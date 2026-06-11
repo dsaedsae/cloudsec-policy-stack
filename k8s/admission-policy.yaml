@@ -1,0 +1,57 @@
+# Layer 0 (identity), enforcement: bind pod network-identity (the `app` label
+# Cilium trusts) to the pod's ServiceAccount, at admission, with a built-in
+# ValidatingAdmissionPolicy (GA, no external webhook/controller needed).
+#
+# The attack it closes (THREAT_MODEL.md, B7): a principal who can create pods
+# labels one `app: api` to *become* api on the network and reach db, bypassing
+# the web->api->db path. This policy makes the network identity (label) and the
+# workload identity (ServiceAccount) agree, or the pod is DENIED before it is
+# persisted. SPIFFE/SVID identities are derived from the SA, so after this the
+# label, the SA, and (with mutual auth) the cryptographic identity all line up.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: shop-label-identity
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  variables:
+    # serviceAccountName is defaulted to "default" by the API before validating
+    # admission runs, so this is always populated.
+    - name: sa
+      expression: "object.spec.serviceAccountName"
+    - name: hasApp
+      expression: "has(object.metadata.labels) && 'app' in object.metadata.labels"
+    - name: app
+      expression: "variables.hasApp ? object.metadata.labels['app'] : ''"
+  validations:
+    # Pods without an `app` label are out of scope (system/probe pods that don't
+    # claim a tier identity). Pods that DO claim app: web|api|db must run as the
+    # matching SA. Any other app value is unknown identity -> deny.
+    - expression: >
+        !variables.hasApp ||
+        (variables.app == 'web' && variables.sa == 'web-sa') ||
+        (variables.app == 'api' && variables.sa == 'api-sa') ||
+        (variables.app == 'db'  && variables.sa == 'db-sa')
+      messageExpression: >
+        "pod label app=" + variables.app + " must run as ServiceAccount " +
+        variables.app + "-sa (got " + variables.sa +
+        "); forged network identity denied — see THREAT_MODEL.md B7"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: shop-label-identity-binding
+spec:
+  policyName: shop-label-identity
+  validationActions: ["Deny"]
+  matchResources:
+    # Scope to the shop namespace via its auto-applied metadata.name label.
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: shop

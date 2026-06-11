@@ -1,0 +1,63 @@
+# Layer 0 (identity): least-privilege ServiceAccounts + who-may-deploy RBAC.
+#
+# Why this file exists: Cilium derives a workload's network identity from its
+# POD LABELS (app: web|api|db). So "traffic from app:web may reach api" is only
+# as trustworthy as "who can create a pod labeled app:web". That authority lives
+# in the Kubernetes API (RBAC) — it is the identity TCB (see THREAT_MODEL.md, B7).
+#
+# Two controls here:
+#   1. Each tier gets its own SA with ZERO RoleBindings -> zero API rights, so a
+#      popped pod cannot touch the cluster API (defense in depth on top of the
+#      unmounted token). Prove it:
+#        kubectl auth can-i --list --as=system:serviceaccount:shop:api-sa
+#   2. An example least-privilege "deployer" Role: may manage Deployments/Services
+#      but NOT create bare pods and NOT touch ServiceAccounts — so a CI principal
+#      can ship the app without being able to hand-craft a forged-identity pod.
+
+apiVersion: v1
+kind: ServiceAccount
+metadata: { name: web-sa, namespace: shop }
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: { name: api-sa, namespace: shop }
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: { name: db-sa, namespace: shop }
+automountServiceAccountToken: false
+---
+# Least-privilege role for whoever deploys the app (CI, an operator). Explicit
+# verbs, namespaced, no wildcards. Note what is ABSENT: no `pods` create (you
+# deploy via Deployments, you don't hand-craft pods), no `serviceaccounts`,
+# no `secrets`. That keeps the forged-identity move (B7) off the table for this
+# principal.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: { name: shop-deployer, namespace: shop }
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["services", "configmaps"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: ["cilium.io"]
+    resources: ["ciliumnetworkpolicies"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+---
+# Bind it to a placeholder group; a real cluster maps this to a CI identity or an
+# OIDC group. RoleBinding (namespaced), never a ClusterRoleBinding for app deploy.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: { name: shop-deployer-binding, namespace: shop }
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: shop-deployer
+subjects:
+  - kind: Group
+    name: "shop:deployers"        # map to your CI SA / OIDC group in a real cluster
+    apiGroup: rbac.authorization.k8s.io

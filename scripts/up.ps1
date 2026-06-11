@@ -23,6 +23,10 @@ Write-Host "Building + loading the Cedar PDP api image..."
 docker build -t cloudsec-api:local -f (Join-Path $Root "app\api\Dockerfile") $Root
 kind load docker-image cloudsec-api:local --name cloudsec
 
+Write-Host "Deploying identity (SAs + label<->SA admission policy)..."
+kubectl --context $ctx apply -f (Join-Path $Root "k8s\rbac.yaml")
+kubectl --context $ctx apply -f (Join-Path $Root "k8s\admission-policy.yaml")
+
 Write-Host "Deploying app + network policies..."
 kubectl --context $ctx apply -f (Join-Path $Root "k8s\app.yaml")
 kubectl --context $ctx apply -f (Join-Path $Root "k8s\netpol.yaml")

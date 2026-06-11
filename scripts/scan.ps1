@@ -3,9 +3,13 @@
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 $checkov = Join-Path $Root ".venv\Scripts\checkov.exe"
+$cfg = Join-Path $Root ".checkov.yaml"
+# Force UTF-8 file reads so checkov doesn't choke on non-ASCII comments under a
+# non-UTF-8 OS locale (e.g. cp949 on Korean Windows).
+$env:PYTHONUTF8 = "1"
 
 Write-Host "== checkov: Terraform =="
-& $checkov -d (Join-Path $Root "terraform") --quiet --compact
+& $checkov -d (Join-Path $Root "terraform") --config-file $cfg --quiet --compact
 
 Write-Host "`n== checkov: Kubernetes manifests =="
-& $checkov -d (Join-Path $Root "k8s") --quiet --compact
+& $checkov -d (Join-Path $Root "k8s") --config-file $cfg --quiet --compact

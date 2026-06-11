@@ -21,6 +21,7 @@ spec:
     metadata:
       labels: { app: web, tier: frontend }
     spec:
+      serviceAccountName: web-sa
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
@@ -69,6 +70,7 @@ spec:
     metadata:
       labels: { app: api, tier: backend }
     spec:
+      serviceAccountName: api-sa
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
@@ -109,6 +111,7 @@ spec:
     metadata:
       labels: { app: db, tier: data }
     spec:
+      serviceAccountName: db-sa
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true

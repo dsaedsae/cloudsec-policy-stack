@@ -12,6 +12,7 @@ metadata:
     checkov.io/skip1: CKV_K8S_8=ephemeral curl test client (sleep); nothing to liveness-probe
     checkov.io/skip2: CKV_K8S_9=ephemeral curl test client (sleep); nothing to readiness-probe
 spec:
+  serviceAccountName: web-sa        # match the app:web identity (admission policy)
   automountServiceAccountToken: false
   securityContext: { runAsNonRoot: true, runAsUser: 100, seccompProfile: { type: RuntimeDefault } }
   containers:
@@ -34,6 +35,7 @@ metadata:
     checkov.io/skip1: CKV_K8S_8=ephemeral curl test client (sleep); nothing to liveness-probe
     checkov.io/skip2: CKV_K8S_9=ephemeral curl test client (sleep); nothing to readiness-probe
 spec:
+  serviceAccountName: api-sa        # match the app:api identity (admission policy)
   automountServiceAccountToken: false
   securityContext: { runAsNonRoot: true, runAsUser: 100, seccompProfile: { type: RuntimeDefault } }
   containers:
