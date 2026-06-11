@@ -1,66 +1,90 @@
-# Layer 2: zero-trust network policy with Cilium.
-# Default-deny everything in the namespace, then allow only the intended hops:
-#   web --(HTTP GET only)--> api --> db
-# L7 rule on api means even a reachable client can only GET /get* — a POST or a
-# different path is dropped by Cilium's Envoy proxy, not just the L3/L4 layer.
+# Layer 2: zero-trust network policy with Cilium — INGRESS *and* EGRESS.
+# Ingress: default-deny, then least-privilege hops web --HTTP GET--> api --> db.
+# Egress:  default-deny too (the realistic attack: a popped pod beaconing/exfil).
+#          Each tier may egress ONLY to its next hop, plus DNS. So a compromised
+#          web pod cannot reach the internet, the cloud metadata IP, the API
+#          server, or db — only api:8080. That is what "zero-trust" actually means.
 
-# 1) Default-deny all ingress for every pod in the namespace.
+# ---------- INGRESS ----------
+# Default-deny all ingress for every pod in the namespace.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
-metadata:
-  name: default-deny-ingress
-  namespace: shop
+metadata: { name: default-deny-ingress, namespace: shop }
 spec:
   endpointSelector: {}
   ingress: []
 ---
-# 2) api accepts ingress ONLY from web, ONLY HTTP GET on /get* (L7).
+# api accepts ingress ONLY from web, ONLY HTTP GET /get* (L7).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
-metadata:
-  name: allow-web-to-api
-  namespace: shop
+metadata: { name: allow-web-to-api, namespace: shop }
 spec:
-  endpointSelector:
-    matchLabels: { app: api }
+  endpointSelector: { matchLabels: { app: api } }
   ingress:
-    - fromEndpoints:
-        - matchLabels: { app: web }
+    - fromEndpoints: [{ matchLabels: { app: web } }]
       toPorts:
-        - ports:
-            - { port: "8080", protocol: TCP }
+        - ports: [{ port: "8080", protocol: TCP }]
           rules:
             http:
               - method: "GET"
-                path: "/get.*"
+                path: "/get(/.*)?$"   # anchored: /get or /get/... (not /getfoo)
 ---
-# 3) db accepts ingress ONLY from api (L3/L4).
+# db accepts ingress ONLY from api (L3/L4).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
-metadata:
-  name: allow-api-to-db
-  namespace: shop
+metadata: { name: allow-api-to-db, namespace: shop }
 spec:
-  endpointSelector:
-    matchLabels: { app: db }
+  endpointSelector: { matchLabels: { app: db } }
   ingress:
-    - fromEndpoints:
-        - matchLabels: { app: api }
-      toPorts:
-        - ports:
-            - { port: "8080", protocol: TCP }
+    - fromEndpoints: [{ matchLabels: { app: api } }]
+      toPorts: [{ ports: [{ port: "8080", protocol: TCP }] }]
 ---
-# 4) web accepts ingress from anywhere in-cluster (it is the entry tier) on 8080.
+# web accepts ingress from in-cluster (entry tier) on 8080.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
-metadata:
-  name: allow-ingress-to-web
-  namespace: shop
+metadata: { name: allow-ingress-to-web, namespace: shop }
 spec:
-  endpointSelector:
-    matchLabels: { app: web }
+  endpointSelector: { matchLabels: { app: web } }
   ingress:
     - fromEntities: ["cluster"]
+      toPorts: [{ ports: [{ port: "8080", protocol: TCP }] }]
+
+# ---------- EGRESS ----------
+---
+# Baseline: every pod may egress ONLY to kube-dns for name resolution (L7 DNS).
+# Selecting all pods for egress makes egress default-deny for everything else.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: allow-dns-egress, namespace: shop }
+spec:
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s-app: kube-dns
+            io.kubernetes.pod.namespace: kube-system
       toPorts:
-        - ports:
-            - { port: "8080", protocol: TCP }
+        - ports: [{ port: "53", protocol: ANY }]
+          rules:
+            dns: [{ matchPattern: "*" }]
+---
+# web may egress ONLY to api:8080 (plus DNS from the baseline).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: egress-web-to-api, namespace: shop }
+spec:
+  endpointSelector: { matchLabels: { app: web } }
+  egress:
+    - toEndpoints: [{ matchLabels: { app: api } }]
+      toPorts: [{ ports: [{ port: "8080", protocol: TCP }] }]
+---
+# api may egress ONLY to db:8080 (plus DNS). db has NO egress rule of its own,
+# so (via the DNS baseline) db can egress to nothing but DNS — most locked down.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: egress-api-to-db, namespace: shop }
+spec:
+  endpointSelector: { matchLabels: { app: api } }
+  egress:
+    - toEndpoints: [{ matchLabels: { app: db } }]
+      toPorts: [{ ports: [{ port: "8080", protocol: TCP }] }]

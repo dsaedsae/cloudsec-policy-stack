@@ -10,6 +10,11 @@ __pycache__/
 crash.log
 *.tfplan
 
-# Kubeconfig / local
+# Kubeconfig / secrets (path-anchored — kind writes terraform/<cluster>-config)
 kubeconfig
 *.kubeconfig
+**/*-config
+*.pem
+*.key
+*-key.pem
+terraform/cloudsec-config
