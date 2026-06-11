@@ -19,6 +19,10 @@ try {
 Write-Host "Waiting for Cilium to be ready..."
 cilium status --context $ctx --wait
 
+Write-Host "Building + loading the Cedar PDP api image..."
+docker build -t cloudsec-api:local -f (Join-Path $Root "app\api\Dockerfile") $Root
+kind load docker-image cloudsec-api:local --name cloudsec
+
 Write-Host "Deploying app + network policies..."
 kubectl --context $ctx apply -f (Join-Path $Root "k8s\app.yaml")
 kubectl --context $ctx apply -f (Join-Path $Root "k8s\netpol.yaml")

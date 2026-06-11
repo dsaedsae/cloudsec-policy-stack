@@ -4,7 +4,13 @@
 # rejected — which is the point: the namespace is locked down).
 apiVersion: v1
 kind: Pod
-metadata: { name: probe-web, namespace: shop, labels: { app: web, role: probe } }
+metadata:
+  name: probe-web
+  namespace: shop
+  labels: { app: web, role: probe }
+  annotations:
+    checkov.io/skip1: CKV_K8S_8=ephemeral curl test client (sleep); nothing to liveness-probe
+    checkov.io/skip2: CKV_K8S_9=ephemeral curl test client (sleep); nothing to readiness-probe
 spec:
   automountServiceAccountToken: false
   securityContext: { runAsNonRoot: true, runAsUser: 100, seccompProfile: { type: RuntimeDefault } }
@@ -20,7 +26,13 @@ spec:
 ---
 apiVersion: v1
 kind: Pod
-metadata: { name: probe-api, namespace: shop, labels: { app: api, role: probe } }
+metadata:
+  name: probe-api
+  namespace: shop
+  labels: { app: api, role: probe }
+  annotations:
+    checkov.io/skip1: CKV_K8S_8=ephemeral curl test client (sleep); nothing to liveness-probe
+    checkov.io/skip2: CKV_K8S_9=ephemeral curl test client (sleep); nothing to readiness-probe
 spec:
   automountServiceAccountToken: false
   securityContext: { runAsNonRoot: true, runAsUser: 100, seccompProfile: { type: RuntimeDefault } }

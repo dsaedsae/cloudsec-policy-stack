@@ -1,92 +1,100 @@
 # cloudsec-policy-stack
 
-**Defense-in-depth, as code, on a free local cluster.** Three policy layers that
-a real cloud-native security role owns — provisioning, network, and application
-authorization — wired into one runnable stack with a shift-left security gate.
+[![ci](https://github.com/dsaedsae/cloudsec-policy-stack/actions/workflows/ci.yml/badge.svg)](https://github.com/dsaedsae/cloudsec-policy-stack/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+**Defense-in-depth, as code, on a free local cluster.** One request to one service
+passes through three independent policy layers — network (L3/L4), HTTP (L7), and
+application authorization — each enforced and verified live, with a shift-left gate in CI.
 
 ```
-            ┌─────────────────────────────────────────────────────────┐
-  Terraform │  kind cluster + Cilium (CNI)   ← infra & network plane    │  IaC
-  ──────────┼─────────────────────────────────────────────────────────┤
-   Cilium   │  default-deny in+out ▸ web ─HTTP GET─▶ api ─▶ db          │  L3/L4 + L7
-            │  egress locked: no pod may reach the internet/metadata     │  (ingress+egress)
-  ──────────┼─────────────────────────────────────────────────────────┤
-   Cedar    │  who may do which action on which resource (authz-as-code)│  app layer
-            └─────────────────────────────────────────────────────────┘
-   checkov  │  shift-left scan of Terraform + K8s manifests (CI gate)
+   a single request:  web ──▶ api ──▶ (resource)
+   ─────────────────────────────────────────────────────────────────────────
+   Terraform │ kind cluster + Cilium (CNI), as code                  │ IaC
+   Cilium L3 │ default-deny in+out; only web→api→db; egress locked    │ no exfil
+   Cilium L7 │ only GET/POST on /accounts/* reach api (Envoy)         │ path/method
+   Cedar     │ api PDP authorizes every call: owner? limit? role?     │ authz-as-code
+   ─────────────────────────────────────────────────────────────────────────
+   checkov   │ shift-left scan of Terraform + K8s (CI gate, 0 fail)   │ + gitleaks
 ```
 
 ## What it demonstrates
 
-- **IaC (Terraform)** — the cluster *and* its CNI are declarative/reproducible; `terraform validate` clean.
-- **Zero-trust network policy (Cilium / eBPF)** — default-deny on **both ingress and egress**, then
-  least-privilege hops. The `web→api` rule is **L7**: only `GET /get*` is allowed; a different path/method
-  is dropped by Cilium's Envoy proxy, not just L3/L4. Egress is locked to the next hop + DNS only, so a
-  **compromised pod cannot reach the internet, cloud metadata, or the API server** (proven live below).
-- **Authorization as code (Cedar)** — the same policy language as Amazon Verified Permissions, evaluated
-  locally and **unit-tested** (`forbid` overrides `permit`; context-based transfer limits; role hierarchy).
-- **Shift-left gate (checkov)** — scans Terraform + K8s; workloads are hardened (non-root, no priv-esc, all
-  caps dropped, read-only rootfs, seccomp, probes, limits). Intentional exceptions live in `.checkov.yaml`
-  with written justifications — triage, not "0 findings" theater.
+- **IaC (Terraform)** — the cluster *and* its CNI are declarative/reproducible; `terraform validate` clean in CI.
+- **Zero-trust network (Cilium / eBPF)** — default-deny on **both ingress and egress**; least-privilege hops
+  only. The `web→api` rule is **L7** (Envoy): only the account API is reachable; other paths are dropped at
+  the edge. Egress is locked to next-hop + DNS, so a **compromised pod cannot reach the internet, cloud
+  metadata, or the API server** (proven live).
+- **Authorization as code (Cedar), enforced inline** — the `api` is a small PDP service that calls Cedar on
+  **every request** (owner check, transfer limit via request context, `forbid` on frozen accounts, role
+  hierarchy). Same policies are unit-tested (`cedar/authz.py`, 7/7) and portable to **Amazon Verified Permissions**.
+- **Shift-left CI gate** — GitHub Actions runs Cedar tests + checkov + `terraform validate` + gitleaks on
+  every push, and a kind job that stands up the stack and re-runs the live enforcement proof.
+- **Hardened workloads** — non-root, no priv-esc, all caps dropped, read-only rootfs, seccomp, probes,
+  limits, `restricted` Pod Security. checkov exceptions are documented in `.checkov.yaml` — triage, not theater.
+
+## The defense-in-depth proof (verified live + in CI)
+
+One asset (`api`), three layers. `scripts/verify.{sh,ps1}` runs all of these:
+
+| Layer | Test | Result | Enforced by |
+|-------|------|--------|-------------|
+| L1 network | web → db (no allowed hop) | **000** | Cilium L3 drop |
+| L2 HTTP | web → api `GET /auditlogs/*` | **403** | Cilium L7 (path not allowed) |
+| L3 authz | `alice` → `GET /accounts/acct-alice` | **200** | Cedar allow (owner) |
+| L3 authz | `bob` → `GET /accounts/acct-alice` | **403** | **Cedar deny (not owner)** |
+| L3 authz | `alice` transfer 500 (≤ limit) | **200** | Cedar allow |
+| L3 authz | `alice` transfer 5000 (> limit) | **403** | Cedar deny (limit) |
+| L3 authz | `alice` transfer from frozen acct | **403** | Cedar `forbid` |
+| L1 network | api → db (allowed hop) | **200** | Cilium allow |
+| egress | web → `https://example.com` | **000** | Cilium egress default-deny |
+
+The two 403s are the point: `GET /auditlogs` (blocked at L7 before reaching the app, body `Access denied`
+from Envoy) vs `bob`'s account read (reaches the app, body `Cedar denied: ...`) — **same network path, same
+L7-allowed route, different principal**. That is layered control on one asset, not three disjoint demos.
 
 ## Layout
 
 ```
-terraform/   kind + Cilium (helm)         k8s/app.yaml     hardened 3-tier app
-cedar/       schema + policies + tests    k8s/netpol.yaml  CiliumNetworkPolicy (L3/L7)
-scripts/     up / verify / scan / down    .checkov.yaml    documented scan baseline
+terraform/   kind + Cilium (helm), as code      app/api/    FastAPI Cedar PDP (the api image)
+cedar/       schema + policies + 7 unit tests    k8s/        app, CiliumNetworkPolicy, probe pods
+scripts/     up / verify / scan / down (.ps1+.sh) .github/   CI workflow + kind config
 ```
 
 ## Quickstart
 
 Prereqs: Docker, `kind`, `kubectl`, `helm`, `cilium`, `terraform`, Python 3.12.
 
-```powershell
-python -m venv .venv ; .venv\Scripts\python -m pip install cedarpy checkov
+```bash
+python -m venv .venv && ./.venv/bin/python -m pip install -r requirements-dev.txt
 
-.venv\Scripts\python cedar\authz.py        # authz tests (no cluster needed)  -> 7/7
-powershell scripts\scan.ps1                # checkov gate (Terraform + K8s)
-powershell scripts\up.ps1                  # provision kind+Cilium, deploy app + policies
-powershell scripts\verify.ps1              # prove enforcement (network + authz)
-powershell scripts\down.ps1                # tear down
+./.venv/bin/python cedar/authz.py     # authz unit tests, no cluster needed -> 7/7
+bash scripts/up.sh    || pwsh scripts/up.ps1       # provision kind+Cilium, build api, deploy
+bash scripts/verify.sh|| pwsh scripts/verify.ps1   # prove all 3 layers live (table above)
+bash scripts/down.sh  || pwsh scripts/down.ps1     # tear down
 ```
 
-## What `verify.ps1` proves
-
-| Hop | Path/Method | Expected | Why |
-|-----|-------------|----------|-----|
-| web → api | `GET /get` | **ALLOW (200)** | L7 rule permits this method+path |
-| web → api | `GET /headers` | **DENY (403)** | L7: wrong path dropped by Envoy |
-| web → db | any | **DENY (000)** | no ingress rule allows web→db (L3 drop) |
-| api → db | any | **ALLOW (200)** | least-privilege hop permitted |
-| web → internet | `https://example.com` | **DENY (000)** | egress default-deny — no exfil/beacon |
-| api → internet | `https://example.com` | **DENY (000)** | egress default-deny |
-| Cedar | 7 authz scenarios | **7/7** | owner/limit/frozen/role (offline PDP tests) |
-
-> All six network rows are **verified live** (kind+Cilium). The Cedar row is an offline
-> policy-decision test today; wiring Cedar inline as the api's request-time PDP is on the roadmap.
+(Windows: `.venv\Scripts\python`, and the `.ps1` scripts. CI runs the `bash` path on Linux.)
 
 ## Validation status
 
-- `cedar/authz.py` — schema validates, **7/7** authorization scenarios pass.
-- `terraform validate` — **clean**.
-- `checkov` — **workload hardening: 258 passed / 0 failed** (K8s), 4 documented suppressions.
-  Scope: checkov validates the *workloads*; it does **not** evaluate the CiliumNetworkPolicy (a CRD it
-  can't see) or Cedar — those have their own gates (live verify + `cedar/authz.py`).
-- Live network enforcement (ingress L3/L4+L7 **and** egress) — `scripts/up.ps1` then `scripts/verify.ps1`.
+- **CI** (`.github/workflows/ci.yml`) on every push: Cedar tests, checkov, `terraform validate`/`fmt`, gitleaks,
+  and a kind integration job that brings up the stack and runs `scripts/verify.sh`.
+- `cedar/authz.py` — schema validates, **7/7** scenarios pass.
+- `checkov` (Terraform + K8s) — **424 passed / 0 failed / 4 documented skips**. Scope: checkov validates the
+  *workloads + Terraform*; the CiliumNetworkPolicy (a CRD it can't see) and Cedar are covered by the live
+  `verify` job and `cedar/authz.py`.
+- Live enforcement — 9/9 checks in the table above pass on kind+Cilium (locally and in CI).
 
-## Roadmap (review-driven)
+## Roadmap
 
-Senior review (5 perspectives) rated the core respectable; these raise it toward production-grade:
-- **CI** — GitHub Actions running `terraform validate` + checkov + `cedar/authz.py` + a kind integration job.
-- **Cedar inline** — replace the demo api with a tiny PDP service that calls Cedar at request time, so one
-  request traverses all three layers (network → L7 → authz) end to end.
-- **Cross-platform** — POSIX `*.sh`/Makefile beside the PowerShell scripts.
-- **Runtime layer** — Tetragon (eBPF) TracingPolicy for runtime detection; Hubble for flow visibility.
-- **Supply chain** — pin images by digest + `cosign verify`; `requirements.txt` for pinned Python deps.
+The core (IaC + zero-trust net incl. egress + inline Cedar authz + CI) is in. Next, toward production-grade:
+- **Runtime layer** — Tetragon (eBPF) `TracingPolicy` for in-pod exec / unexpected connect detection; Hubble for flow visibility.
+- **Identity hardening** — Cilium mutual auth / SPIFFE; document the label-as-identity threat model + RBAC on who may set pod labels.
+- **Supply chain** — pin images by `@sha256` digest + `cosign verify`; SLSA provenance.
+- **Learning labs** — numbered `docs/` walkthroughs ("break the L7 rule and watch it drop", "add a Cedar deny").
 
 ## Notes
 
-Local `kind` cluster — no cloud cost. Cedar policies are portable to **Amazon Verified Permissions**;
-Cilium policies to any Cilium-enabled cluster (EKS/GKE/AKS). Learning/portfolio artifact, not turnkey prod.
-Licensed under [MIT](LICENSE).
+Local `kind` cluster — no cloud cost. Cedar policies port to **Amazon Verified Permissions**; Cilium policies
+to any Cilium cluster (EKS/GKE/AKS). Learning/portfolio artifact, not turnkey prod. Licensed under [MIT](LICENSE).
