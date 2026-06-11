@@ -4,6 +4,10 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 $ctx = "kind-cloudsec"
 
+# The Helm provider needs the chart repo cached locally first.
+helm repo add cilium https://helm.cilium.io/ 2>$null
+helm repo update cilium | Out-Null
+
 Push-Location (Join-Path $Root "terraform")
 try {
     terraform init -input=false | Out-Null

@@ -1,0 +1,35 @@
+# Test clients for verify.ps1. Labeled with the identity under test (app=web /
+# app=api) so Cilium applies the right policy. Hardened so they pass the
+# namespace's `restricted` Pod Security admission (bare `kubectl run` would be
+# rejected — which is the point: the namespace is locked down).
+apiVersion: v1
+kind: Pod
+metadata: { name: probe-web, namespace: shop, labels: { app: web, role: probe } }
+spec:
+  automountServiceAccountToken: false
+  securityContext: { runAsNonRoot: true, runAsUser: 100, seccompProfile: { type: RuntimeDefault } }
+  containers:
+    - name: c
+      image: curlimages/curl:8.11.1
+      command: ["sleep", "3600"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities: { drop: ["ALL"] }
+      resources: { requests: { cpu: "5m", memory: "8Mi" }, limits: { cpu: "50m", memory: "32Mi" } }
+---
+apiVersion: v1
+kind: Pod
+metadata: { name: probe-api, namespace: shop, labels: { app: api, role: probe } }
+spec:
+  automountServiceAccountToken: false
+  securityContext: { runAsNonRoot: true, runAsUser: 100, seccompProfile: { type: RuntimeDefault } }
+  containers:
+    - name: c
+      image: curlimages/curl:8.11.1
+      command: ["sleep", "3600"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities: { drop: ["ALL"] }
+      resources: { requests: { cpu: "5m", memory: "8Mi" }, limits: { cpu: "50m", memory: "32Mi" } }

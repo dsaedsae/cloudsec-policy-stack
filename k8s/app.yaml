@@ -77,7 +77,6 @@ spec:
       containers:
         - name: api
           image: mccutchen/go-httpbin:v2.15.0
-          args: ["-host", "0.0.0.0", "-port", "8080"]
           ports: [{ containerPort: 8080 }]
           imagePullPolicy: IfNotPresent
           readinessProbe: { httpGet: { path: /, port: 8080 }, initialDelaySeconds: 3, periodSeconds: 10 }
