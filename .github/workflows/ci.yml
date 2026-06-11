@@ -55,15 +55,17 @@ jobs:
           cluster_name: cloudsec
           config: .github/kind-config.yaml
 
-      - name: Install Cilium (with L7 proxy)
+      - name: Install Cilium (L7 proxy) + Tetragon (runtime)
         run: |
           curl -sL https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz | sudo tar xzC /usr/local/bin
           cilium install --version 1.16.5 --set l7Proxy=true --wait
+          helm repo add cilium https://helm.cilium.io/ && helm repo update cilium
+          helm install tetragon cilium/tetragon -n kube-system --version 1.7.0 --wait
 
-      - name: Load image + deploy app and policies
+      - name: Load image + deploy app, network + runtime policies
         run: |
           kind load docker-image cloudsec-api:local --name cloudsec
-          kubectl apply -f k8s/app.yaml -f k8s/netpol.yaml
+          kubectl apply -f k8s/app.yaml -f k8s/netpol.yaml -f k8s/tracingpolicy.yaml
           kubectl -n shop rollout status deploy/web --timeout=180s
           kubectl -n shop rollout status deploy/api --timeout=180s
           kubectl -n shop rollout status deploy/db  --timeout=180s

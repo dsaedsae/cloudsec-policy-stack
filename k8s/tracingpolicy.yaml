@@ -1,0 +1,26 @@
+# Layer 4 (runtime): Tetragon (eBPF) detection + prevention.
+# Network policy and Cedar act before/at the request; nothing watches a workload
+# AFTER it's compromised. This kills any attempt to run a shell inside the data
+# tier (db) — a database container has no business spawning /bin/sh, so an exec
+# of one is treated as intrusion and SIGKILLed in-kernel.
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: block-shell-in-data-tier
+spec:
+  podSelector:
+    matchLabels:
+      tier: data
+  kprobes:
+    - call: "sys_execve"
+      syscall: true
+      args:
+        - index: 0
+          type: "string"
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Postfix"
+              values: ["/sh", "/bash", "/dash", "/ash", "/busybox"]
+          matchActions:
+            - action: Sigkill

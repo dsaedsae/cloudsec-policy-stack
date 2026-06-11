@@ -26,6 +26,7 @@ kind load docker-image cloudsec-api:local --name cloudsec
 Write-Host "Deploying app + network policies..."
 kubectl --context $ctx apply -f (Join-Path $Root "k8s\app.yaml")
 kubectl --context $ctx apply -f (Join-Path $Root "k8s\netpol.yaml")
+kubectl --context $ctx apply -f (Join-Path $Root "k8s\tracingpolicy.yaml")
 kubectl --context $ctx -n shop rollout status deploy/web
 kubectl --context $ctx -n shop rollout status deploy/api
 kubectl --context $ctx -n shop rollout status deploy/db

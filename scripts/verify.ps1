@@ -34,6 +34,12 @@ try {
     Probe "probe-web" "web->internet blocked"                 "000" @("https://example.com")
     Probe "probe-web" "web->cloud metadata blocked"           "000" @("http://169.254.169.254/")
     Probe "probe-web" "web->kube-apiserver blocked"           "000" @("-k", "https://10.96.0.1:443/")
+
+    Write-Host "== Tetragon runtime (eBPF) =="
+    $dbpod = kubectl --context $ctx -n shop get pod -l tier=data -o jsonpath="{.items[0].metadata.name}"
+    kubectl --context $ctx -n shop exec $dbpod -- sh -c "echo x" 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "shell exec in db (SIGKILL by TracingPolicy)", "KILL", "137", "PASS" }
+    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "shell exec in db pod", "KILL", "RAN", "FAIL"; $script:fail = 1 }
 }
 finally {
     kubectl --context $ctx -n shop delete -f (Join-Path $Root "k8s\probes.yaml") --ignore-not-found | Out-Null

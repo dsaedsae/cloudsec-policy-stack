@@ -14,6 +14,7 @@ application authorization — each enforced and verified live, with a shift-left
    Cilium L3 │ default-deny in+out; only web→api→db; egress locked    │ no exfil
    Cilium L7 │ only GET/POST on /accounts/* reach api (Envoy)         │ path/method
    Cedar     │ api PDP authorizes every call: owner? limit? role?     │ authz-as-code
+   Tetragon  │ eBPF runtime: SIGKILLs a shell spawned in the db pod   │ detect+prevent
    ─────────────────────────────────────────────────────────────────────────
    checkov   │ shift-left scan of Terraform + K8s (CI gate, 0 fail)   │ + gitleaks
 ```
@@ -28,8 +29,12 @@ application authorization — each enforced and verified live, with a shift-left
 - **Authorization as code (Cedar), enforced inline** — the `api` is a small PDP service that calls Cedar on
   **every request** (owner check, transfer limit via request context, `forbid` on frozen accounts, role
   hierarchy). Same policies are unit-tested (`cedar/authz.py`, 7/7) and portable to **Amazon Verified Permissions**.
+- **Runtime detection + prevention (Tetragon / eBPF)** — network and authz act before/at the request; nothing
+  watches a workload once it's popped. A `TracingPolicy` **SIGKILLs any shell exec in the db tier in-kernel**
+  (legit processes unaffected, pod stays healthy), and Tetragon records every process exec. Hubble adds
+  flow visibility (`hubble observe -n shop --verdict DROPPED`).
 - **Shift-left CI gate** — GitHub Actions runs Cedar tests + checkov + `terraform validate` + gitleaks on
-  every push, and a kind job that stands up the stack and re-runs the live enforcement proof.
+  every push, and a kind job that stands up the stack and re-runs the live enforcement proof (incl. runtime).
 - **Hardened workloads** — non-root, no priv-esc, all caps dropped, read-only rootfs, seccomp, probes,
   limits, `restricted` Pod Security. checkov exceptions are documented in `.checkov.yaml` — triage, not theater.
 
@@ -52,6 +57,7 @@ One asset (`api`), three layers. `scripts/verify.{sh,ps1}` runs all of these:
 | egress | web → `https://example.com` | **000** | Cilium egress default-deny |
 | egress | web → cloud metadata `169.254.169.254` | **000** | egress default-deny (no SSRF→metadata) |
 | egress | web → kube-apiserver `10.96.0.1:443` | **000** | egress default-deny |
+| L4 runtime | shell exec inside `db` pod | **SIGKILL (137)** | Tetragon `TracingPolicy` (eBPF) |
 
 The two 403s are the point: `GET /auditlogs` (blocked at L7 before reaching the app, body `Access denied`
 from Envoy) vs `bob`'s account read (reaches the app, body `Cedar denied: ...`) — **same network path, same
@@ -60,8 +66,8 @@ L7-allowed route, different principal**. That is layered control on one asset, n
 ## Layout
 
 ```
-terraform/   kind + Cilium (helm), as code      app/api/    FastAPI Cedar PDP (the api image)
-cedar/       schema + policies + 7 unit tests    k8s/        app, CiliumNetworkPolicy, probe pods
+terraform/   kind + Cilium + Tetragon (helm)     app/api/    FastAPI Cedar PDP (the api image)
+cedar/       schema + policies + 8 unit tests    k8s/        app, netpol, tracingpolicy, probes
 scripts/     up / verify / scan / down (.ps1+.sh) .github/   CI workflow + kind config
 ```
 
@@ -88,12 +94,11 @@ bash scripts/down.sh  || pwsh scripts/down.ps1     # tear down
 - `checkov` (Terraform + K8s) — **424 passed / 0 failed / 4 documented skips**. Scope: checkov validates the
   *workloads + Terraform*; the CiliumNetworkPolicy (a CRD it can't see) and Cedar are covered by the live
   `verify` job and `cedar/authz.py`.
-- Live enforcement — **13/13** checks in the table above pass on kind+Cilium (locally and in CI).
+- Live enforcement — **14/14** checks in the table above pass on kind+Cilium+Tetragon (locally and in CI).
 
 ## Roadmap
 
-The core (IaC + zero-trust net incl. egress + inline Cedar authz + CI) is in. Next, toward production-grade:
-- **Runtime layer** — Tetragon (eBPF) `TracingPolicy` for in-pod exec / unexpected connect detection; Hubble for flow visibility.
+The core (IaC + zero-trust net incl. egress + inline Cedar authz + Tetragon runtime + CI) is in. Next:
 - **Identity hardening** — Cilium mutual auth / SPIFFE; document the label-as-identity threat model + RBAC on who may set pod labels.
 - **Supply chain** — pin images by `@sha256` digest + `cosign verify`; SLSA provenance.
 - **Learning labs** — numbered `docs/` walkthroughs ("break the L7 rule and watch it drop", "add a Cedar deny").

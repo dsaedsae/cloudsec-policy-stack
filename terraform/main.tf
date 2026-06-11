@@ -56,9 +56,23 @@ resource "helm_release" "cilium" {
     value = "IfNotPresent"
   }
   # Enable L7 (HTTP) policy enforcement via the Envoy proxy — needed for the
-  # toHTTP rules in the CiliumNetworkPolicy (k8s/netpol/).
+  # toHTTP rules in the CiliumNetworkPolicy (k8s/netpol.yaml).
   set {
     name  = "l7Proxy"
+    value = "true"
+  }
+  # Hubble: flow visibility, so policy drops/allows are observable with identity
+  # labels (`hubble observe -n shop --verdict DROPPED`).
+  set {
+    name  = "hubble.enabled"
+    value = "true"
+  }
+  set {
+    name  = "hubble.relay.enabled"
+    value = "true"
+  }
+  set {
+    name  = "hubble.ui.enabled"
     value = "true"
   }
 

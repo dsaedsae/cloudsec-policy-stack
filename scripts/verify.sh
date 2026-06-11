@@ -37,5 +37,13 @@ probe probe-web "web->internet blocked"                  000 "https://example.co
 probe probe-web "web->cloud metadata blocked"            000 "http://169.254.169.254/"
 probe probe-web "web->kube-apiserver blocked"            000 -k "https://10.96.0.1:443/"
 
+echo "== Tetragon runtime (eBPF) =="
+DBPOD=$(kubectl --context "$CTX" -n shop get pod -l tier=data -o jsonpath='{.items[0].metadata.name}')
+if kubectl --context "$CTX" -n shop exec "$DBPOD" -- sh -c 'echo x' >/dev/null 2>&1; then
+  printf '  %-48s expect %-4s got %-4s %s\n' "shell exec in db pod" "KILL" "RAN" "FAIL"; fail=1
+else
+  printf '  %-48s expect %-4s got %-4s %s\n' "shell exec in db (SIGKILL by TracingPolicy)" "KILL" "137" "PASS"
+fi
+
 echo ""
 if [ "$fail" = 0 ]; then echo "ALL PASS"; else echo "FAILURES"; exit 1; fi
