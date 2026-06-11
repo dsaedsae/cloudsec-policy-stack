@@ -27,9 +27,13 @@ try {
     Probe "probe-web" "L3 alice transfer 500 (under limit)"   "200" @("-H", "X-User: alice", "-H", "Content-Type: application/json", "-d", '{"amount":500}', "http://$($api):8080/accounts/acct-alice/transfer")
     Probe "probe-web" "L3 alice transfer 5000 (over limit)"   "403" @("-H", "X-User: alice", "-H", "Content-Type: application/json", "-d", '{"amount":5000}', "http://$($api):8080/accounts/acct-alice/transfer")
     Probe "probe-web" "L3 alice transfer FROZEN (forbid)"     "403" @("-H", "X-User: alice", "-H", "Content-Type: application/json", "-d", '{"amount":100}', "http://$($api):8080/accounts/acct-alice-frozen/transfer")
+    Probe "probe-web" "L3 alice transfer -100 (negative)"     "403" @("-H", "X-User: alice", "-H", "Content-Type: application/json", "-d", '{"amount":-100}', "http://$($api):8080/accounts/acct-alice/transfer")
+    Probe "probe-web" "L3 malformed X-User -> 400"            "400" @("-H", "X-User: bad user", "http://$($api):8080/accounts/acct-alice")
     Probe "probe-api" "L1 api->db (allowed hop)"              "200" @("http://$($db):8080/")
     Write-Host "== Cilium egress (default-deny outbound) =="
     Probe "probe-web" "web->internet blocked"                 "000" @("https://example.com")
+    Probe "probe-web" "web->cloud metadata blocked"           "000" @("http://169.254.169.254/")
+    Probe "probe-web" "web->kube-apiserver blocked"           "000" @("-k", "https://10.96.0.1:443/")
 }
 finally {
     kubectl --context $ctx -n shop delete -f (Join-Path $Root "k8s\probes.yaml") --ignore-not-found | Out-Null

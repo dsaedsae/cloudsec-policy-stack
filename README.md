@@ -46,8 +46,12 @@ One asset (`api`), three layers. `scripts/verify.{sh,ps1}` runs all of these:
 | L3 authz | `alice` transfer 500 (≤ limit) | **200** | Cedar allow |
 | L3 authz | `alice` transfer 5000 (> limit) | **403** | Cedar deny (limit) |
 | L3 authz | `alice` transfer from frozen acct | **403** | Cedar `forbid` |
+| L3 authz | `alice` transfer **-100** (negative) | **403** | Cedar positive-amount guard |
+| L3 input | malformed `X-User` header | **400** | PDP validates before Cedar |
 | L1 network | api → db (allowed hop) | **200** | Cilium allow |
 | egress | web → `https://example.com` | **000** | Cilium egress default-deny |
+| egress | web → cloud metadata `169.254.169.254` | **000** | egress default-deny (no SSRF→metadata) |
+| egress | web → kube-apiserver `10.96.0.1:443` | **000** | egress default-deny |
 
 The two 403s are the point: `GET /auditlogs` (blocked at L7 before reaching the app, body `Access denied`
 from Envoy) vs `bob`'s account read (reaches the app, body `Cedar denied: ...`) — **same network path, same
@@ -80,11 +84,11 @@ bash scripts/down.sh  || pwsh scripts/down.ps1     # tear down
 
 - **CI** (`.github/workflows/ci.yml`) on every push: Cedar tests, checkov, `terraform validate`/`fmt`, gitleaks,
   and a kind integration job that brings up the stack and runs `scripts/verify.sh`.
-- `cedar/authz.py` — schema validates, **7/7** scenarios pass.
+- `cedar/authz.py` — schema validates, **8/8** scenarios pass (incl. negative-amount deny).
 - `checkov` (Terraform + K8s) — **424 passed / 0 failed / 4 documented skips**. Scope: checkov validates the
   *workloads + Terraform*; the CiliumNetworkPolicy (a CRD it can't see) and Cedar are covered by the live
   `verify` job and `cedar/authz.py`.
-- Live enforcement — 9/9 checks in the table above pass on kind+Cilium (locally and in CI).
+- Live enforcement — **13/13** checks in the table above pass on kind+Cilium (locally and in CI).
 
 ## Roadmap
 
@@ -97,4 +101,6 @@ The core (IaC + zero-trust net incl. egress + inline Cedar authz + CI) is in. Ne
 ## Notes
 
 Local `kind` cluster — no cloud cost. Cedar policies port to **Amazon Verified Permissions**; Cilium policies
-to any Cilium cluster (EKS/GKE/AKS). Learning/portfolio artifact, not turnkey prod. Licensed under [MIT](LICENSE).
+to any Cilium cluster (EKS/GKE/AKS). Identity (`X-User`) is **unauthenticated demo input** (charset-validated
+to prevent injection); a real system derives the principal from a verified JWT `sub`. Entities are static
+fixtures baked into the image. Learning/portfolio artifact, not turnkey prod. Licensed under [MIT](LICENSE).

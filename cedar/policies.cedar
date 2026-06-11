@@ -11,13 +11,18 @@ permit (
 )
 when { resource.owner == principal };
 
-// A customer may transfer from their own account, up to their transfer limit.
+// A customer may transfer from their own account, a POSITIVE amount up to their
+// limit. The `amount > 0` guard blocks negative-value "transfers" (value extraction).
 permit (
     principal,
     action == Action::"Transfer",
     resource
 )
-when { resource.owner == principal && context.amount <= principal.transferLimit };
+when {
+    resource.owner == principal
+    && context.amount > 0
+    && context.amount <= principal.transferLimit
+};
 
 // Auditors may read audit logs (role membership via the entity hierarchy).
 permit (

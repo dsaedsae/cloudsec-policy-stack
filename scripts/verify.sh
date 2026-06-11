@@ -29,9 +29,13 @@ probe probe-web "L3 bob GET alice acct (Cedar deny)"     403 -H "X-User: bob"   
 probe probe-web "L3 alice transfer 500 (under limit)"    200 -H "X-User: alice" -H "Content-Type: application/json" -d '{"amount":500}'  "http://$API:8080/accounts/acct-alice/transfer"
 probe probe-web "L3 alice transfer 5000 (over limit)"    403 -H "X-User: alice" -H "Content-Type: application/json" -d '{"amount":5000}' "http://$API:8080/accounts/acct-alice/transfer"
 probe probe-web "L3 alice transfer FROZEN (forbid)"      403 -H "X-User: alice" -H "Content-Type: application/json" -d '{"amount":100}'  "http://$API:8080/accounts/acct-alice-frozen/transfer"
+probe probe-web "L3 alice transfer -100 (negative)"      403 -H "X-User: alice" -H "Content-Type: application/json" -d '{"amount":-100}' "http://$API:8080/accounts/acct-alice/transfer"
+probe probe-web "L3 malformed X-User -> 400"             400 -H "X-User: bad user" "http://$API:8080/accounts/acct-alice"
 probe probe-api "L1 api->db (allowed hop)"               200 "http://$DB:8080/"
 echo "== Cilium egress (default-deny outbound) =="
 probe probe-web "web->internet blocked"                  000 "https://example.com"
+probe probe-web "web->cloud metadata blocked"            000 "http://169.254.169.254/"
+probe probe-web "web->kube-apiserver blocked"            000 -k "https://10.96.0.1:443/"
 
 echo ""
 if [ "$fail" = 0 ]; then echo "ALL PASS"; else echo "FAILURES"; exit 1; fi

@@ -13,9 +13,15 @@ and portable to Amazon Verified Permissions.
 from __future__ import annotations
 
 import pathlib
+import re
 
 import cedarpy
 from fastapi import FastAPI, Header, HTTPException, Request
+
+# The principal id is attacker-controlled (X-User header). Constrain its charset
+# BEFORE interpolating it into a Cedar entity UID, so a crafted header can't break
+# out of `User::"..."` (injection / parse-error 500 / log injection).
+_USER_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
 CEDAR = pathlib.Path(__file__).parent / "cedar"
 POLICIES = (CEDAR / "policies.cedar").read_text(encoding="utf-8")
@@ -25,13 +31,24 @@ ENTITIES = (CEDAR / "entities.json").read_text(encoding="utf-8")
 app = FastAPI(title="cedar-pdp-api")
 
 
+def principal_uid(x_user: str) -> str:
+    """Validate the header-supplied user id, then build its Cedar entity UID."""
+    if not _USER_RE.match(x_user or ""):
+        raise HTTPException(status_code=400, detail="invalid X-User")
+    return f'User::"{x_user}"'
+
+
 def authorize(principal: str, action: str, resource: str, context: dict | None = None) -> None:
-    """Raise 403 unless Cedar returns Allow."""
-    res = cedarpy.is_authorized(
-        {"principal": principal, "action": action, "resource": resource, "context": context or {}},
-        POLICIES, ENTITIES, SCHEMA,
-    )
-    if res.decision.value != "Allow":
+    """Raise 403 unless Cedar returns Allow (fail closed on any evaluation error)."""
+    try:
+        res = cedarpy.is_authorized(
+            {"principal": principal, "action": action, "resource": resource, "context": context or {}},
+            POLICIES, ENTITIES, SCHEMA,
+        )
+        allowed = res.decision.value == "Allow"
+    except Exception:
+        allowed = False  # fail closed
+    if not allowed:
         raise HTTPException(status_code=403, detail=f"Cedar denied: {action} on {resource}")
 
 
@@ -42,7 +59,7 @@ def healthz() -> dict:
 
 @app.get("/accounts/{acct}")
 def view_account(acct: str, x_user: str = Header(default="anonymous")) -> dict:
-    authorize(f'User::"{x_user}"', 'Action::"ViewAccount"', f'Account::"{acct}"')
+    authorize(principal_uid(x_user),'Action::"ViewAccount"', f'Account::"{acct}"')
     return {"account": acct, "viewer": x_user, "decision": "Allow"}
 
 
@@ -57,11 +74,11 @@ async def transfer(acct: str, request: Request, x_user: str = Header(default="an
         amount = int(body.get("amount", 10**9))
     except (TypeError, ValueError):
         amount = 10**9
-    authorize(f'User::"{x_user}"', 'Action::"Transfer"', f'Account::"{acct}"', {"amount": amount})
+    authorize(principal_uid(x_user),'Action::"Transfer"', f'Account::"{acct}"', {"amount": amount})
     return {"account": acct, "by": x_user, "amount": amount, "decision": "Allow"}
 
 
 @app.get("/auditlogs/{log}")
 def view_audit_log(log: str, x_user: str = Header(default="anonymous")) -> dict:
-    authorize(f'User::"{x_user}"', 'Action::"ViewAuditLog"', f'AuditLog::"{log}"')
+    authorize(principal_uid(x_user),'Action::"ViewAuditLog"', f'AuditLog::"{log}"')
     return {"auditlog": log, "viewer": x_user, "decision": "Allow"}
