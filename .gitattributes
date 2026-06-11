@@ -1,0 +1,4 @@
+# Force LF for everything (so bash scripts / YAML / Dockerfiles work in Linux CI),
+# CRLF only for PowerShell. Prevents CRLF from breaking scripts/*.sh on the runner.
+* text=auto eol=lf
+*.ps1 text eol=crlf
