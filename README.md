@@ -86,6 +86,12 @@ bash scripts/down.sh  || pwsh scripts/down.ps1     # tear down
 
 (Windows: `.venv\Scripts\python`, and the `.ps1` scripts. CI runs the `bash` path on Linux.)
 
+## Learn it
+
+New here? Follow the **[guided labs](docs/)** — Lab 0 needs only Python (5 min):
+authz-as-code → shift-left scanning → network+authz on a cluster → eBPF runtime.
+Each lab shows the payoff, then has you *break and fix* one layer.
+
 ## Validation status
 
 - **CI** (`.github/workflows/ci.yml`) on every push: Cedar tests, checkov, `terraform validate`/`fmt`, gitleaks,
