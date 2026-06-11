@@ -1,0 +1,66 @@
+# Layer 2: zero-trust network policy with Cilium.
+# Default-deny everything in the namespace, then allow only the intended hops:
+#   web --(HTTP GET only)--> api --> db
+# L7 rule on api means even a reachable client can only GET /get* — a POST or a
+# different path is dropped by Cilium's Envoy proxy, not just the L3/L4 layer.
+
+# 1) Default-deny all ingress for every pod in the namespace.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: shop
+spec:
+  endpointSelector: {}
+  ingress: []
+---
+# 2) api accepts ingress ONLY from web, ONLY HTTP GET on /get* (L7).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-web-to-api
+  namespace: shop
+spec:
+  endpointSelector:
+    matchLabels: { app: api }
+  ingress:
+    - fromEndpoints:
+        - matchLabels: { app: web }
+      toPorts:
+        - ports:
+            - { port: "8080", protocol: TCP }
+          rules:
+            http:
+              - method: "GET"
+                path: "/get.*"
+---
+# 3) db accepts ingress ONLY from api (L3/L4).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-api-to-db
+  namespace: shop
+spec:
+  endpointSelector:
+    matchLabels: { app: db }
+  ingress:
+    - fromEndpoints:
+        - matchLabels: { app: api }
+      toPorts:
+        - ports:
+            - { port: "8080", protocol: TCP }
+---
+# 4) web accepts ingress from anywhere in-cluster (it is the entry tier) on 8080.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-ingress-to-web
+  namespace: shop
+spec:
+  endpointSelector:
+    matchLabels: { app: web }
+  ingress:
+    - fromEntities: ["cluster"]
+      toPorts:
+        - ports:
+            - { port: "8080", protocol: TCP }

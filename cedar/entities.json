@@ -1,0 +1,26 @@
+[
+  { "uid": { "type": "User", "id": "alice" },
+    "attrs": { "transferLimit": 1000 },
+    "parents": [{ "type": "Role", "id": "customer" }] },
+
+  { "uid": { "type": "User", "id": "bob" },
+    "attrs": { "transferLimit": 1000 },
+    "parents": [{ "type": "Role", "id": "customer" }] },
+
+  { "uid": { "type": "User", "id": "carol" },
+    "attrs": { "transferLimit": 0 },
+    "parents": [{ "type": "Role", "id": "auditor" }] },
+
+  { "uid": { "type": "Role", "id": "customer" }, "attrs": {}, "parents": [] },
+  { "uid": { "type": "Role", "id": "auditor" }, "attrs": {}, "parents": [] },
+
+  { "uid": { "type": "Account", "id": "acct-alice" },
+    "attrs": { "owner": { "__entity": { "type": "User", "id": "alice" } }, "frozen": false },
+    "parents": [] },
+
+  { "uid": { "type": "Account", "id": "acct-alice-frozen" },
+    "attrs": { "owner": { "__entity": { "type": "User", "id": "alice" } }, "frozen": true },
+    "parents": [] },
+
+  { "uid": { "type": "AuditLog", "id": "2026-06" }, "attrs": {}, "parents": [] }
+]

@@ -1,0 +1,29 @@
+[
+  { "name": "owner views own account",
+    "principal": "User::\"alice\"", "action": "Action::\"ViewAccount\"",
+    "resource": "Account::\"acct-alice\"", "context": {}, "expect": "Allow" },
+
+  { "name": "non-owner views another's account",
+    "principal": "User::\"bob\"", "action": "Action::\"ViewAccount\"",
+    "resource": "Account::\"acct-alice\"", "context": {}, "expect": "Deny" },
+
+  { "name": "owner transfers within limit",
+    "principal": "User::\"alice\"", "action": "Action::\"Transfer\"",
+    "resource": "Account::\"acct-alice\"", "context": { "amount": 500 }, "expect": "Allow" },
+
+  { "name": "owner transfers OVER limit",
+    "principal": "User::\"alice\"", "action": "Action::\"Transfer\"",
+    "resource": "Account::\"acct-alice\"", "context": { "amount": 5000 }, "expect": "Deny" },
+
+  { "name": "transfer from FROZEN account (forbid overrides)",
+    "principal": "User::\"alice\"", "action": "Action::\"Transfer\"",
+    "resource": "Account::\"acct-alice-frozen\"", "context": { "amount": 100 }, "expect": "Deny" },
+
+  { "name": "auditor reads audit log",
+    "principal": "User::\"carol\"", "action": "Action::\"ViewAuditLog\"",
+    "resource": "AuditLog::\"2026-06\"", "context": {}, "expect": "Allow" },
+
+  { "name": "customer reads audit log (no role)",
+    "principal": "User::\"alice\"", "action": "Action::\"ViewAuditLog\"",
+    "resource": "AuditLog::\"2026-06\"", "context": {}, "expect": "Deny" }
+]

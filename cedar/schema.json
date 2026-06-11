@@ -1,0 +1,44 @@
+{
+  "": {
+    "entityTypes": {
+      "User": {
+        "memberOfTypes": ["Role"],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "transferLimit": { "type": "Long" }
+          }
+        }
+      },
+      "Role": {},
+      "Account": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "owner": { "type": "Entity", "name": "User" },
+            "frozen": { "type": "Boolean" }
+          }
+        }
+      },
+      "AuditLog": {}
+    },
+    "actions": {
+      "ViewAccount": {
+        "appliesTo": { "principalTypes": ["User"], "resourceTypes": ["Account"] }
+      },
+      "Transfer": {
+        "appliesTo": {
+          "principalTypes": ["User"],
+          "resourceTypes": ["Account"],
+          "context": {
+            "type": "Record",
+            "attributes": { "amount": { "type": "Long" } }
+          }
+        }
+      },
+      "ViewAuditLog": {
+        "appliesTo": { "principalTypes": ["User"], "resourceTypes": ["AuditLog"] }
+      }
+    }
+  }
+}
