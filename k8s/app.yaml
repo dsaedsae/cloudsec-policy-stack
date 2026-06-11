@@ -72,15 +72,15 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 8080
+        runAsUser: 10001
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: api
-          image: mccutchen/go-httpbin:v2.15.0
+          image: cloudsec-api:local   # FastAPI Cedar PDP (built from app/api/)
           ports: [{ containerPort: 8080 }]
           imagePullPolicy: IfNotPresent
-          readinessProbe: { httpGet: { path: /, port: 8080 }, initialDelaySeconds: 3, periodSeconds: 10 }
-          livenessProbe: { httpGet: { path: /, port: 8080 }, initialDelaySeconds: 5, periodSeconds: 20 }
+          readinessProbe: { httpGet: { path: /healthz, port: 8080 }, initialDelaySeconds: 3, periodSeconds: 10 }
+          livenessProbe: { httpGet: { path: /healthz, port: 8080 }, initialDelaySeconds: 5, periodSeconds: 20 }
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

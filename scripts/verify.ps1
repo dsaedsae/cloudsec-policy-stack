@@ -1,11 +1,11 @@
-# verify.ps1 — prove enforcement at both layers (ingress + EGRESS + Cedar).
-# Hardened probe pods (k8s/probes.yaml) carry the identity label under test;
-# we curl pod IPs directly so the L7 rule at the api endpoint is exercised, and
-# distinguish failure modes: 403 = L7 deny (Envoy), 000 = L3/egress drop.
+# verify.ps1 — prove all three layers on ONE asset (api): Cilium L3 drop, Cilium
+# L7 path deny, and Cedar authz inside the api PDP — plus egress default-deny.
+# POSIX twin: scripts/verify.sh (used by CI).
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 $ctx = "kind-" + (terraform -chdir=(Join-Path $Root "terraform") output -raw cluster_name 2>$null)
 if (-not $ctx -or $ctx -eq "kind-") { $ctx = "kind-cloudsec" }
+$script:fail = 0
 
 kubectl --context $ctx apply -f (Join-Path $Root "k8s\probes.yaml") | Out-Null
 try {
@@ -13,25 +13,25 @@ try {
     $api = kubectl --context $ctx -n shop get pod -l tier=backend -o jsonpath="{.items[0].status.podIP}"
     $db = kubectl --context $ctx -n shop get pod -l tier=data -o jsonpath="{.items[0].status.podIP}"
 
-    function Probe($from, $url, $expect) {
-        $code = kubectl --context $ctx -n shop exec $from -- curl -s -o /dev/null -m 8 -w "%{http_code}" $url
-        $verdict = switch ($code) { "200" { "ALLOW 200" } "403" { "DENY 403(L7)" } default { "DENY $code(drop)" } }
-        $ok = if ($verdict.StartsWith($expect)) { "PASS" } else { "FAIL" }
-        "{0,-40} -> {1,-16} {2}" -f $url, $verdict, $ok
+    function Probe($src, $desc, $exp, $cargs) {
+        $code = & kubectl --context $ctx -n shop exec $src -- curl -s -o /dev/null -m 8 -w "%{http_code}" @cargs 2>$null
+        if ($code -eq $exp) { $res = "PASS" } else { $res = "FAIL"; $script:fail = 1 }
+        "{0,-46} expect {1,-4} got {2,-4} {3}" -f $desc, $exp, $code, $res
     }
 
-    Write-Host "== Cilium INGRESS (L3/L4 + L7) =="
-    Probe "probe-web" "http://$($api):8080/get"     "ALLOW"   # web->api GET /get (L7 allow)
-    Probe "probe-web" "http://$($api):8080/headers" "DENY"    # web->api wrong path (L7 403)
-    Probe "probe-web" "http://$($db):8080/"         "DENY"    # web->db (L3 drop)
-    Probe "probe-api" "http://$($db):8080/"         "ALLOW"   # api->db (allowed hop)
-    Write-Host "`n== Cilium EGRESS (default-deny outbound) =="
-    Probe "probe-web" "https://example.com"         "DENY"    # web->internet blocked (no exfil/beacon)
-    Probe "probe-api" "https://example.com"         "DENY"    # api->internet blocked
+    Write-Host "== Defense in depth: one asset (api), three layers =="
+    Probe "probe-web" "L1 web->db (no hop, L3 drop)"          "000" @("http://$($db):8080/")
+    Probe "probe-web" "L2 web->api GET /auditlogs (L7 deny)"  "403" @("-H", "X-User: alice", "http://$($api):8080/auditlogs/2026-06")
+    Probe "probe-web" "L3 alice GET own acct (Cedar allow)"   "200" @("-H", "X-User: alice", "http://$($api):8080/accounts/acct-alice")
+    Probe "probe-web" "L3 bob GET alice acct (Cedar deny)"    "403" @("-H", "X-User: bob", "http://$($api):8080/accounts/acct-alice")
+    Probe "probe-web" "L3 alice transfer 500 (under limit)"   "200" @("-H", "X-User: alice", "-H", "Content-Type: application/json", "-d", '{"amount":500}', "http://$($api):8080/accounts/acct-alice/transfer")
+    Probe "probe-web" "L3 alice transfer 5000 (over limit)"   "403" @("-H", "X-User: alice", "-H", "Content-Type: application/json", "-d", '{"amount":5000}', "http://$($api):8080/accounts/acct-alice/transfer")
+    Probe "probe-web" "L3 alice transfer FROZEN (forbid)"     "403" @("-H", "X-User: alice", "-H", "Content-Type: application/json", "-d", '{"amount":100}', "http://$($api):8080/accounts/acct-alice-frozen/transfer")
+    Probe "probe-api" "L1 api->db (allowed hop)"              "200" @("http://$($db):8080/")
+    Write-Host "== Cilium egress (default-deny outbound) =="
+    Probe "probe-web" "web->internet blocked"                 "000" @("https://example.com")
 }
 finally {
     kubectl --context $ctx -n shop delete -f (Join-Path $Root "k8s\probes.yaml") --ignore-not-found | Out-Null
 }
-
-Write-Host "`n== Cedar application authorization (offline PDP tests) =="
-& (Join-Path $Root ".venv\Scripts\python.exe") (Join-Path $Root "cedar\authz.py")
+if ($script:fail -ne 0) { Write-Host "`nFAILURES"; exit 1 } else { Write-Host "`nALL PASS" }

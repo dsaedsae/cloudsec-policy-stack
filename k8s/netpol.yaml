@@ -26,8 +26,13 @@ spec:
         - ports: [{ port: "8080", protocol: TCP }]
           rules:
             http:
+              # L7: only the account API is reachable from web. /auditlogs/* is a
+              # real app route but is dropped HERE at the network edge (403) before
+              # it ever reaches the app or Cedar — network-layer least privilege.
               - method: "GET"
-                path: "/get(/.*)?$"   # anchored: /get or /get/... (not /getfoo)
+                path: "/accounts/[^/]+$"
+              - method: "POST"
+                path: "/accounts/[^/]+/transfer$"
 ---
 # db accepts ingress ONLY from api (L3/L4).
 apiVersion: cilium.io/v2
