@@ -23,15 +23,18 @@ PASS/FAIL로 판정한다. 따라치기가 아니라 — 스펙만 보고 쓰고
 
 ## 모듈 사다리
 
-| 모듈 | 주제 | 클러스터 | 졸업 과제 (자동채점) | 상태 |
+| 모듈 | 주제 | 클러스터 | 졸업 과제 (자동채점) | 채점 |
 |---|---|---|---|---|
-| **[M0](m0/README.md)** | **인가 as-code (Cedar)** | ❌ 불필요 | 빈 정책에서 core 8 + ext 3 = **11/11** | ✅ 시작 가능 |
-| M1 | 쉬프트레프트 (checkov/trivy) | ❌ | 심어둔 결함 찾아 수정 → 게이트 green | 예정 |
-| M2 | K8s 신원 (SA/RBAC/admission CEL) | ✅ | `admission-policy` 재작성 → 신원 체크 PASS | 예정 |
-| M3 | 네트워크 (Cilium L3/L7/egress) | ✅ | default-deny에서 netpol 재구성 | 예정 |
-| M4 | 런타임 (Tetragon eBPF) | ✅ | TracingPolicy 작성 → selective-kill PASS | 예정 |
-| M5 | 암호화 (WireGuard/etcd) | ✅ | capture-wg 직접 실행·해석 + 키회전 수행 | 예정 |
-| M6 | 프런티어 (agent-ABAC/ReBAC/NHI) | ❌ | confused-deputy 시나리오 직접 설계 | 예정 |
+| **[M0](m0/README.md)** | **인가 as-code (Cedar)** | ❌ 불필요 | 빈 정책에서 core 8 + ext 3 = **11/11** | `python labs/m0/grade.py` |
+| **[M1](m1/README.md)** | **쉬프트레프트 (checkov/trivy)** | ❌ | 심어둔 16개 결함 수정 → Failed checks **0** | `python labs/m1/grade.py` |
+| **[M2](m2/README.md)** | **K8s 신원 (admission CEL)** | ✅ | `admission-policy` CEL 작성 → 위조 DENY/정합 ADMIT **5/5** | `bash labs/m2/grade.sh` |
+| **[M3](m3/README.md)** | **네트워크 (Cilium L3/L7/egress)** | ✅ | default-deny에서 최소권한 홉 재구성 **7/7** | `bash labs/m3/grade.sh` |
+| **[M4](m4/README.md)** | **런타임 (Tetragon eBPF)** | ✅ | TracingPolicy 작성 → selective-kill (id=0 + sh=137) | `bash labs/m4/grade.sh` |
+| **[M5](m5/README.md)** | **암호화 (WireGuard/etcd)** | ✅ | ET1 채점 + capture-wg/etcd 직접 실행·해석 | `bash labs/m5/grade.sh` |
+| **[M6](m6/README.md)** | **프런티어 (agent-ABAC + ReBAC)** | ❌ | 위임 인가 ABAC 교집합 **12/12** + ReBAC **11/11** | `python labs/m6/grade.py` |
+
+> 클러스터 모듈(M2–M5)은 `scripts/up.ps1` 한 번 → M2→M3→M4→M5 연속 → `scripts/down.ps1` (RAM 규율).
+> 각 채점기는 학습자 아티팩트를 적용해 검증한 뒤 **canonical 정책을 자동 복원**한다.
 
 ## 학습 순서에 대한 노트
 

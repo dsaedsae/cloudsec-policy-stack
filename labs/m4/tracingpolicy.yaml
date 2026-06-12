@@ -1,0 +1,31 @@
+# M4 작업 파일 — Tetragon 런타임 TracingPolicy (eBPF). 여기에만 작성한다.
+#
+# 목표: data tier(tier: data) 파드에서 *셸 실행*(execve of /bin/sh 류)을 커널에서 즉시 SIGKILL.
+#   단, 셸이 아닌 정상 바이너리(/usr/bin/id 등)는 건드리지 않는다(선택적 kill).
+# 채점: bash labs/m4/grade.sh   (클러스터 필요)
+# 정답지 k8s/tracingpolicy.yaml 은 졸업 전 열람 금지.
+#
+# podSelector·kprobe 구조는 채워뒀다. 네가 채울 것은 selectors — 어떤 인자를 매칭하고(matchArgs)
+# 무슨 액션을 할지(matchActions).
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: block-shell-in-data-tier
+spec:
+  podSelector:
+    matchLabels:
+      tier: data
+  kprobes:
+    - call: "sys_execve"
+      syscall: true
+      args:
+        - index: 0
+          type: "string"      # execve 의 첫 인자 = 실행 파일 경로
+      selectors:
+        # TODO: index 0 문자열이 셸 경로로 *끝나면*(Postfix) SIGKILL.
+        #   matchArgs: operator "Postfix", values 에 ["/sh","/bash","/dash","/ash","/busybox"]
+        #   matchActions: action Sigkill
+        #   (Postfix를 쓰는 이유: /bin/sh, /usr/bin/bash 등 경로 접두가 달라도 잡기 위해.
+        #    /usr/bin/id 는 이 목록에 없으니 안 잡힌다 = 선택적 kill.)
+        - matchArgs: []
+          matchActions: []

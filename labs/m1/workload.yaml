@@ -1,0 +1,26 @@
+# M1 작업 파일 — 여기에만 작성한다.
+#
+# 어느 신입이 "일단 돌아가게" 짜온 Deployment다. checkov가 16개 위반을 잡는다.
+# 미션: 하나도 빠짐없이 *실제로 고쳐서* `grade.py`가 Failed checks: 0 을 내게 하라.
+# (스킵 주석으로 덮지 마라 — 그건 사냥이 아니라 은폐다. README 참고.)
+#
+# 채점:  .venv\Scripts\python.exe labs\m1\grade.py
+# 스펙/힌트: labs/m1/README.md
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: widget
+  namespace: shop
+  labels: { app: widget }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: widget } }
+  template:
+    metadata: { labels: { app: widget } }
+    spec:
+      containers:
+        - name: app
+          image: widget:local
+          ports: [{ containerPort: 8080 }]
+          securityContext:
+            privileged: true

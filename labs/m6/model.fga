@@ -1,0 +1,40 @@
+# M6 Part B 작업 파일 — ReBAC 관계 모델 (OpenFGA DSL, schema 1.1). 여기에만 작성한다.
+#
+# 채점: .venv\Scripts\python.exe labs\m6\grade.py rebac   (목표 fga model test 11/11)
+#   채점기는 이 model.fga + canonical rebac/store.fga.yaml(테스트 단언)을 묶어 돌린다.
+#   그래서 아래 *타입/relation 이름은 그대로 둬야 한다*(테스트가 그 이름을 참조). 채울 것은
+#   `define ...` 의 **재작성(rewrite) 우변**뿐이다.
+# 정답지 rebac/model.fga 는 졸업 전 열람 금지.
+#
+# 핵심 개념: 에이전트가 계정을 보려면 "계정 소유자 alice" AND "alice가 assistant에게 위임"
+# 두 관계의 *그래프 조인*이 성립해야 한다 — 속성(ABAC)이 아니라 관계에서 권한이 파생된다.
+# 트래버설 문법:  `<relationA> from <relationB>`  =  object의 relationB가 가리키는 대상에서 relationA.
+
+model
+  schema 1.1
+
+type user
+  relations
+    # 위임 엣지: 사용자가 자기를 대행할 에이전트를 지정.  (대상 타입: agent)
+    define delegate: [agent]    # 이 줄은 그대로 — TODO는 account/workload의 재작성이다
+
+type agent
+
+type team
+  relations
+    define member: [user]
+
+type account
+  relations
+    define owner: [user]
+    # TODO: 소유자 OR (소유자가 위임한 에이전트)가 볼 수 있다.  힌트: owner or <delegate from owner>
+    define can_view: owner
+    # TODO: 이체도 동일 규칙
+    define can_transfer: owner
+
+type workload
+  relations
+    define owner_team: [team]
+    # TODO: 직접 지정된 user, 또는 owner_team 팀의 member 가 operator 다.
+    define operator: [user]
+    define can_admin: operator

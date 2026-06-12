@@ -1,0 +1,72 @@
+# M3 작업 파일 — Cilium 제로트러스트 네트워크 정책. 여기에만 작성한다.
+#
+# 목표 위상:  ingress(외부) → web → api → db,  그 외 전부 차단(ingress+egress default-deny).
+#   L7: web→api 는 GET /accounts/... 와 POST /accounts/.../transfer 만 (auditlogs 등은 403).
+#   egress: web는 api만, api는 db만, db는 (DNS 외) 아무 데도 못 나간다.
+# 채점: bash labs/m3/grade.sh   (클러스터 필요)
+# 정답지 k8s/netpol.yaml 은 졸업 전 열람 금지.
+#
+# 두 베이스라인(default-deny-ingress, DNS egress)은 완성해뒀다 — 이게 "기본 차단"을 만든다.
+# 네가 채울 것은 그 위의 *허용 홉* 5개의 rule 들이다.
+
+# ── 베이스라인 (완성) ──
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: default-deny-ingress, namespace: shop }
+spec:
+  endpointSelector: {}        # 모든 파드
+  ingress: []                 # 아무 ingress도 허용 안 함 = default-deny
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: allow-dns-egress, namespace: shop }
+spec:
+  endpointSelector: {}        # 모든 파드가 egress 규칙을 가짐 = egress도 default-deny(아래 외 차단)
+  egress:
+    - toEndpoints:
+        - matchLabels: { k8s-app: kube-dns, io.kubernetes.pod.namespace: kube-system }
+      toPorts:
+        - ports: [{ port: "53", protocol: ANY }]
+          rules: { dns: [{ matchPattern: "*" }] }
+
+# ── 허용 홉 (TODO) ──
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: allow-web-to-api, namespace: shop }
+spec:
+  endpointSelector: { matchLabels: { app: api } }
+  # TODO ingress: app:web 에서 8080/TCP, L7으로 GET /accounts/[^/]+$ 와 POST /accounts/[^/]+/transfer$ 만 허용
+  ingress: []
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: allow-api-to-db, namespace: shop }
+spec:
+  endpointSelector: { matchLabels: { app: db } }
+  # TODO ingress: app:api 에서 8080/TCP (L3/L4)
+  ingress: []
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: allow-ingress-to-web, namespace: shop }
+spec:
+  endpointSelector: { matchLabels: { app: web } }
+  # TODO ingress: 클러스터 엔티티(fromEntities: ["cluster"])에서 8080/TCP
+  ingress: []
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: egress-web-to-api, namespace: shop }
+spec:
+  endpointSelector: { matchLabels: { app: web } }
+  # TODO egress: app:api 로 8080/TCP 만 (DNS는 베이스라인에서)
+  egress: []
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: egress-api-to-db, namespace: shop }
+spec:
+  endpointSelector: { matchLabels: { app: api } }
+  # TODO egress: app:db 로 8080/TCP 만
+  egress: []

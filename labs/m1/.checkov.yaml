@@ -1,0 +1,9 @@
+# M1 lab checkov config — documented, intentional suppressions only (the triage lesson).
+# Everything else MUST be fixed in workload.yaml, not skipped.
+framework:
+  - kubernetes
+skip-check:
+  - CKV_K8S_15   # imagePullPolicy IfNotPresent — intentional for a kind-loaded local image
+  - CKV_K8S_43   # image digest pinning — the lab image (widget:local) has no registry digest
+  - CKV2_K8S_6   # a NetworkPolicy IS the cluster's job (CiliumNetworkPolicy CRD checkov can't see)
+compact: true
