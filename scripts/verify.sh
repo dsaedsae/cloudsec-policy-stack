@@ -115,10 +115,15 @@ spec:
           resources: { requests: { cpu: "5m", memory: "8Mi" }, limits: { cpu: "50m", memory: "32Mi" } }
 YAML
 }
-if sa_use_deploy | kubectl --context "$CTX" --as=ci-deployer --as-group=shop:deployers create --dry-run=server -f - >/dev/null 2>&1; then
-  printf '  %-48s expect %-4s got %-4s %s\n' "shop:deployers runs workload as api-sa" "DENY" "ADMIT" "FAIL"; fail=1
+# Realistic attacker: a CI *ServiceAccount* (system:serviceaccount:...) WITH deploy
+# rights (shop:deployers) tries to run a workload as api-sa. Must be DENIED *by the
+# SA-use gate* — assert the policy's distinctive message so an RBAC 403 / typo / down
+# apiserver can't false-pass (and an absent/unbound policy is caught).
+DENY_OUT=$(sa_use_deploy | kubectl --context "$CTX" --as=system:serviceaccount:shop:ci-deployer --as-group=shop:deployers create --dry-run=server -f - 2>&1 || true)
+if echo "$DENY_OUT" | grep -qE "SA-use gate|shop-sa-use|authorized operator"; then
+  printf '  %-48s expect %-4s got %-4s %s\n' "CI SA runs workload as api-sa -> SA-use DENY" "DENY" "DENY" "PASS"
 else
-  printf '  %-48s expect %-4s got %-4s %s\n' "shop:deployers runs workload as api-sa -> DENY" "DENY" "DENY" "PASS"
+  printf '  %-48s expect %-4s got %-4s %s\n' "CI SA runs workload as api-sa (SA-use gate)" "DENY" "?" "FAIL"; fail=1
 fi
 if sa_use_deploy | kubectl --context "$CTX" create --dry-run=server -f - >/dev/null 2>&1; then
   printf '  %-48s expect %-4s got %-4s %s\n' "authorized operator deploys api-sa workload -> ADMIT" "ADMIT" "ADMIT" "PASS"

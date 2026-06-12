@@ -42,7 +42,7 @@ application authorization — each enforced and verified live, with a shift-left
 
 ## The defense-in-depth proof (verified live + in CI)
 
-One asset (`api`), every layer. `scripts/verify.{sh,ps1}` runs all of these (18/18):
+One asset (`api`), every layer. `scripts/verify.{sh,ps1}` runs all of these (20/20 PASS):
 
 | Layer | Test | Result | Enforced by |
 |-------|------|--------|-------------|
@@ -108,21 +108,28 @@ bash scripts/down.sh  || pwsh scripts/down.ps1     # tear down
 ## Learn it
 
 New here? Follow the **[guided labs](docs/)** — Lab 0 needs only Python (5 min):
-authz-as-code → shift-left scanning → network+authz on a cluster → eBPF runtime.
-Each lab shows the payoff, then has you *break and fix* one layer.
+authz-as-code → shift-left scanning → network+authz on a cluster → eBPF runtime →
+identity (B7) → data protection. Each lab shows the payoff, then has you *break and
+fix* one layer. **Why it matters** (금융 망분리 완화/MLS): see
+[`docs/financial-mls-mapping.md`](docs/financial-mls-mapping.md). **Run it in
+production-shape:** [`runbooks/`](runbooks/) — incident response, key rotation,
+break-glass, tier onboarding, deploy/rollback, AWS teardown. **Cloud + cost:**
+[`docs/aws-eks-path.md`](docs/aws-eks-path.md).
 
 ## Validation status
 
 - **CI** (`.github/workflows/ci.yml`) on every push: Cedar tests, checkov, `terraform validate`/`fmt`, gitleaks,
   and a kind integration job that brings up the stack and runs `scripts/verify.sh`.
 - `cedar/authz.py` — schema validates, **8/8** scenarios pass (incl. negative-amount deny).
-- `checkov` (Terraform + K8s) — **K8s 445 passed / 0 failed / 5 documented skips**, Terraform clean. Scope:
+- `checkov` (Terraform + K8s) — **K8s 452 passed / 0 failed / 5 documented skips**, Terraform clean. Scope:
   checkov validates the *workloads + Terraform*; the CiliumNetworkPolicy (a CRD it can't see) and Cedar are
   covered by the live `verify` job and `cedar/authz.py`. Images are digest-pinned (`@sha256`) except the
   locally-built api image, which carries one *scoped* (not global) skip — see `.checkov.yaml` / `k8s/app.yaml`.
 - Live enforcement — **20/20** checks in the table above pass on kind+Cilium+Tetragon (locally and in CI),
   on a pinned `kindest/node:v1.34.0` (k8s ≥1.30 so the identity admission policy installs). Mutual auth
-  (SPIFFE) and Secret encryption-at-rest are each verified live by their own scripts.
+  Secret encryption-at-rest is verified by its own script (`enable-secrets-encryption`);
+  mutual auth (SPIFFE) is applied opt-in (`k8s/netpol-mutual.yaml`) and verified live manually
+  (Lab 4 / Identity), not in the default `verify` suite.
 
 ## Roadmap
 
@@ -136,7 +143,7 @@ Done since:
 
 Next:
 - **Build provenance** — `cosign verify` + SLSA attestation for the api image.
-- **SA-use gate coverage** — extend the admission policy to CronJob and a generated, cluster-wide form (Kyverno/Gatekeeper) so the pattern is not hand-maintained per resource type.
+- **SA-use gate coverage (known open path)** — the gate matches Pods/Deployments/RS/STS/DS/Jobs, but **NOT CronJob**: a CronJob's SA lives at `spec.jobTemplate.spec.template.spec.serviceAccountName`, so a CronJob running as a tier SA is currently *unmatched → admitted*. Closing it = add the CronJob path (and ideally a generated, cluster-wide form via Kyverno/Gatekeeper so the rule isn't hand-maintained per resource type). Tracked, not yet closed.
 
 ## Notes
 

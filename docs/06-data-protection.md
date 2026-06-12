@@ -14,12 +14,18 @@ the GDPR Art.32 / PCI-DSS / ISMS-P "protect the data" half of the story.
 > lifecycle. In-transit is verified live; at-rest is a runnable script; in-use is a
 > design property of the PDP. Nothing here is claimed to protect data it doesn't have.
 
-## In transit — WireGuard transparent encryption (verified live)
+## In transit — WireGuard transparent encryption (feature verified live)
 
 Cilium is installed with `encryption.enabled=true, encryption.type=wireguard`
-(`terraform/main.tf`), so all pod-to-pod traffic between nodes is WireGuard-
-encrypted. An on-path attacker between nodes sees ciphertext, not `X-User` headers
-or account data.
+(`terraform/main.tf`), so **node-to-node** pod traffic is WireGuard-encrypted —
+an on-path attacker *between nodes* sees ciphertext, not `X-User` headers or
+account data.
+
+> **Honest caveat:** this is a single-worker demo, so web/api/db are co-located on
+> one node and that hop never traverses the wire. The `verify` check confirms the
+> *feature is enabled* (`cilium encrypt status` → WireGuard), not that this specific
+> intra-node hop is encrypted. In a multi-node deployment, traffic that crosses
+> nodes is encrypted. (See `docs/financial-mls-mapping.md` §7.)
 
 ```bash
 kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg encrypt status

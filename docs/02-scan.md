@@ -12,15 +12,17 @@ bash scripts/scan.sh        # or: pwsh scripts/scan.ps1
 Expected (checkov over `terraform/` + `k8s/`):
 
 ```
-Passed checks: 424, Failed checks: 0, Skipped checks: 4
+Passed checks: 452, Failed checks: 0, Skipped checks: 5
 ```
+(The passed count grows as manifests are added — the gate is **Failed checks: 0**.)
 
 ## What to read
 
-`.checkov.yaml` lists exactly **4** suppressions, each with a written reason
-(e.g. `CKV2_K8S_6` — checkov can't see the CiliumNetworkPolicy CRD; `CKV_K8S_40`
-— `nginx-unprivileged` fixes UID 101). Plus inline skips on the probe pods
-(`k8s/probes.yaml`) for liveness/readiness — they're ephemeral `sleep` clients.
+`.checkov.yaml` lists **3** global suppressions, each with a written reason
+(`CKV_K8S_15` — `IfNotPresent` for kind; `CKV_K8S_40` — `nginx-unprivileged` fixes
+UID 101; `CKV2_K8S_6` — checkov can't see the CiliumNetworkPolicy CRD). Plus *scoped*
+annotation skips: `CKV_K8S_43` on the locally-built api image (no registry digest) in
+`k8s/app.yaml`, and liveness/readiness on the ephemeral probe pods (`k8s/probes.yaml`).
 
 The lesson: a real review *triages* findings with justification; it doesn't chase
 a green number by disabling everything. The README scopes the claim precisely —

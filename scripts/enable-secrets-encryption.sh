@@ -9,6 +9,15 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CTX="kind-cloudsec"; NODE="cloudsec-control-plane"
 ENC_DIR="$ROOT/terraform/.enc"; mkdir -p "$ENC_DIR"
 
+# Idempotency: if the apiserver already carries the encryption flag, do NOT mint a
+# new key (EncryptionConfiguration matches by key NAME, so a fresh key1 would orphan
+# every Secret written under the prior key1 — undecryptable). Skip to verification.
+# Rotation is the deliberate 2-key flow in runbooks/02-key-rotation.md, not a re-run.
+if docker exec "$NODE" sh -c 'grep -c encryption-provider-config /etc/kubernetes/manifests/kube-apiserver.yaml 2>/dev/null || echo 0' | grep -qv '^0'; then
+  echo "Encryption-at-rest already enabled; skipping key regen (re-run is a no-op, not a rotation)."
+  exit 0
+fi
+
 # 1. Fresh 32-byte AES key -> EncryptionConfiguration.
 KEY="$(head -c 32 /dev/urandom | base64 | tr -d '\n')"
 sed "s|__ENC_KEY_B64__|$KEY|" "$ROOT/k8s/encryption-config.yaml" > "$ENC_DIR/enc.yaml"

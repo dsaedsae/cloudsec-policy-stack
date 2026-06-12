@@ -60,16 +60,23 @@ spec:
       expression: "(has(request.userInfo) && has(request.userInfo.username)) ? request.userInfo.username : ''"
     - name: ugroups
       expression: "(has(request.userInfo) && has(request.userInfo.groups)) ? request.userInfo.groups : []"
-    # Authorized = a Kubernetes controller (system:*), a cluster admin, or the named
-    # tier-operator group. The admin group differs by version: kubeadm >=1.29 puts
-    # admin.conf in `kubeadm:cluster-admins` (system:masters moved to super-admin.conf),
-    # so both are accepted. `shop:tier-operators` is the portable, intended knob.
+    # Authorized = the kube-system workload controllers (which materialize the pods),
+    # a cluster admin, or the named tier-operator group. The admin group differs by
+    # version: kubeadm >=1.29 puts admin.conf in `kubeadm:cluster-admins` (system:masters
+    # moved to super-admin.conf), so both are accepted. `shop:tier-operators` is the
+    # portable, intended knob (bound in k8s/rbac.yaml).
+    #
+    # IMPORTANT: do NOT use `startsWith('system:')` — that matches
+    # `system:serviceaccount:<ns>:<name>` for ANY ServiceAccount, so a CI/app SA (e.g.
+    # system:serviceaccount:shop:ci-deployer) would be admitted, defeating the control.
+    # We scope to the kube-system namespace (where the trusted controllers live) only.
     - name: requesterAuthorized
       expression: >
-        variables.uname.startsWith('system:') ||
         ('system:masters' in variables.ugroups) ||
         ('kubeadm:cluster-admins' in variables.ugroups) ||
-        ('shop:tier-operators' in variables.ugroups)
+        ('shop:tier-operators' in variables.ugroups) ||
+        variables.uname.startsWith('system:serviceaccount:kube-system:') ||
+        variables.uname == 'system:kube-controller-manager'
   validations:
     # Non-tier workloads are unaffected. Tier workloads require an authorized requester.
     - expression: "!variables.isTierSA || variables.requesterAuthorized"

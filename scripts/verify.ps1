@@ -116,9 +116,14 @@ spec:
           securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: ["ALL"] } }
           resources: { requests: { cpu: "5m", memory: "8Mi" }, limits: { cpu: "50m", memory: "32Mi" } }
 "@
-    $saUse | kubectl --context $ctx --as=ci-deployer --as-group=shop:deployers create --dry-run=server -f - 2>$null | Out-Null
-    if ($LASTEXITCODE -ne 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "shop:deployers runs workload as api-sa -> DENY", "DENY", "DENY", "PASS" }
-    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "shop:deployers runs workload as api-sa", "DENY", "ADMIT", "FAIL"; $script:fail = 1 }
+    # Realistic attacker: a CI *ServiceAccount* (system:serviceaccount:...) WITH deploy
+    # rights (shop:deployers) tries to run a workload as api-sa. It must be DENIED *by the
+    # SA-use gate* — assert the policy's distinctive message so an RBAC 403 / typo / down
+    # apiserver can't false-pass (and so an absent/unbound policy is caught).
+    $denyOut = ($saUse | kubectl --context $ctx --as="system:serviceaccount:shop:ci-deployer" --as-group=shop:deployers create --dry-run=server -f - 2>&1) -join "`n"
+    if ($LASTEXITCODE -ne 0 -and $denyOut -match "SA-use gate|shop-sa-use|authorized operator") { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "CI SA runs workload as api-sa -> SA-use DENY", "DENY", "DENY", "PASS" }
+    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "CI SA runs workload as api-sa (SA-use gate)", "DENY", "?", "FAIL"; $script:fail = 1 }
+    # Authorized operator (admin here; shop:tier-operators in prod) deploys the same -> ADMIT.
     $saUse | kubectl --context $ctx create --dry-run=server -f - 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "authorized operator deploys api-sa workload -> ADMIT", "ADMIT", "ADMIT", "PASS" }
     else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "authorized operator deploys api-sa workload", "ADMIT", "DENY", "FAIL"; $script:fail = 1 }

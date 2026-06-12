@@ -77,3 +77,21 @@ subjects:
   - kind: Group
     name: "shop:deployers"        # map to your CI SA / OIDC group in a real cluster
     apiGroup: rbac.authorization.k8s.io
+---
+# `shop:tier-operators` — the identity the SA-use gate (k8s/admission-sa-use.yaml)
+# trusts to run a workload AS a tier ServiceAccount. It needs the same deploy rights
+# as shop:deployers (so RBAC permits the create); the ONLY difference is that the
+# SA-use gate admits tier-operators and denies plain deployers. Without this binding
+# the group is just a name in CEL — so we make it a real, RBAC-bound principal.
+# (Map this Group to your privileged GitOps controller / OIDC group in a real cluster.)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: { name: shop-tier-operators-binding, namespace: shop }
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: shop-deployer
+subjects:
+  - kind: Group
+    name: "shop:tier-operators"
+    apiGroup: rbac.authorization.k8s.io
