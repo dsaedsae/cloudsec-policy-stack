@@ -85,6 +85,7 @@ nav:
   - 위협 모델 (B1–B7): THREAT_MODEL.md
   - 인가 모델 (RBAC+ABAC/PaC/ReBAC): docs/authorization-model.md
   - 금융 망분리 완화 (MLS): docs/financial-mls-mapping.md
+  - 평가 — 검증가능성 커버리지: docs/evaluation-coverage.md
   - 실습 랩:
     - 개요: docs/README.md
     - 0 · 인가 as-code: docs/01-authz-no-cluster.md

@@ -42,19 +42,20 @@ hide:
 ## 무엇을 한 요청이 통과하는가 (the architecture)
 
 ```mermaid
-flowchart LR
-    R(["요청 / 공격 시도"]) --> ADM{{"① 신원 admission<br/>라벨↔SA · SA-use gate · SPIFFE mTLS"}}
-    ADM -->|"신원 위조 → DENY"| WEB["web · 공개 O"]
-    WEB -->|"② Cilium L3/L4+L7 default-deny"| API["api · 민감 S<br/>③ Cedar PDP (owner·한도·역할)"]
-    API -->|"④ Cilium L3"| DB[("db · 기밀 C")]
-    API -. "⑤ WireGuard (전송 암호화)" .- DB
-    DB -. "⑥ etcd Secret 암호화 (저장)" .- ENC[("k8s:enc:aescbc")]
-    DB -. "⑦ Tetragon eBPF: 런타임 셸 즉시 SIGKILL" .- RT{{"KILL"}}
-    WEB -. "egress default-deny (인터넷·메타데이터·API서버 000)" .- X(("⛔ 유출 차단"))
+flowchart TB
+    R(["요청 / 공격 시도"]) --> ADM
+    ADM["① 신원: admission 라벨↔SA · SA-use gate · SPIFFE"] --> WEB
+    WEB["web · 공개 O"] --> L7["② Cilium L3/L4 + L7 (default-deny)"]
+    L7 --> API["api · 민감 S"]
+    API --> CEDAR["③ Cedar PDP: owner · 한도 · 역할 · 동결"]
+    CEDAR --> DB[("db · 기밀 C")]
+    DB --> ENC["⑤⑥ 암호화: WireGuard 전송 + etcd 저장"]
+    DB --> RT["⑦ Tetragon eBPF: 런타임 셸 즉시 SIGKILL"]
+    WEB --> EG["④ egress default-deny: 인터넷·메타데이터·API서버 000"]
 
     classDef ctrl fill:#e8eaf6,stroke:#3f51b5,color:#1a237e;
-    classDef data fill:#fff3e0,stroke:#e65100;
-    class ADM,RT ctrl;
+    classDef data fill:#fff3e0,stroke:#e65100,color:#bf360c;
+    class ADM,L7,CEDAR,RT,EG ctrl;
     class DB,ENC data;
 ```
 
@@ -72,10 +73,10 @@ flowchart LR
     FSC 망분리 완화/MLS 보상통제 6종을 NIST SP 800-207·ISMS-P·**검증 항목**에 1:1 매핑.
     [→ MLS 매핑](docs/financial-mls-mapping.md)
 
--   :material-check-decagram: **검증 가능성 = 이행 증거**
+-   :material-check-decagram: **검증가능성 기준 + 커버리지 측정**
 
-    각 통제를 *통과하는 테스트*로 만든다. `verify` **20/20 라이브** + checkov 452/0 + cedar 8/8.
-    "정책이 있다"가 아니라 "정책이 막는다".
+    "각 규제 요구는 시행을 증명하는 실행 테스트에 대응돼야 한다"를 기준으로 삼고, MLS 보상통제의
+    **61%가 코드로 검증가능**함을 *정량화*(갭 공개). [→ 평가](docs/evaluation-coverage.md)
 
 -   :material-shield-bug: **정직한 적대적 검증**
 
@@ -95,7 +96,8 @@ flowchart LR
 
 | 항목 | 결과 |
 |------|------|
-| 라이브 방어심층 검증 | **20 / 20 PASS** (network L3/L7 · Cedar · egress · runtime · identity · 암호화) |
+| **검증가능성 커버리지 (정량 헤드라인)** | 워크로드 적용가능 MLS 보상통제 sub-requirement의 **61% (22/36)** 가 *코드로 검증* — 갭(CONFIGURED 8·NOT-COVERED 6·GOVERNANCE 2)을 정직하게 공개. [→ 평가](docs/evaluation-coverage.md) |
+| 라이브 방어심층 검증 (기능 회귀 스위트) | **21 / 21 PASS** — 20개는 차단/허용 *enforcement* 증명 + 1개는 WireGuard *기능 활성*(단일워커라 노드간만) |
 | Cedar 인가 단위테스트 | **8 / 8** |
 | checkov shift-left | **452 pass / 0 fail / 5 documented skip** |
 | 적대적 검토가 찾은 실제 버그 | **CRITICAL 1** (SA-use 우회) + 다수 — 전부 수정·검증 |
