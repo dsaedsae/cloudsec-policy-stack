@@ -31,3 +31,7 @@ site/
 # Each run carries a fresh serialNumber/timestamp, so they are not committed —
 # the scan gate + the documented trivy command are the reproducible evidence.
 outputs/sbom/*.json
+
+# Raw packet captures (scripts/capture-wg.*): may contain node IPs; commit only the
+# sanitized docs/assets/evidence/wg-capture-summary.txt, never the pcap.
+docs/assets/evidence/*.pcap

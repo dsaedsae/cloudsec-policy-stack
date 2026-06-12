@@ -111,7 +111,12 @@ portfolios, and it is exactly where this stack now adds controls.
    workloads (Deployment/ReplicaSet/StatefulSet/DaemonSet) + batch Jobs **and CronJobs**
    in `shop` (each resolved to the SA via its own template path); *other namespaces*
    apply the same pattern, and fully generic coverage is what a policy engine
-   (Kyverno/Gatekeeper) generates from one rule. The trust
+   (Kyverno/Gatekeeper) generates from one rule — **provided here as an opt-in
+   capstone** (`k8s/kyverno-sa-use.yaml` + `scripts/enable-kyverno.*`/`verify-kyverno.*`),
+   though it was **not stood up in the last session (RAM)**, so the cross-namespace claim
+   (coverage ID7) stays NOT_COVERED until proven live. Note the generalization carries the
+   **same scoping caveat**: like the VAP it gates the workload *controller*, not the
+   controller-spawned Pod (a Pod's `userInfo` is its controller's SA). The trust
    is now **explicit and minimized** (named operators) rather than "anyone who can
    deploy."
 

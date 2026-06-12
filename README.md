@@ -149,8 +149,8 @@ Done since:
 
 Next:
 - **Image signing** — `cosign sign`/`verify` + SLSA attestation on the **ECR path** (released cosign needs a registry; the local kind image has none — `docs/aws-eks-path.md` §1-1). Scan + SBOM already shipped (above).
-- **SA-use gate — cluster-wide generalization** — the gate now matches Pods/Deployments/RS/STS/DS/Jobs **and CronJobs** in `shop` (each resolved to its SA, live-verified). The remaining work is a *generated, cluster-wide* form (Kyverno/Gatekeeper) so the rule isn't hand-maintained per resource kind, and extending beyond the `shop` namespace.
-- **WireGuard packet capture** — the cross-node hop is proven by node-placement + `encrypt status` (Cilium encrypts cross-node traffic); a `tcpdump`/`cilium monitor` ciphertext capture is the stronger, still-pending evidence.
+- **SA-use gate — cluster-wide generalization** — the always-on gate is the `shop`-scoped `ValidatingAdmissionPolicy` (Pods/Deployments/RS/STS/DS/Jobs **and CronJobs**, live-verified). A *generated, cluster-wide* form is **provided as an opt-in capstone** — a Kyverno `ClusterPolicy` (`k8s/kyverno-sa-use.yaml`) + `scripts/enable-kyverno.*` / `verify-kyverno.*` proving the gate in a second namespace. It was **not stood up in the last session (RAM)**, so the cross-namespace row (ID7) stays NOT_COVERED until proven live — honest, not claimed. Note: like the VAP, Kyverno gates the workload controller, not the controller-spawned Pod (same A2 residual).
+- ✅ **WireGuard packet capture (opt-in evidence)** — `scripts/capture-wg.*` captures on the db node's host netns: during real api→db traffic, 40 WireGuard packets (UDP/51871) cross the wire and **0 plaintext** bytes appear on `eth0` — ciphertext-only, plaintext-absent. Upgrades ET2 to VERIFIED (gated/evidence, not a baseline check).
 
 ## Notes
 

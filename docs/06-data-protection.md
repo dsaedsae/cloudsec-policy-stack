@@ -27,10 +27,8 @@ WireGuard-encrypted. The `verify` check asserts both halves — WireGuard active
 `api`/`db` on different nodes — so it proves *this app hop is encrypted on the wire*,
 not merely that the feature is on.
 
-> **Honest caveat:** the verify proves it by node-placement + `encrypt status`, which
-> follows from Cilium's documented behavior (all cross-node pod traffic is encrypted);
-> it does **not** packet-capture the ciphertext (a `tcpdump`/`cilium monitor` capture is
-> the stronger, still-pending evidence — classified CONFIGURED in the coverage analysis).
+The always-on `verify` row proves it by node-placement + `encrypt status` (follows from
+Cilium's documented behavior: all cross-node pod traffic is encrypted):
 
 ```bash
 kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg encrypt status
@@ -38,8 +36,25 @@ kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg encrypt stat
 # Encrypted endpoints / keys in use: ...
 ```
 
-`scripts/verify.sh` asserts this (the WireGuard row). It maps to **PCI-DSS req 4 /
-GDPR Art.32** "encryption of personal data in transit."
+**Packet-captured proof (opt-in evidence — `scripts/capture-wg.sh`).** For the stronger
+claim, a `tcpdump` capture on the db node's host netns (`docker exec`, avoiding the
+PSA-restricted privileged-pod trap) shows, during real api→db traffic: **40 WireGuard
+packets (UDP/51871)** between the two nodes (ciphertext present) and **0 plaintext bytes**
+(no `X-User`/`HTTP/1` on `tcp/8080` over `eth0`) in the same window — i.e. the app hop is
+on the wire *only* as ciphertext. This upgrades ET2 from CONFIGURED to **VERIFIED** in the
+coverage analysis. It is gated (kind nodes lack `tcpdump`; install needs node internet) and
+SKIPs honestly when unavailable, so it is evidence — not one of the always-on 21 checks.
+
+```bash
+bash scripts/capture-wg.sh      # -> docs/assets/evidence/wg-capture-summary.txt
+```
+
+> **Honest caveat:** this proves packets are on the WireGuard tunnel and plaintext is absent
+> on the wire — *not* WireGuard's cipher strength, and *not* that same-node hops are encrypted
+> (they are not — only cross-node).
+
+`scripts/verify.sh` asserts the always-on row; `capture-wg.sh` is the captured-evidence
+upgrade. Maps to **PCI-DSS req 4 / GDPR Art.32** "encryption of personal data in transit."
 
 ## At rest — Secret encryption in etcd (runnable proof)
 

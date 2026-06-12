@@ -1,0 +1,8 @@
+# WireGuard cross-node ciphertext capture (api->db)
+cluster-context : kind-cloudsec
+api pod / node  : api-869ff48968-v5q7v @ cloudsec-worker
+db  pod / node  : db-cbbb899bd-fnj58 @ cloudsec-worker2 (capture site: host netns, iface eth0)
+api node IP     : 172.18.0.2    wireguard udp port: 51871
+positive (WG UDP/51871 packets, need >=1) : 40
+negative (plaintext X-User/HTTP on wire, need 0) : 0
+reproduce       : scripts/capture-wg.sh   (needs tcpdump on the db node)

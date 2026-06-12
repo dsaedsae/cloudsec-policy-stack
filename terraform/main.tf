@@ -56,6 +56,12 @@ resource "helm_release" "cilium" {
   version    = var.cilium_version
   namespace  = "kube-system"
 
+  # Cilium + the in-cluster SPIRE pull several large images (cilium-envoy, hubble-relay/ui,
+  # spire-server/agent). On a cold machine that can exceed Helm's 300s default, and a
+  # *failed* release makes the provider destroy+recreate on the next apply — a timeout
+  # loop that tears down a healthy CNI. 15 min absorbs the cold image-pull on slow disks.
+  timeout = 900
+
   # kind-friendly defaults; Kubernetes-backed IPAM.
   set {
     name  = "ipam.mode"

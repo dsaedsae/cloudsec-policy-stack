@@ -141,6 +141,30 @@ and the named operators, and a resource kind outside the matched set (it covers
 Pods/Deployments/RS/STS/DS/Jobs/CronJobs in `shop`; other namespaces or a future API
 kind) would extend the same one rule.
 
+## Capstone (opt-in) — the SA-use gate, cluster-wide via Kyverno
+
+The VAP above is hand-pinned to `shop`. The same rule expressed **once, generically,
+cluster-wide** is a Kyverno `ClusterPolicy` (`k8s/kyverno-sa-use.yaml`): one rule over
+Pods/Deployments/RS/STS/DS/Jobs/CronJobs in every namespace except the excluded ones
+(`kube-system`, `kyverno`, and `shop` — the VAP already owns `shop`). It reproduces the
+exact authorization predicate (`background: false`, since it reads `request.userInfo`).
+
+```bash
+scripts/enable-kyverno.sh     # helm install (dev-sized) + apply the ClusterPolicy
+scripts/verify-kyverno.sh     # proves DENY/ADMIT in a SECOND namespace (not shop)
+```
+
+**Honest scope (two parts):** (1) Kyverno's real delta is *namespace genericity* and
+*one rule vs per-kind CEL* — it does **not** remove the structural limit: a Pod created
+by a controller carries the *controller's* SA in `userInfo`, so (exactly like the VAP)
+the gate matches the workload **controller**, not the controller-spawned Pod, and an
+authorized operator/cluster-admin stays trusted by design. (2) It is an **opt-in
+capstone** (4 extra controllers = real RAM on top of Cilium+Tetragon+SPIRE); it was
+**not stood up in the last session due to RAM**, so the cross-namespace coverage row
+(ID7 in the coverage analysis) **remains NOT_COVERED** until proven live — the design and
+scripts are provided, the live claim is not made. The modern equivalent is the new
+Kyverno `ValidatingPolicy` / native VAP cluster-wide — this is one of three honest ways.
+
 ## Make it yours
 
 The `verify` scripts assert all of this: `api-sa` has no API rights, the mismatched

@@ -1,0 +1,89 @@
+# OPT-IN capstone: the SA-use gate generalized CLUSTER-WIDE via a Kyverno ClusterPolicy.
+#
+# The always-on control for `shop` is the ValidatingAdmissionPolicy in
+# admission-sa-use.yaml (zero extra pods). THIS policy expresses the SAME rule ONCE,
+# generically, and applies it to every namespace EXCEPT the excluded ones — closing the
+# documented residual that the VAP is hand-pinned to `shop` (THREAT_MODEL.md A2 / CSV ID7).
+#
+# HONEST SCOPE (identical to the VAP, by construction): a Pod created by a controller
+# (Deployment/Job/CronJob) carries the CONTROLLER's ServiceAccount in request.userInfo,
+# NOT the human deployer. So this — like the VAP — must match the WORKLOAD CONTROLLERS
+# and read userInfo there; it does NOT gate the controller-spawned Pod by the human, and
+# an authorized operator / cluster-admin remains trusted by design. Kyverno's real delta
+# is (1) namespace genericity and (2) one rule vs per-kind CEL — not removing that limit.
+#
+# Requires `background: false`: the rule reads request.userInfo, which is unavailable to
+# Kyverno's background scans (with background:true the policy would misbehave / not be ready).
+#
+# shop is EXCLUDED here (the VAP already owns it) so each namespace has exactly one
+# enforcer and the cross-namespace proof (scripts/verify-kyverno.*) is clean.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: sa-use
+  annotations:
+    policies.kyverno.io/title: SA-use gate (cluster-wide)
+    policies.kyverno.io/subject: ServiceAccount, Pod, Deployment, Job, CronJob
+    policies.kyverno.io/description: >-
+      Running a workload as a tier ServiceAccount (web-sa/api-sa/db-sa) is admitted only
+      when the requester is an authorized operator. The cluster-wide generalization of the
+      shop-scoped ValidatingAdmissionPolicy. See THREAT_MODEL.md B7.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: tier-sa-use-authorized-requester
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - ReplicaSet
+                - StatefulSet
+                - DaemonSet
+                - Job
+                - CronJob
+      exclude:
+        any:
+          - resources:
+              namespaces: [kube-system, kyverno, shop]
+      context:
+        # Resolve the effective SA across all matched kinds. JMESPath `||` falls through
+        # missing paths (null/'' are falsy): CronJob -> Deployment/Job template -> bare Pod.
+        - name: saName
+          variable:
+            jmesPath: >-
+              request.object.spec.jobTemplate.spec.template.spec.serviceAccountName ||
+              request.object.spec.template.spec.serviceAccountName ||
+              request.object.spec.serviceAccountName || ''
+            default: ""
+        # Authorized = kube-system workload controllers (which materialize the pods),
+        # a cluster admin (system:masters OR kubeadm:cluster-admins on kubeadm>=1.29),
+        # or the shop:tier-operators group. Mirrors the VAP predicate exactly.
+        - name: requesterAuthorized
+          variable:
+            jmesPath: >-
+              contains(request.userInfo.groups, 'system:masters') ||
+              contains(request.userInfo.groups, 'kubeadm:cluster-admins') ||
+              contains(request.userInfo.groups, 'shop:tier-operators') ||
+              starts_with(request.userInfo.username, 'system:serviceaccount:kube-system:') ||
+              request.userInfo.username == 'system:kube-controller-manager'
+            default: false
+      preconditions:
+        # Only tier workloads are gated; everything else is admitted untouched.
+        all:
+          - key: "{{ saName }}"
+            operator: AnyIn
+            value: ["web-sa", "api-sa", "db-sa"]
+      validate:
+        message: >-
+          running a workload as tier ServiceAccount '{{ saName }}' requires an authorized
+          operator (a kube-system controller, a cluster admin, or shop:tier-operators);
+          requester '{{ request.userInfo.username }}' is not — SA-use gate (THREAT_MODEL.md B7)
+        deny:
+          conditions:
+            all:
+              - key: "{{ requesterAuthorized }}"
+                operator: Equals
+                value: false

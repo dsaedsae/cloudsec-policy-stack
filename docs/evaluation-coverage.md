@@ -32,8 +32,8 @@
 **헤드라인 메트릭:**
 
 !!! success "검증가능-as-code 커버리지"
-    **워크로드 적용가능 sub-requirement의 64% (25/39)** 가 코드로 검증된다.
-    (거버넌스 포함 전체로는 25/41 = 61%.) 범주 분포: **VERIFIED 25 · CONFIGURED 8 ·
+    **워크로드 적용가능 sub-requirement의 67% (26/39)** 가 코드로 검증된다.
+    (거버넌스 포함 전체로는 26/41 = 63%.) 범주 분포: **VERIFIED 26 · CONFIGURED 7 ·
     GOVERNANCE 2 · NOT-COVERED 6.**
 
 ![MLS verifiability coverage per family](assets/coverage.png)
@@ -46,7 +46,7 @@
 | zero-trust (egress) | 4 / 4 | — |
 | credential-forgery (B7) | 4 / 7 | SPIFFE opt-in, 토큰미마운트 미assert, 타 ns 미포함 |
 | least-privilege | 6 / 7 | deployer RBAC 부분 |
-| encryption-in-transit | 1 / 2 | 크로스노드 암호화 검증(api/db 다른 노드+wg); tcpdump 캡처는 미수행 |
+| encryption-in-transit | 2 / 2 | 크로스노드 암호화 + tcpdump 패킷캡처(WG UDP/51871 40pkt, eth0 평문 0) — scripts/capture-wg.sh |
 | encryption-at-rest | 1 / 3 | 키회전·KMS는 수동/문서 |
 | detection (EDR) | 1 / 3 | 프로세스감사·광역룰 미assert |
 | shift-left | 4 / 6 | gitleaks는 CI만; 이미지 서명(cosign)은 ECR 경로(레지스트리 필요) |
@@ -55,17 +55,19 @@
 → 전체 Table 1(41행, sub-requirement→출처→범주→verify 라인/갭)은 [`mls-coverage.csv`](mls-coverage.csv).
 
 ## 논의 (정직한 갭이 곧 기여)
-- **VERIFIED 64%** 는 "워크로드 보상통제를 *어디까지 코드로 증명할 수 있는가*"의 정직한 상한에
-  가깝다 — 망·인가·런타임·일부 암호화는 증명되고, **데이터 거버넌스(C/S/O 분류·DLP·SIEM)는
-  워크로드 계층 밖**이다. 이 경계를 수치로 보이는 것이 핵심.
-- **CONFIGURED 8** 은 "있지만 증명 안 됨" — 가장 위험한 범주(감사 시 "있다"고 주장하나
-  테스트 없음). 향후 작업의 우선 타깃(WireGuard tcpdump 캡처, SPIFFE 시행 테스트).
-- **GOVERNANCE 2 / NOT-COVERED 5** 은 *이 레퍼런스의 범위 밖*임을 명시 — 전사 MLS의 일부일 뿐.
+- **VERIFIED 67%** 는 "워크로드 보상통제를 *어디까지 코드로 증명할 수 있는가*"의 정직한 상한에
+  가깝다 — 망·인가·런타임·암호화(전송 tcpdump 캡처 포함)는 증명되고, **데이터 거버넌스(C/S/O
+  분류·DLP·SIEM)는 워크로드 계층 밖**이다. 이 경계를 수치로 보이는 것이 핵심.
+- **CONFIGURED 7** 은 "있지만 증명 안 됨" — 가장 위험한 범주(감사 시 "있다"고 주장하나
+  테스트 없음). 우선 타깃이던 WireGuard tcpdump 캡처는 이번에 VERIFIED로 승격(ET2); 남은 타깃은
+  SPIFFE 시행 테스트(ID4)·etcd 키회전 자동화(ER2).
+- **GOVERNANCE 2 / NOT-COVERED 6** 은 *이 레퍼런스의 범위 밖*이거나 명시된 갭(예: ID7 SA-use 타 ns —
+  Kyverno ClusterPolicy 설계·스크립트 제공하나 RAM 사유로 본 세션 미기동 → 라이브 미증명이라 NOT_COVERED 유지).
 
 ## 한계
 - 분해·분류는 저자 수행 → 주관 개입. 1차 출처(FSC·국정원 MLS·금융보안원 가이드) 대조와
   복수 평가자 합의가 다음 단계.
-- 38개 sub-requirement는 *이 데모 워크로드* 기준. 전사 요구집합은 더 크고 분모가 달라진다.
+- 41개 sub-requirement는 *이 데모 워크로드* 기준. 전사 요구집합은 더 크고 분모가 달라진다.
 - 오버헤드(지연·자원) 측정은 미수행 — 시스템 논문이면 별도 평가 필요(여기선 *커버리지*가 헤드라인).
 
 ## 발표/논문 타깃 (정직)

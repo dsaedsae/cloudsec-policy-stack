@@ -8,5 +8,9 @@ resource "helm_release" "tetragon" {
   version    = "1.7.0"
   namespace  = "kube-system"
 
+  # Cold image pull headroom (see the cilium release note); avoids a 300s-timeout
+  # failed release that would force a destroy+recreate loop on the next apply.
+  timeout = 600
+
   depends_on = [helm_release.cilium]
 }
