@@ -26,6 +26,12 @@ resource "kind_cluster" "this" {
     node {
       role = "worker"
     }
+    # A second worker so api and db can be forced onto DIFFERENT nodes (podAntiAffinity
+    # in k8s/app.yaml). Their traffic then crosses the wire and is WireGuard-encrypted —
+    # turning the in-transit claim from "feature enabled" into a real cross-node proof.
+    node {
+      role = "worker"
+    }
   }
 }
 

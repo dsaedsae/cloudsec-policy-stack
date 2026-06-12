@@ -115,6 +115,13 @@ spec:
     spec:
       serviceAccountName: db-sa
       automountServiceAccountToken: false
+      # Keep db OFF api's node so the api->db hop crosses the wire and is
+      # WireGuard-encrypted (cross-node in-transit proof). Needs >=2 worker nodes.
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector: { matchLabels: { app: api } }
+              topologyKey: kubernetes.io/hostname
       securityContext:
         runAsNonRoot: true
         runAsUser: 101

@@ -22,8 +22,8 @@ LP4,least-privilege,Cedar positive-amount guard,A,VERIFIED,verify:-100 403
 LP5,least-privilege,Cedar role hierarchy (auditlog),A,VERIFIED,authz.py:auditor allow / customer deny
 LP6,least-privilege,input charset validation (X-User),A,VERIFIED,verify:malformed X-User 400
 LP7,least-privilege,deployer minimal RBAC (no pods/secrets/SA),A,CONFIGURED,Role defined; partially via SA-use test
-ET1,encryption-transit,WireGuard pod-to-pod enabled,B,CONFIGURED,verify:feature enabled; single-worker intra-node not on-wire
-ET2,encryption-transit,cross-node ciphertext proven,B,NOT_COVERED,single worker; needs 2-node + anti-affinity
+ET1,encryption-transit,WireGuard cross-node encryption,B,VERIFIED,verify:api/db on diff nodes + wg active (api->db crosses wire)
+ET2,encryption-transit,packet-captured ciphertext (tcpdump),B,CONFIGURED,path verified; actual capture not done
 ER1,encryption-rest,etcd Secret AES-CBC,B,VERIFIED,enable-secrets-encryption: k8s:enc:aescbc / no plaintext
 ER2,encryption-rest,key rotation procedure,B,CONFIGURED,runbook 02 2-key flow; not automated/tested
 ER3,encryption-rest,managed KMS/HSM key mgmt,B,NOT_COVERED,local demo; AWS path documented only

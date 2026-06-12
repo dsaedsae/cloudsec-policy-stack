@@ -172,12 +172,18 @@ else
   printf '  %-48s expect %-4s got %-4s %s\n' "CI SA schedules CronJob as api-sa (SA-use gate)" "DENY" "?" "FAIL"; fail=1
 fi
 
-echo "== Data-in-transit (Cilium WireGuard) =="
+echo "== Data-in-transit (Cilium WireGuard, cross-node) =="
+# Real cross-node proof: WireGuard is active AND api/db are on DIFFERENT nodes (forced
+# by podAntiAffinity), so the api->db hop traverses the wire and is WireGuard-encrypted
+# (Cilium encrypts all cross-node pod traffic). Asserting node placement upgrades the
+# claim from "feature enabled" to "this app hop is encrypted on the wire".
 ENC=$(kubectl --context "$CTX" exec -n kube-system ds/cilium -c cilium-agent -- cilium-dbg encrypt status 2>/dev/null || true)
-if echo "$ENC" | grep -qi "Wireguard"; then
-  printf '  %-48s expect %-4s got %-4s %s\n' "pod-to-pod traffic encrypted (WireGuard)" "WG" "WG" "PASS"
+API_NODE=$(kubectl --context "$CTX" -n shop get pod -l tier=backend -o jsonpath='{.items[0].spec.nodeName}')
+DB_NODE=$(kubectl --context "$CTX" -n shop get pod -l tier=data -o jsonpath='{.items[0].spec.nodeName}')
+if echo "$ENC" | grep -qi "Wireguard" && [ -n "$API_NODE" ] && [ "$API_NODE" != "$DB_NODE" ]; then
+  printf '  %-48s expect %-7s got %-7s %s\n' "api->db cross-node, WireGuard-encrypted" "WG+xnode" "WG+xnode" "PASS"
 else
-  printf '  %-48s expect %-4s got %-4s %s\n' "WireGuard pod-to-pod encryption" "WG" "off" "FAIL"; fail=1
+  printf '  %-48s expect %-7s got %-7s %s\n' "WireGuard cross-node (api=$API_NODE db=$DB_NODE)" "WG+xnode" "?" "FAIL"; fail=1
 fi
 
 echo ""

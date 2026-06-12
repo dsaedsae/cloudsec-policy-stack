@@ -32,9 +32,9 @@
 **헤드라인 메트릭:**
 
 !!! success "검증가능-as-code 커버리지"
-    **워크로드 적용가능 sub-requirement의 61% (22/36)** 가 코드로 검증된다.
-    (거버넌스 포함 전체로는 22/38 = 58%.) 범주 분포: **VERIFIED 22 · CONFIGURED 8 ·
-    GOVERNANCE 2 · NOT-COVERED 6.**
+    **워크로드 적용가능 sub-requirement의 64% (23/36)** 가 코드로 검증된다.
+    (거버넌스 포함 전체로는 23/38 = 61%.) 범주 분포: **VERIFIED 23 · CONFIGURED 8 ·
+    GOVERNANCE 2 · NOT-COVERED 5.**
 
 ![MLS verifiability coverage per family](assets/coverage.png)
 
@@ -46,7 +46,7 @@
 | zero-trust (egress) | 4 / 4 | — |
 | credential-forgery (B7) | 4 / 7 | SPIFFE opt-in, 토큰미마운트 미assert, 타 ns 미포함 |
 | least-privilege | 6 / 7 | deployer RBAC 부분 |
-| encryption-in-transit | 0 / 2 | 단일워커라 노드간 미증명 (CONFIGURED) |
+| encryption-in-transit | 1 / 2 | 크로스노드 암호화 검증(api/db 다른 노드+wg); tcpdump 캡처는 미수행 |
 | encryption-at-rest | 1 / 3 | 키회전·KMS는 수동/문서 |
 | detection (EDR) | 1 / 3 | 프로세스감사·광역룰 미assert |
 | shift-left | 2 / 3 | gitleaks는 CI만 |
@@ -55,7 +55,7 @@
 → 전체 Table 1(38행, sub-requirement→출처→범주→verify 라인/갭)은 [`mls-coverage.csv`](mls-coverage.csv).
 
 ## 논의 (정직한 갭이 곧 기여)
-- **VERIFIED 61%** 는 "워크로드 보상통제를 *어디까지 코드로 증명할 수 있는가*"의 정직한 상한에
+- **VERIFIED 64%** 는 "워크로드 보상통제를 *어디까지 코드로 증명할 수 있는가*"의 정직한 상한에
   가깝다 — 망·인가·런타임·일부 암호화는 증명되고, **데이터 거버넌스(C/S/O 분류·DLP·SIEM)는
   워크로드 계층 밖**이다. 이 경계를 수치로 보이는 것이 핵심.
 - **CONFIGURED 8** 은 "있지만 증명 안 됨" — 가장 위험한 범주(감사 시 "있다"고 주장하나

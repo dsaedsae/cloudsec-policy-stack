@@ -11,3 +11,7 @@ nodes:
     image: kindest/node:v1.34.0
   - role: worker
     image: kindest/node:v1.34.0
+  # Second worker: lets podAntiAffinity put api and db on different nodes so their
+  # traffic crosses the wire and is WireGuard-encrypted (real cross-node proof).
+  - role: worker
+    image: kindest/node:v1.34.0

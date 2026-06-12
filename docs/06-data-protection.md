@@ -14,18 +14,23 @@ the GDPR Art.32 / PCI-DSS / ISMS-P "protect the data" half of the story.
 > lifecycle. In-transit is verified live; at-rest is a runnable script; in-use is a
 > design property of the PDP. Nothing here is claimed to protect data it doesn't have.
 
-## In transit — WireGuard transparent encryption (feature verified live)
+## In transit — WireGuard transparent encryption (cross-node, verified live)
 
 Cilium is installed with `encryption.enabled=true, encryption.type=wireguard`
 (`terraform/main.tf`), so **node-to-node** pod traffic is WireGuard-encrypted —
 an on-path attacker *between nodes* sees ciphertext, not `X-User` headers or
 account data.
 
-> **Honest caveat:** this is a single-worker demo, so web/api/db are co-located on
-> one node and that hop never traverses the wire. The `verify` check confirms the
-> *feature is enabled* (`cilium encrypt status` → WireGuard), not that this specific
-> intra-node hop is encrypted. In a multi-node deployment, traffic that crosses
-> nodes is encrypted. (See `docs/financial-mls-mapping.md` §7.)
+The cluster runs **two workers**, and `k8s/app.yaml` pins `db` OFF `api`'s node
+(`podAntiAffinity`), so the `api→db` hop **crosses the wire** and is therefore
+WireGuard-encrypted. The `verify` check asserts both halves — WireGuard active AND
+`api`/`db` on different nodes — so it proves *this app hop is encrypted on the wire*,
+not merely that the feature is on.
+
+> **Honest caveat:** the verify proves it by node-placement + `encrypt status`, which
+> follows from Cilium's documented behavior (all cross-node pod traffic is encrypted);
+> it does **not** packet-capture the ciphertext (a `tcpdump`/`cilium monitor` capture is
+> the stronger, still-pending evidence — classified CONFIGURED in the coverage analysis).
 
 ```bash
 kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg encrypt status

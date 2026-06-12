@@ -159,10 +159,14 @@ spec:
     if ($LASTEXITCODE -ne 0 -and $cronOut -match "SA-use gate|shop-sa-use|authorized operator") { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "CI SA schedules CronJob as api-sa -> SA-use DENY", "DENY", "DENY", "PASS" }
     else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "CI SA schedules CronJob as api-sa (SA-use gate)", "DENY", "?", "FAIL"; $script:fail = 1 }
 
-    Write-Host "== Data-in-transit (Cilium WireGuard) =="
+    Write-Host "== Data-in-transit (Cilium WireGuard, cross-node) =="
+    # Real cross-node proof: WireGuard active AND api/db on DIFFERENT nodes (podAntiAffinity)
+    # -> the api->db hop crosses the wire and is WireGuard-encrypted.
     $enc = (kubectl --context $ctx exec -n kube-system ds/cilium -c cilium-agent -- cilium-dbg encrypt status 2>$null) -join "`n"
-    if ($enc -match "Wireguard") { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "pod-to-pod traffic encrypted (WireGuard)", "WG", "WG", "PASS" }
-    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "WireGuard pod-to-pod encryption", "WG", "off", "FAIL"; $script:fail = 1 }
+    $apiNode = kubectl --context $ctx -n shop get pod -l tier=backend -o jsonpath="{.items[0].spec.nodeName}"
+    $dbNode  = kubectl --context $ctx -n shop get pod -l tier=data -o jsonpath="{.items[0].spec.nodeName}"
+    if ($enc -match "Wireguard" -and $apiNode -and $apiNode -ne $dbNode) { "{0,-46} expect {1,-8} got {2,-8} {3}" -f "api->db cross-node, WireGuard-encrypted", "WG+xnode", "WG+xnode", "PASS" }
+    else { "{0,-46} expect {1,-8} got {2,-8} {3}" -f "WireGuard cross-node (api=$apiNode db=$dbNode)", "WG+xnode", "?", "FAIL"; $script:fail = 1 }
 }
 finally {
     kubectl --context $ctx -n shop delete -f (Join-Path $Root "k8s\probes.yaml") --ignore-not-found | Out-Null

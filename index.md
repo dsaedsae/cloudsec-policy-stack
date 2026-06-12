@@ -8,6 +8,8 @@ hide:
 **검증 가능한 다층보안(MLS) 보상통제를 코드로 — 한 요청이 신원·세분화·인가·암호화·탐지를
 전부 통과해야 데이터에 닿는다. 그리고 그 사실을 매번 라이브로 증명한다.**
 
+<p align="center"><strong>🟢 라이브 검증 21/21 &nbsp;·&nbsp; 📊 검증가능 커버리지 64% &nbsp;·&nbsp; 🛡️ 적대적 자기검증이 CRITICAL 1건 발견·수정 &nbsp;·&nbsp; 💰 무료 로컬</strong></p>
+
 !!! abstract "한 문단 요약"
     한국 금융권은 10년간 **물리/논리 망분리**로 보안을 유지했다. FSC 「금융분야 망분리 개선
     로드맵」(2024-08-13)이 이를 위험기반 **다층보안(MLS)** 으로 전환하면서, "네트워크 위치로
@@ -76,7 +78,7 @@ flowchart TB
 -   :material-check-decagram: **검증가능성 기준 + 커버리지 측정**
 
     "각 규제 요구는 시행을 증명하는 실행 테스트에 대응돼야 한다"를 기준으로 삼고, MLS 보상통제의
-    **61%가 코드로 검증가능**함을 *정량화*(갭 공개). [→ 평가](docs/evaluation-coverage.md)
+    **64%가 코드로 검증가능**함을 *정량화*(갭 공개). [→ 평가](docs/evaluation-coverage.md)
 
 -   :material-shield-bug: **정직한 적대적 검증**
 
@@ -96,8 +98,8 @@ flowchart TB
 
 | 항목 | 결과 |
 |------|------|
-| **검증가능성 커버리지 (정량 헤드라인)** | 워크로드 적용가능 MLS 보상통제 sub-requirement의 **61% (22/36)** 가 *코드로 검증* — 갭(CONFIGURED 8·NOT-COVERED 6·GOVERNANCE 2)을 정직하게 공개. [→ 평가](docs/evaluation-coverage.md) |
-| 라이브 방어심층 검증 (기능 회귀 스위트) | **21 / 21 PASS** — 20개는 차단/허용 *enforcement* 증명 + 1개는 WireGuard *기능 활성*(단일워커라 노드간만) |
+| **검증가능성 커버리지 (정량 헤드라인)** | 워크로드 적용가능 MLS 보상통제 sub-requirement의 **64% (23/36)** 가 *코드로 검증* — 갭(CONFIGURED 8·NOT-COVERED 5·GOVERNANCE 2)을 정직하게 공개. [→ 평가](docs/evaluation-coverage.md) |
+| 라이브 방어심층 검증 (기능 회귀 스위트) | **21 / 21 PASS** — 차단/허용 enforcement 전부. WireGuard는 api/db를 **다른 노드로 강제**(podAntiAffinity)해 api→db가 선상을 가로질러 *크로스노드 암호화*됨을 증명 |
 | Cedar 인가 단위테스트 | **8 / 8** |
 | checkov shift-left | **452 pass / 0 fail / 5 documented skip** |
 | 적대적 검토가 찾은 실제 버그 | **CRITICAL 1** (SA-use 우회) + 다수 — 전부 수정·검증 |
@@ -118,5 +120,6 @@ flowchart TB
 
 !!! note "정직 메모"
     이것은 *워크로드 보상통제 레이어*의 레퍼런스다 — 인증서가 아니다. 실 데이터스토어 없음,
-    X-User는 미인증 데모 입력, WireGuard는 단일워커라 노드간만, 규제 세부는 1차 출처 대조 필요.
+    X-User는 미인증 데모 입력, WireGuard는 노드간 암호화(api/db를 다른 노드로 강제해 크로스노드
+    증명; tcpdump 패킷캡처는 미수행), 규제 세부는 1차 출처 대조 필요.
     한계를 명시하는 것 자체가 MLS의 "자율보안·정직성"에 부합한다.
