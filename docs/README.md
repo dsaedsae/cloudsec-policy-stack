@@ -7,6 +7,10 @@ payoff *before* asking you to install more. Defensive/infra only.
 > **[금융 망분리 완화(MLS) ↔ 통제 매핑](financial-mls-mapping.md)** 참고 — FSC 「금융분야
 > 망분리 개선 로드맵」(2024-08-13)의 다층보안(MLS) 보상통제에 각 통제를 1:1 매핑하고
 > NIST 800-207·검증 항목까지 연결한다.
+>
+> **클라우드로 가면 (비용 포함):** **[로컬 → AWS/EKS 경로 + 가격대별 실습 가이드](aws-eks-path.md)**
+> — 각 통제의 AWS 등가물(Cedar→Verified Permissions, etcd암호화→KMS 등) + **무료(로컬)부터**
+> Tier 0~3 비용 사다리와 teardown 체크리스트. 발표용 자료: [`presentation/`](../presentation/talk-outline.md).
 
 | Lab | You'll learn | Needs | Time |
 |-----|--------------|-------|------|
