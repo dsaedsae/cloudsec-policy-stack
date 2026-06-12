@@ -1,0 +1,13 @@
+[
+  { "name": "EXT1: auditor views ANOTHER user's account (E1)",
+    "principal": "User::\"carol\"", "action": "Action::\"ViewAccount\"",
+    "resource": "Account::\"acct-alice\"", "context": {}, "expect": "Allow" },
+
+  { "name": "EXT2: auditor must NOT be able to transfer (over-grant catch)",
+    "principal": "User::\"carol\"", "action": "Action::\"Transfer\"",
+    "resource": "Account::\"acct-alice\"", "context": { "amount": 100 }, "expect": "Deny" },
+
+  { "name": "EXT3: transfer of EXACTLY the limit (1000) is allowed (boundary)",
+    "principal": "User::\"alice\"", "action": "Action::\"Transfer\"",
+    "resource": "Account::\"acct-alice\"", "context": { "amount": 1000 }, "expect": "Allow" }
+]

@@ -98,6 +98,9 @@ nav:
     - 3 · 런타임 (eBPF): docs/04-runtime.md
     - 4 · 신원 (B7): docs/05-identity.md
     - 5 · 데이터 보호: docs/06-data-protection.md
+  - 재구현 트랙 (자가채점):
+    - 트랙 개요: labs/README.md
+    - M0 · Cedar 인가 재구현: labs/m0/README.md
   - 클라우드 + 비용 (무료부터): docs/aws-eks-path.md
   - 운영 런북:
     - 개요: runbooks/README.md
