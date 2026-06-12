@@ -14,6 +14,7 @@ plugins:
 docs_dir: .
 site_dir: site
 exclude_docs: |
+  README.md
   .venv/
   .git/
   .github/
@@ -56,12 +57,21 @@ theme:
 markdown_extensions:
   - admonition
   - attr_list
+  - md_in_html
   - tables
   - footnotes
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight: { anchor_linenums: true }
   - pymdownx.inlinehilite
+  - pymdownx.tabbed: { alternate_style: true }
   - toc: { permalink: true }
 
 # The .md files use GitHub-relative links between each other; don't fail the build
@@ -71,7 +81,7 @@ validation:
   links: { not_found: warn, absolute_links: ignore, unrecognized_links: ignore }
 
 nav:
-  - 홈: README.md
+  - 홈: index.md
   - 위협 모델 (B1–B7): THREAT_MODEL.md
   - 인가 모델 (RBAC+ABAC/PaC/ReBAC): docs/authorization-model.md
   - 금융 망분리 완화 (MLS): docs/financial-mls-mapping.md
