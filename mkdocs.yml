@@ -1,0 +1,95 @@
+site_name: cloudsec-policy-stack
+site_description: 망분리 완화(MLS) 보상통제를 코드로 — 검증 가능한 방어심층(defense-in-depth)
+site_author: dsaedsae
+repo_url: https://github.com/dsaedsae/cloudsec-policy-stack
+repo_name: dsaedsae/cloudsec-policy-stack
+edit_uri: edit/main/
+
+# The repo isn't a docs/-only project — Markdown lives at the root and across
+# docs/ runbooks/ presentation/. The same-dir plugin lets docs_dir be the repo
+# root (MkDocs 1.6 otherwise forbids it); exclude the code/infra dirs from the build.
+plugins:
+  - search
+  - same-dir
+docs_dir: .
+site_dir: site
+exclude_docs: |
+  .venv/
+  .git/
+  .github/
+  terraform/
+  scripts/
+  app/
+  cedar/
+  k8s/
+  node_modules/
+  site/
+  *.tf
+  *.tfvars
+  requirements*.txt
+  .checkov.yaml
+  .gitattributes
+  .gitignore
+
+theme:
+  name: material
+  language: ko
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle: { icon: material/weather-night, name: 다크 모드로 }
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle: { icon: material/weather-sunny, name: 라이트 모드로 }
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - navigation.tracking
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight: { anchor_linenums: true }
+  - pymdownx.inlinehilite
+  - toc: { permalink: true }
+
+# The .md files use GitHub-relative links between each other; don't fail the build
+# on those (the nav below is the canonical navigation).
+validation:
+  nav: { omitted_files: ignore }
+  links: { not_found: warn, absolute_links: ignore, unrecognized_links: ignore }
+
+nav:
+  - 홈: README.md
+  - 위협 모델 (B1–B7): THREAT_MODEL.md
+  - 인가 모델 (RBAC+ABAC/PaC/ReBAC): docs/authorization-model.md
+  - 금융 망분리 완화 (MLS): docs/financial-mls-mapping.md
+  - 실습 랩:
+    - 개요: docs/README.md
+    - 0 · 인가 as-code: docs/01-authz-no-cluster.md
+    - 1 · 시프트레프트 스캔: docs/02-scan.md
+    - 2 · 네트워크 + 인가: docs/03-network-and-authz.md
+    - 3 · 런타임 (eBPF): docs/04-runtime.md
+    - 4 · 신원 (B7): docs/05-identity.md
+    - 5 · 데이터 보호: docs/06-data-protection.md
+  - 클라우드 + 비용 (무료부터): docs/aws-eks-path.md
+  - 운영 런북:
+    - 개요: runbooks/README.md
+    - 01 · 사고대응: runbooks/01-incident-response.md
+    - 02 · 키 회전: runbooks/02-key-rotation.md
+    - 03 · 브레이크글래스: runbooks/03-break-glass.md
+    - 04 · 티어 온보딩: runbooks/04-tier-onboarding.md
+    - 05 · 배포·롤백: runbooks/05-deploy-rollback.md
+    - 06 · AWS teardown: runbooks/06-aws-teardown.md
+  - 발표 아웃라인: presentation/talk-outline.md

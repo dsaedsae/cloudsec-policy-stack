@@ -1,7 +1,11 @@
 # cloudsec-policy-stack
 
 [![ci](https://github.com/dsaedsae/cloudsec-policy-stack/actions/workflows/ci.yml/badge.svg)](https://github.com/dsaedsae/cloudsec-policy-stack/actions/workflows/ci.yml)
+[![docs](https://github.com/dsaedsae/cloudsec-policy-stack/actions/workflows/docs.yml/badge.svg)](https://dsaedsae.github.io/cloudsec-policy-stack/)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+> 📖 **Docs site:** <https://dsaedsae.github.io/cloudsec-policy-stack/> (push 후 자동 배포).
+> 로컬 미리보기: `pip install -r requirements-docs.txt && mkdocs serve` → <http://localhost:8000>
 
 **Defense-in-depth, as code, on a free local cluster.** One request to one service
 passes through three independent policy layers — network (L3/L4), HTTP (L7), and

@@ -1,0 +1,3 @@
+# Docs site (MkDocs Material). Build: python -m mkdocs build ; preview: mkdocs serve
+mkdocs-material==9.7.6
+mkdocs-same-dir==0.1.5
