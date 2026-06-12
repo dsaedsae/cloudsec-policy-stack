@@ -32,6 +32,29 @@
 > 포인트: **Cedar → Amazon Verified Permissions**, **etcd암호화 → KMS 봉투암호화**가 가장 깔끔한
 > "코드 그대로, 관리형으로" 전환이다. 발표(특히 Summit)에서 이 두 개를 강조하라.
 
+### 1-1. 빌드 프로비넌스: 이미지 서명(cosign) — *레지스트리 경로 전용*
+
+로컬 스택은 이미지 **취약점·시크릿 스캔 + SBOM**(`trivy`, [02-scan.md](02-scan.md))까지는
+실제로 수행한다. 하지만 이미지 **서명(cosign)** 은 로컬에서 *정직하게 불가능*하다 — 출시된
+cosign은 서명을 붙일 **레지스트리 다이제스트가 필요**하고(sigstore/cosign#3832; 무(無)레지스트리
+PR #4014 미병합), `cloudsec-api:local`은 kind에 로드된 레지스트리 없는 이미지다. 그래서 서명은
+**ECR 경로에서만** 성립하며, 아래는 그 *설계*다(로컬에서 실행하지 않음 — 가짜 `cosign verify`
+체크는 두지 않는다):
+
+```bash
+# CI(OIDC keyless) 또는 keyful 로 ECR 다이제스트에 서명
+cosign sign  $ECR_REPO@sha256:<digest>                       # keyless: --yes, OIDC 신원
+cosign verify $ECR_REPO@sha256:<digest> \
+  --certificate-identity-regexp '.*' --certificate-oidc-issuer-regexp '.*'
+# SLSA 빌드 프로비넌스 어테스테이션 첨부/검증
+cosign attest --predicate provenance.json --type slsaprovenance $ECR_REPO@sha256:<digest>
+```
+
+배포 게이트는 **ECR 다이제스트로 admission**(이 repo의 디지털 핀 원칙과 동일)하고, 서명 미검증
+이미지는 거부한다(Kyverno `verifyImages` 또는 sigstore policy-controller `ClusterImagePolicy`,
+혹은 EKS에선 **AWS Signer** + ECR). 즉 로컬은 *scan+SBOM까지 VERIFIED*, **서명/어테스테이션은
+ECR 경로의 CONFIGURED(설계)** — 로드맵의 열린 항목이다.
+
 ---
 
 ## 2. 가격대별 실습 사다리 (무료부터)

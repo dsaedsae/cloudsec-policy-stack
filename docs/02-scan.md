@@ -29,6 +29,35 @@ a green number by disabling everything. The README scopes the claim precisely �
 checkov validates **workloads + Terraform**, not the network policy or Cedar
 (those have their own gates).
 
+## Image scan + SBOM (build provenance)
+
+`scripts/scan.*` also runs an **image vuln+secret gate** and emits a **CycloneDX
+SBOM** — gated behind `trivy` being installed, so the checkov gate above still runs
+anywhere:
+
+```bash
+trivy image --scanners vuln,secret --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 cloudsec-api:local
+trivy image --format cyclonedx --output outputs/sbom/cloudsec-api.cdx.json cloudsec-api:local
+# install (Windows host): winget install AquaSecurity.Trivy   (or: brew install trivy)
+```
+
+**This gate caught a real vulnerability — and we fixed it, not suppressed it.** The
+first run failed (`exit 1`) on `CVE-2025-62727` (HIGH — Starlette DoS via Range-header
+merging), present because `fastapi==0.115.6` pulled `starlette 0.41.3`. The remediation
+was a dependency bump in `app/api/requirements.txt`
+(`fastapi 0.115.6→0.136.3`, `starlette 0.41.3→1.3.1`, `uvicorn 0.34.0→0.49.0`); the
+api was rebuilt, the Cedar PDP re-smoke-tested (alice 200 / bob 403 / over-limit 403),
+and the gate went green (`0 vuln / 0 secret`). That is the whole point of shift-left:
+catch → remediate → green, before deploy.
+
+**Honest scope — what is NOT here:** image **signing**. Released `cosign` needs a
+registry to attach a signature to (sigstore/cosign#3832; the no-registry PR #4014 is
+unmerged), and this `cloudsec-api:local` image is `kind`-loaded with no registry. So
+signing / SLSA attestation is **documented on the ECR path**
+([aws-eks-path.md](aws-eks-path.md)), not claimed locally — no fake `cosign verify`
+check exists. `--ignore-unfixed` mirrors checkov's honest-suppression lesson: gate on
+what you can actually act on.
+
 ## Break it (then fix it)
 
 1. In `k8s/app.yaml`, delete `readOnlyRootFilesystem: true` from the `web`

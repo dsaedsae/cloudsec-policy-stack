@@ -1,3 +1,7 @@
-fastapi==0.115.6
-uvicorn==0.34.0
+fastapi==0.136.3
+uvicorn==0.49.0
 cedarpy==4.8.4
+# starlette is a FastAPI transitive dep; pinned explicitly as the audit trail for the
+# trivy build gate. Bumped 0.41.3 -> 1.3.1 to remediate CVE-2025-62727 (HIGH, DoS via
+# Range-header merging) that scripts/scan.* caught. See docs/02-scan.md.
+starlette==1.3.1

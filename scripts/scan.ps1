@@ -17,3 +17,28 @@ Write-Host "== checkov: Terraform =="
 
 Write-Host "`n== checkov: Kubernetes manifests =="
 & $py -m checkov.main -d (Join-Path $Root "k8s") --config-file $cfg --quiet --compact
+
+# --- Image scan + SBOM (build provenance) -----------------------------------
+# Gated behind trivy's presence so the checkov gate above still runs anywhere.
+# Honesty (CLAUDE.md): image SIGNING (cosign) is NOT done here — the kind-loaded
+# local image has no registry to attach a signature to; signing is documented on
+# the ECR path (docs/aws-eks-path.md). See docs/02-scan.md.
+$image = "cloudsec-api:local"
+$sbomDir = Join-Path $Root "outputs\sbom"
+if (Get-Command trivy -ErrorAction SilentlyContinue) {
+    if (-not (docker images -q $image)) {
+        Write-Host "`n== building $image for scan =="
+        docker build -t $image -f (Join-Path $Root "app\api\Dockerfile") $Root
+        if ($LASTEXITCODE -ne 0) { throw "docker build failed" }
+    }
+    Write-Host "`n== trivy: image vuln+secret gate ($image) =="
+    trivy image --scanners vuln,secret --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 $image
+    if ($LASTEXITCODE -ne 0) { throw "trivy image gate failed (CRITICAL/HIGH fixable vuln or secret found)" }
+    Write-Host "`n== trivy: SBOM (CycloneDX) =="
+    New-Item -ItemType Directory -Force $sbomDir | Out-Null
+    trivy image --quiet --format cyclonedx --output (Join-Path $sbomDir "cloudsec-api.cdx.json") $image
+    Write-Host "SBOM written: outputs/sbom/cloudsec-api.cdx.json"
+} else {
+    Write-Host "`n== trivy not installed - skipping image scan + SBOM (checkov gate above still ran) =="
+    Write-Host "   install: winget install AquaSecurity.Trivy"
+}
