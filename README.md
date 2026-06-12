@@ -142,12 +142,13 @@ The core (IaC + zero-trust net incl. egress + inline Cedar authz + Tetragon runt
 
 Done since:
 - ✅ **Identity hardening (B7)** — threat model of label-as-identity (`THREAT_MODEL.md`); least-privilege per-tier ServiceAccounts; a `ValidatingAdmissionPolicy` binding the `app` label to its SA; a **SA-use gate** (`k8s/admission-sa-use.yaml`) that lets only authorized operators run a workload under a tier identity (so the limited `shop:deployers` role can deploy but not impersonate a tier); and Cilium **mutual auth / SPIFFE** on the `web→api` edge (`k8s/netpol-mutual.yaml`). The full chain — who may deploy → label/SA consistency → who may use a tier SA → SVID — is live-verified.
-- ✅ **Supply chain (partial)** — public images pinned by `@sha256` digest (the local api image carries a scoped, documented exception). Build provenance (cosign/SLSA) still open.
+- ✅ **Supply chain (scan + SBOM)** — public images pinned by `@sha256` digest (the local api image carries a scoped, documented exception); the scan gate (`scripts/scan.*`) now runs a **trivy image vuln+secret gate + CycloneDX SBOM**. It caught `CVE-2025-62727` (HIGH, Starlette DoS) on the first run; remediated by bumping `app/api/requirements.txt` (starlette `0.41.3→1.3.1`) and re-verifying — gate green. Image **signing** (cosign/SLSA) is still open (documented on the ECR path — the local image has no registry; `docs/aws-eks-path.md` §1-1).
+- ✅ **Authorization depth (ABAC + ReBAC + agent delegation)** — beyond the inline Cedar ABAC PDP: an **AI-agent delegation** model (`cedar/agent/`, `python cedar/agent_authz.py`, 9/9) enforcing the *intersection* of agent-ceiling ∧ delegating-user clearance (confused-deputy prevention), and a **ReBAC** relationship demo (`rebac/`, `fga model test` 11/11 + a live OpenFGA `/check` path) filling the gap `docs/authorization-model.md` §4 names. See `docs/nhi.md` for the NHI lifecycle framing.
 - ✅ **Data protection** — WireGuard pod-to-pod encryption (in transit) + Secret encryption-at-rest in etcd (`scripts/enable-secrets-encryption.*`); the three data states mapped to controls in `docs/06-data-protection.md`.
 - ✅ **Learning labs** — numbered `docs/` walkthroughs (0–5), each break-and-fix.
 
 Next:
-- **Build provenance** — `cosign verify` + SLSA attestation for the api image.
+- **Image signing** — `cosign sign`/`verify` + SLSA attestation on the **ECR path** (released cosign needs a registry; the local kind image has none — `docs/aws-eks-path.md` §1-1). Scan + SBOM already shipped (above).
 - **SA-use gate — cluster-wide generalization** — the gate now matches Pods/Deployments/RS/STS/DS/Jobs **and CronJobs** in `shop` (each resolved to its SA, live-verified). The remaining work is a *generated, cluster-wide* form (Kyverno/Gatekeeper) so the rule isn't hand-maintained per resource kind, and extending beyond the `shop` namespace.
 - **WireGuard packet capture** — the cross-node hop is proven by node-placement + `encrypt status` (Cilium encrypts cross-node traffic); a `tcpdump`/`cilium monitor` ciphertext capture is the stronger, still-pending evidence.
 

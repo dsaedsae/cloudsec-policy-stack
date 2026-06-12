@@ -22,6 +22,8 @@ exclude_docs: |
   scripts/
   app/
   cedar/
+  rebac/
+  outputs/
   k8s/
   node_modules/
   site/
@@ -84,6 +86,7 @@ nav:
   - 홈: index.md
   - 위협 모델 (B1–B7): THREAT_MODEL.md
   - 인가 모델 (RBAC+ABAC/PaC/ReBAC): docs/authorization-model.md
+  - NHI 생애주기 (워크로드 신원): docs/nhi.md
   - 금융 망분리 완화 (MLS): docs/financial-mls-mapping.md
   - 평가 — 검증가능성 커버리지: docs/evaluation-coverage.md
   - 감사증거 패키지 (예시): docs/audit-evidence.md

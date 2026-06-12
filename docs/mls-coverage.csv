@@ -33,6 +33,9 @@ ED3,detection-edr,broader runtime policies (nc/python/curl),B,NOT_COVERED,only s
 SL1,shift-left,IaC + K8s manifest scan (checkov),B,VERIFIED,checkov 452 pass / 0 fail
 SL2,shift-left,secret scan (gitleaks),B,CONFIGURED,CI step; not in verify suite
 SL3,shift-left,CI enforcement gate,B,VERIFIED,CI runs verify.sh on push
+SL4,shift-left,image vuln+secret scan (trivy),B,VERIFIED,scan gate:exit1 on CVE-2025-62727 / exit0 after starlette bump
+SL5,shift-left,SBOM generation (CycloneDX),B,VERIFIED,scan gate:trivy cyclonedx 103 components
+SL6,shift-left,image signing / provenance attestation (cosign/SLSA),B,NOT_COVERED,no local registry; documented on ECR path (aws-eks-path 1-1)
 GV1,governance,C/S/O data classification governance,G,GOVERNANCE,workload cannot test; NIS MLS process
 GV2,governance,CEO/board reporting + 시정요구 대응,G,GOVERNANCE,organizational; out of workload scope
 GV3,governance,DLP (data loss prevention),G,NOT_COVERED,enterprise control; absent here

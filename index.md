@@ -85,9 +85,10 @@ flowchart TB
     LLM 멀티에이전트 재검토가 **우리 SA-use 정책의 실제 우회(CRITICAL)** 를 발견 → 수정 →
     라이브 재검증. 과대주장 대신 잔여위험 명시.
 
--   :material-scale-balance: **현재 인가 흐름에 정렬**
+-   :material-scale-balance: **현재 인가 흐름에 정렬 + 프런티어**
 
-    RBAC+ABAC 하이브리드 · policy-as-code · 지속평가. ReBAC는 정직한 갭.
+    RBAC+ABAC 하이브리드 · policy-as-code · 지속평가. **AI-에이전트 위임(Cedar)·ReBAC(OpenFGA)**
+    을 실행 데모로 충족(NHI 생애주기 프레이밍 포함).
     [→ 인가 모델](docs/authorization-model.md)
 
 </div>
@@ -98,9 +99,11 @@ flowchart TB
 
 | 항목 | 결과 |
 |------|------|
-| **검증가능성 커버리지 (정량 헤드라인)** | 워크로드 적용가능 MLS 보상통제 sub-requirement의 **64% (23/36)** 가 *코드로 검증* — 갭(CONFIGURED 8·NOT-COVERED 5·GOVERNANCE 2)을 정직하게 공개. [→ 평가](docs/evaluation-coverage.md) |
+| **검증가능성 커버리지 (정량 헤드라인)** | 워크로드 적용가능 MLS 보상통제 sub-requirement의 **64% (25/39)** 가 *코드로 검증* — 갭(CONFIGURED 8·NOT-COVERED 6·GOVERNANCE 2)을 정직하게 공개. [→ 평가](docs/evaluation-coverage.md) |
 | 라이브 방어심층 검증 (기능 회귀 스위트) | **21 / 21 PASS** — 차단/허용 enforcement 전부. WireGuard는 api/db를 **다른 노드로 강제**(podAntiAffinity)해 api→db가 선상을 가로질러 *크로스노드 암호화*됨을 증명 |
-| Cedar 인가 단위테스트 | **8 / 8** |
+| Cedar 인가 단위테스트 | **8 / 8** (코어) · **9 / 9** AI-에이전트 위임(confused-deputy 차단) |
+| ReBAC 관계 테스트 (OpenFGA) | **11 / 11** `fga model test` + 라이브 `/check` 10/10 — 인가 모델의 ReBAC 갭을 실행으로 충족 |
+| 공급망: 이미지 스캔 + SBOM (trivy) | 게이트가 **실제 CVE 1건(HIGH) 포착→remediation→green** · CycloneDX SBOM **103 컴포넌트** |
 | checkov shift-left | **452 pass / 0 fail / 5 documented skip** |
 | 적대적 검토가 찾은 실제 버그 | **CRITICAL 1** (SA-use 우회) + 다수 — 전부 수정·검증 |
 | 비용 | **$0** (무료 로컬 kind; AWS 경로는 가격대별 가이드) |
