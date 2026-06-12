@@ -8,11 +8,17 @@
 # PSA entirely. Cilium WireGuard tunnels cross-node pod traffic as UDP/51871 on eth0;
 # the cilium_wg0 interface carries the *decrypted* side, so eth0 is where ciphertext lives.
 #
-# PROOF (both halves required, so it cannot false-pass):
-#   positive: during real api->db traffic, eth0<->api-node shows UDP/51871 (WireGuard).
-#   negative: during the SAME window, eth0 shows NO plaintext tcp/8080 carrying the
-#             X-User/HTTP marker between the nodes -> the app bytes are encrypted.
-#   guards:   api node != db node (else no wire hop), and traffic actually flowed.
+# PROOF (a traffic-flow gate + two corroborating halves — see honesty notes below):
+#   gate:     app requests must actually succeed (REQOK>=1) — else SKIP, never assert.
+#   positive (DISPOSITIVE): with api/db on different nodes, cross-node pod traffic in the
+#             window is WireGuard (UDP/51871) on eth0. (This count includes app + node
+#             background WG traffic; it is credited only once the traffic gate passed.)
+#   negative (CORROBORATING): no plaintext app bytes (X-User/HTTP/1) appear on eth0 as
+#             tcp/8080 in the same window. NOTE: absence here is also consistent with
+#             encapsulation (cross-node pod traffic is tunneled) or with no traffic — so
+#             it corroborates, it does not by itself prove encryption. The dispositive
+#             evidence is WG-packet presence + cross-node node-placement (ET1).
+#   guards:   api node != db node (else no wire hop), AND app traffic provably flowed.
 #
 # Honest scope: this is an OPT-IN evidence script (kind nodes lack tcpdump; install
 # needs node internet). It is NOT one of verify.sh's always-on checks. SKIPs (exit 0)
@@ -51,18 +57,21 @@ if ! docker exec "$DBNODE" sh -c 'command -v tcpdump' >/dev/null 2>&1; then
 fi
 
 # 2) Start BOTH captures in the background BEFORE generating traffic (else we miss packets).
+#    No -c cap on the positive: rely on the 25s timeout so the reported count is the real
+#    measured total, not a capture ceiling. Negative filters the db POD IP (the inner
+#    packet's address) — though under tunnel/encapsulation it won't appear on eth0 anyway.
 docker exec "$DBNODE" sh -c "rm -f /tmp/wg.pcap /tmp/plain.txt" 2>/dev/null || true
-# positive: encrypted WireGuard packets between the two nodes
-docker exec -d "$DBNODE" sh -c "timeout 25 tcpdump -ni eth0 -c 40 -w /tmp/wg.pcap 'udp port $WGPORT and host $API_NODE_IP'" 2>/dev/null
-# negative: any plaintext app bytes (tcp/8080) on the wire between the nodes, printed ASCII
-docker exec -d "$DBNODE" sh -c "timeout 25 tcpdump -nAi eth0 -c 60 'tcp port 8080 and host $API_NODE_IP' > /tmp/plain.txt 2>/dev/null" 2>/dev/null
+docker exec -d "$DBNODE" sh -c "timeout 25 tcpdump -ni eth0 -w /tmp/wg.pcap 'udp port $WGPORT and host $API_NODE_IP'" 2>/dev/null
+docker exec -d "$DBNODE" sh -c "timeout 25 tcpdump -nAi eth0 -c 200 'tcp port 8080 and host $DB_IP' > /tmp/plain.txt 2>/dev/null" 2>/dev/null
 sleep 1
 
 # 3) Drive REAL api->db traffic from the api pod (anti-affined off the db node) with the
-#    X-User marker, using the image's own python (no curl in the slim image).
+#    X-User marker, using the image's own python (no curl in the slim image). The python
+#    exits nonzero if ZERO requests succeeded, so the traffic-flow gate (|| skip) fires —
+#    we never assert "no plaintext" vacuously on a run where no traffic flowed.
 echo "generating api->db traffic ..."
-k -n shop exec "$APIPOD" -- python -c "
-import urllib.request
+REQOUT=$(k -n shop exec "$APIPOD" -- python -c "
+import urllib.request, sys
 r=0
 for _ in range(20):
     req=urllib.request.Request('http://$DB_IP:8080/', headers={'X-User':'alice-MARKER'})
@@ -70,8 +79,11 @@ for _ in range(20):
         urllib.request.urlopen(req, timeout=3).read(); r+=1
     except Exception:
         pass
-print('ok',r)
-" 2>/dev/null || skip "could not generate api->db traffic from the api pod"
+print('REQOK', r)
+sys.exit(0 if r > 0 else 7)
+" 2>/dev/null)
+REQOK=$(echo "$REQOUT" | awk '/REQOK/{print $2}'); REQOK=${REQOK:-0}
+[ "${REQOK:-0}" -ge 1 ] || skip "api->db traffic did not flow ($REQOK/20 requests succeeded — NetworkPolicy drop / db not ready?); cannot prove encryption without real traffic"
 
 sleep 3  # let the timeout'd captures flush
 
@@ -82,29 +94,34 @@ PLAIN_HITS=$(docker exec "$DBNODE" sh -c "grep -c -E 'alice-MARKER|X-User|HTTP/1
 PLAIN_HITS=${PLAIN_HITS:-0}
 
 echo "----------------------------------------------------------------"
-echo "positive  WireGuard UDP/$WGPORT packets (api<->db node):  $WG_COUNT   (need >=1)"
-echo "negative  plaintext app-bytes on eth0 (X-User/HTTP/1):    $PLAIN_HITS   (need 0)"
+echo "gate      app requests that succeeded (REQOK):             $REQOK   (need >=1)"
+echo "positive  WireGuard UDP/$WGPORT pkts api<->db node (app+bg): $WG_COUNT   (need >=1)"
+echo "negative  plaintext app-bytes on eth0 (X-User/HTTP/1):     $PLAIN_HITS   (need 0; corroborating)"
 echo "----------------------------------------------------------------"
 
 # 5) Save sanitized evidence (commit the summary, not the raw pcap — gitignored).
 mkdir -p "$EVID"
 docker cp "$DBNODE:/tmp/wg.pcap" "$EVID/wg-capture.pcap" >/dev/null 2>&1 || true
 {
-  echo "# WireGuard cross-node ciphertext capture (api->db)"
+  echo "# WireGuard cross-node capture (api->db) — WG ciphertext present, no plaintext observed"
   echo "cluster-context : $CTX"
   echo "api pod / node  : $APIPOD @ $API_NODE"
   echo "db  pod / node  : $DBPOD @ $DB_NODE (capture site: host netns, iface eth0)"
-  echo "api node IP     : $API_NODE_IP    wireguard udp port: $WGPORT"
-  echo "positive (WG UDP/$WGPORT packets, need >=1) : $WG_COUNT"
-  echo "negative (plaintext X-User/HTTP on wire, need 0) : $PLAIN_HITS"
+  echo "api node IP     : $API_NODE_IP    db pod IP: $DB_IP    wireguard udp port: $WGPORT"
+  echo "gate     (app requests succeeded, need >=1) : $REQOK"
+  echo "positive (WG UDP/$WGPORT pkts app+background, need >=1) : $WG_COUNT"
+  echo "negative (plaintext X-User/HTTP on eth0, need 0; corroborating) : $PLAIN_HITS"
+  echo "dispositive evidence : WG-packet presence + cross-node placement (ET1). Negative"
+  echo "  corroborates (absence is also consistent with tunnel encapsulation)."
   echo "reproduce       : scripts/capture-wg.sh   (needs tcpdump on the db node)"
 } > "$EVID/wg-capture-summary.txt"
 echo "evidence -> docs/assets/evidence/wg-capture-summary.txt"
 
-if [ "$WG_COUNT" -ge 1 ] && [ "$PLAIN_HITS" -eq 0 ]; then
-  echo "RESULT: PASS — api->db crosses the wire ONLY as WireGuard ciphertext; no plaintext observed."
+if [ "$REQOK" -ge 1 ] && [ "$WG_COUNT" -ge 1 ] && [ "$PLAIN_HITS" -eq 0 ]; then
+  echo "RESULT: PASS — app traffic flowed; cross-node api->db traffic in the window is WireGuard"
+  echo "        (UDP/$WGPORT) and NO plaintext app bytes appeared on eth0."
   exit 0
 else
-  echo "RESULT: FAIL — positive>=1 AND negative==0 not both satisfied (see counts above)."
+  echo "RESULT: FAIL — need REQOK>=1 AND WG_COUNT>=1 AND PLAIN_HITS==0 (see counts above)."
   exit 1
 fi

@@ -23,7 +23,7 @@ LP5,least-privilege,Cedar role hierarchy (auditlog),A,VERIFIED,authz.py:auditor 
 LP6,least-privilege,input charset validation (X-User),A,VERIFIED,verify:malformed X-User 400
 LP7,least-privilege,deployer minimal RBAC (no pods/secrets/SA),A,CONFIGURED,Role defined; partially via SA-use test
 ET1,encryption-transit,WireGuard cross-node encryption,B,VERIFIED,verify:api/db on diff nodes + wg active (api->db crosses wire)
-ET2,encryption-transit,packet-captured ciphertext (tcpdump),B,VERIFIED,capture-wg:40 WG UDP/51871 pkts + 0 plaintext X-User on eth0 (cross-node)
+ET2,encryption-transit,packet-captured ciphertext (tcpdump),B,VERIFIED,capture-wg:>=40 WG UDP/51871 pkts + 0 plaintext on eth0 (cross-node; traffic-gated)
 ER1,encryption-rest,etcd Secret AES-CBC,B,VERIFIED,enable-secrets-encryption: k8s:enc:aescbc / no plaintext
 ER2,encryption-rest,key rotation procedure,B,CONFIGURED,runbook 02 2-key flow; not automated/tested
 ER3,encryption-rest,managed KMS/HSM key mgmt,B,NOT_COVERED,local demo; AWS path documented only

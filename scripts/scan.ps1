@@ -12,11 +12,16 @@ $cfg = Join-Path $Root ".checkov.yaml"
 # non-UTF-8 OS locale (e.g. cp949 on Korean Windows).
 $env:PYTHONUTF8 = "1"
 
+# $ErrorActionPreference=Stop does NOT abort on a NATIVE exe's nonzero exit (only on
+# PowerShell cmdlet errors), so checkov's gate must be enforced via $LASTEXITCODE — or
+# a policy violation (exit 1) would be silently ignored and the build would false-pass.
 Write-Host "== checkov: Terraform =="
 & $py -m checkov.main -d (Join-Path $Root "terraform") --config-file $cfg --quiet --compact
+if ($LASTEXITCODE -ne 0) { throw "checkov gate failed (terraform)" }
 
 Write-Host "`n== checkov: Kubernetes manifests =="
 & $py -m checkov.main -d (Join-Path $Root "k8s") --config-file $cfg --quiet --compact
+if ($LASTEXITCODE -ne 0) { throw "checkov gate failed (k8s)" }
 
 # --- Image scan + SBOM (build provenance) -----------------------------------
 # Gated behind trivy's presence so the checkov gate above still runs anywhere.

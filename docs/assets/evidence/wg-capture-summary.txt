@@ -1,8 +1,11 @@
-# WireGuard cross-node ciphertext capture (api->db)
+# WireGuard cross-node capture (api->db) — WG ciphertext present, no plaintext observed
 cluster-context : kind-cloudsec
 api pod / node  : api-869ff48968-v5q7v @ cloudsec-worker
 db  pod / node  : db-cbbb899bd-fnj58 @ cloudsec-worker2 (capture site: host netns, iface eth0)
-api node IP     : 172.18.0.2    wireguard udp port: 51871
-positive (WG UDP/51871 packets, need >=1) : 40
-negative (plaintext X-User/HTTP on wire, need 0) : 0
-reproduce       : scripts/capture-wg.sh   (needs tcpdump on the db node)
+api node IP     : 172.18.0.2    db pod IP: 10.244.1.138    wireguard udp port: 51871
+gate     (app requests succeeded, need >=1) : 20
+positive (WG UDP/51871 pkts app+background, need >=1) : >=40 (this run's tcpdump was -c 40 capped)
+negative (plaintext X-User/HTTP on eth0, need 0; corroborating) : 0
+dispositive evidence : WG-packet presence + cross-node placement (ET1). Negative
+  corroborates (absence is also consistent with tunnel encapsulation).
+reproduce       : scripts/capture-wg.sh   (needs tcpdump on the db node; -c cap removed since)

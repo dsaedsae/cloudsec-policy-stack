@@ -5,7 +5,7 @@
 > 추가하지 않는다.** 이미 검증된 통제를 **NHI 생애주기 6단계**(provision → authenticate →
 > authorize → rotate → detect → decommission)로 재조명하고, 각 항목을
 > [`mls-coverage.csv`](mls-coverage.csv)의 **기존 id와 그 라벨**(VERIFIED/CONFIGURED/NOT_COVERED)에
-> 그대로 연결한다. 헤드라인 64%(25/39)는 **바뀌지 않는다** — 이 문서는 메트릭을 더하지 않고,
+> 그대로 연결한다. 헤드라인 67%(26/39)는 **바뀌지 않는다** — 이 문서는 메트릭을 더하지 않고,
 > 같은 증거를 다른 렌즈로 본다.
 
 ## NHI란, 그리고 왜 2024–2026의 핵심인가
@@ -37,7 +37,7 @@ principal, 그리고 확장 스레드인 AI 에이전트(`cedar/agent/`). 그래
 | | SPIFFE SVID 상호인증(엣지) | ID4 | ⚙️ CONFIGURED (opt-in·Lab4 수동) |
 | **AUTHORIZE** (권한 행사) | tier SA의 K8s API 권한 0 | ID5 | ✅ VERIFIED |
 | | 네트워크 도달 L3/L7(Cilium) | NS3·NS4 | ✅ VERIFIED |
-| | 요청별 Cedar ABAC + 에이전트 위임 | LP1–LP6 · `cedar/agent/` 9/9 | ✅ VERIFIED |
+| | 요청별 Cedar ABAC + 에이전트 위임 | LP1–LP6 · `cedar/agent/` 12/12 | ✅ VERIFIED |
 | **ROTATE** (자격증명 위생) | SPIRE 단명 SVID 자동회전(~1h) | ID4 | ⚙️ CONFIGURED |
 | | etcd Secret 키 회전 절차(2-key) | ER2 | ⚙️ CONFIGURED (런북·미자동) |
 | | SA 토큰 미마운트(정적 시크릿 회피) | ID6 | ⚙️ CONFIGURED (미assert) |
@@ -66,13 +66,14 @@ AI 에이전트도 NHI다. 자세한 모델은 [`authorization-model.md` §4·§
 
 - **위임은 본질적으로 관계다.** "에이전트 A가 사용자 U를 *대행*"은 [`rebac/`](../rebac/)의 관계
   그래프(`delegate from owner`)로, 또는 [`cedar/agent/`](../cedar/agent/)의 **ABAC 교집합**
-  (에이전트 천장 ∧ 대행 사용자 등급)으로 표현된다 — 후자는 confused-deputy 차단을 9/9로 단위테스트한다.
+  (에이전트 천장 ∧ 대행 사용자 등급, *비소유* 데이터 한정 — 소유 데이터는 owner override로 천장까지)로
+  표현된다 — 후자는 confused-deputy 차단을 12/12로 단위테스트하며 P2·P3 mutation으로 반증가능하다.
 - **`api` PDP = AI/Agent Gateway가 호스팅할 PEP의 축소판.** 단, 이 repo는 에이전트 런타임·위임
   체인·게이트웨이를 **구현하지 않는다** — 그것이 명시된 확장 경로이지 주장이 아니다.
 
 ## 평가 분석과의 연결 (새 메트릭 없음)
 
-이 문서는 **CSV에 행을 더하지 않고, 헤드라인 64%(25/39)를 바꾸지 않는다.** 위 표의 모든 id
+이 문서는 **CSV에 행을 더하지 않고, 헤드라인 67%(26/39)를 바꾸지 않는다.** 위 표의 모든 id
 (ID1–ID6, NS3·NS4, ZT1–ZT3, LP1–LP6, ED1–ED3, ER2)는 이미 [`mls-coverage.csv`](mls-coverage.csv)에
 *그 범주 그대로* 존재한다. NHI 렌즈는 **이미 검증된 증거 위에 올라탄다** — 증거를 부풀리지 않는다.
 이 불변성 자체가 정직성의 보증이다(`python scripts/coverage.py` 출력은 이 문서로 인해 변하지 않는다).

@@ -16,7 +16,7 @@
 직접 유용하다(증명 못 하는 통제는 보상통제로 인정받기 어렵다).
 
 ## 방법 (재현 가능)
-1. **분해** — 1차 출처에서 요구사항을 원자적·검사가능 sub-requirement로 분해(현재 **38개**).
+1. **분해** — 1차 출처에서 요구사항을 원자적·검사가능 sub-requirement로 분해(현재 **41개**).
    출처 구분: A=FSC 로드맵 직접 명시, B=MLS/NIST 800-207/ISMS-P 파생, G=거버넌스.
 2. **분류** — 각 sub-requirement를 4범주로(하드룰):
    - **VERIFIED-AS-CODE** — `verify.sh`/`authz.py`에 시행을 증명하는 실행 assertion 존재 → 라인 인용.
@@ -46,7 +46,7 @@
 | zero-trust (egress) | 4 / 4 | — |
 | credential-forgery (B7) | 4 / 7 | SPIFFE opt-in, 토큰미마운트 미assert, 타 ns 미포함 |
 | least-privilege | 6 / 7 | deployer RBAC 부분 |
-| encryption-in-transit | 2 / 2 | 크로스노드 암호화 + tcpdump 패킷캡처(WG UDP/51871 40pkt, eth0 평문 0) — scripts/capture-wg.sh |
+| encryption-in-transit | 2 / 2 | 크로스노드 암호화 + tcpdump 패킷캡처(WG UDP/51871 ≥40pkt 존재, eth0 평문 0; 트래픽게이트) — scripts/capture-wg.sh |
 | encryption-at-rest | 1 / 3 | 키회전·KMS는 수동/문서 |
 | detection (EDR) | 1 / 3 | 프로세스감사·광역룰 미assert |
 | shift-left | 4 / 6 | gitleaks는 CI만; 이미지 서명(cosign)은 ECR 경로(레지스트리 필요) |

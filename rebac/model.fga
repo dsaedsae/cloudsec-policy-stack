@@ -22,10 +22,9 @@ type user
     # The authorization edge: a user delegates to an agent that acts for them.
     define delegate: [agent]
 
+# `agent` carries no relations of its own — it is only ever the TARGET of user.delegate
+# (the on-behalf-of edge lives on the user side, where the can_view rewrite consumes it).
 type agent
-  relations
-    # The provenance edge (NHI on-behalf-of): the human this agent represents.
-    define principal: [user]
 
 type team
   relations

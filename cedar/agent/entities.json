@@ -2,6 +2,8 @@
   { "uid": { "type": "User", "id": "bob" }, "attrs": { "clearance": 2 }, "parents": [] },
   { "uid": { "type": "User", "id": "alice" }, "attrs": { "clearance": 2 }, "parents": [] },
   { "uid": { "type": "User", "id": "guest" }, "attrs": { "clearance": 0 }, "parents": [] },
+  { "uid": { "type": "User", "id": "carol" }, "attrs": { "clearance": 1 }, "parents": [] },
+  { "uid": { "type": "User", "id": "xuser" }, "attrs": { "clearance": 0 }, "parents": [] },
 
   { "uid": { "type": "Agent", "id": "agent-bob" },
     "attrs": { "allowed_tools": ["search", "read_data"], "max_classification": 2,
@@ -23,6 +25,16 @@
                "on_behalf_of": { "__entity": { "type": "User", "id": "guest" } } },
     "parents": [] },
 
+  { "uid": { "type": "Agent", "id": "agent-carol" },
+    "attrs": { "allowed_tools": ["search", "read_data"], "max_classification": 2,
+               "on_behalf_of": { "__entity": { "type": "User", "id": "carol" } } },
+    "parents": [] },
+
+  { "uid": { "type": "Agent", "id": "agent-x" },
+    "attrs": { "allowed_tools": ["read_data"], "max_classification": 2,
+               "on_behalf_of": { "__entity": { "type": "User", "id": "xuser" } } },
+    "parents": [] },
+
   { "uid": { "type": "Tool", "id": "search" }, "attrs": { "name": "search" }, "parents": [] },
   { "uid": { "type": "Tool", "id": "read_data" }, "attrs": { "name": "read_data" }, "parents": [] },
   { "uid": { "type": "Tool", "id": "transfer" }, "attrs": { "name": "transfer" }, "parents": [] },
@@ -35,5 +47,8 @@
     "parents": [] },
   { "uid": { "type": "DataRecord", "id": "rec-classified" },
     "attrs": { "classification": 2, "owner": { "__entity": { "type": "User", "id": "alice" } } },
+    "parents": [] },
+  { "uid": { "type": "DataRecord", "id": "rec-xowned" },
+    "attrs": { "classification": 1, "owner": { "__entity": { "type": "User", "id": "xuser" } } },
     "parents": [] }
 ]

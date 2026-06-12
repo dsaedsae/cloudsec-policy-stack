@@ -31,7 +31,19 @@
     "principal": "Agent::\"agent-overpriv\"", "action": "Action::\"ReadData\"",
     "resource": "DataRecord::\"rec-sensitive\"", "context": {}, "expect": "Deny" },
 
-  { "name": "forbid guardrail: low-ceiling agent never reads classified",
+  { "name": "low-ceiling agent never reads classified (default-deny / permit ceiling cap)",
     "principal": "Agent::\"agent-guest\"", "action": "Action::\"ReadData\"",
-    "resource": "DataRecord::\"rec-classified\"", "context": {}, "expect": "Deny" }
+    "resource": "DataRecord::\"rec-classified\"", "context": {}, "expect": "Deny" },
+
+  { "name": "P2 IS LOAD-BEARING: agent for a mid-clearance user reads a third-party record at the user's ceiling -> Allow",
+    "principal": "Agent::\"agent-carol\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-sensitive\"", "context": {}, "expect": "Allow" },
+
+  { "name": "P2 INTERSECTION GATE: same agent/user, third-party record ABOVE the user's clearance -> Deny",
+    "principal": "Agent::\"agent-carol\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-classified\"", "context": {}, "expect": "Deny" },
+
+  { "name": "P3 IS LOAD-BEARING: agent reads the delegating user's OWN record above the user's clearance -> Allow",
+    "principal": "Agent::\"agent-x\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-xowned\"", "context": {}, "expect": "Allow" }
 ]

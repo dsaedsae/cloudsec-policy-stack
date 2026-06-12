@@ -5,7 +5,15 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Force UTF-8 file reads so checkov doesn't choke on non-ASCII comments under a
 # non-UTF-8 OS locale (e.g. cp949 on Korean Windows). Linux/CI default to UTF-8.
 export PYTHONUTF8=1
-checkov -d "$ROOT/terraform" -d "$ROOT/k8s" --config-file "$ROOT/.checkov.yaml" --compact
+# One -d per call (mirrors scan.ps1): a single multi-`-d` invocation suppresses the
+# "Passed checks: N" summary on the console-script path, so the user sees nothing. Two
+# banner-prefixed calls restore the per-target summary documented in docs/02-scan.md.
+# set -e aborts on a nonzero checkov exit (a real policy failure), enforcing the gate.
+echo "== checkov: Terraform =="
+checkov -d "$ROOT/terraform" --config-file "$ROOT/.checkov.yaml" --compact
+echo ""
+echo "== checkov: Kubernetes manifests =="
+checkov -d "$ROOT/k8s" --config-file "$ROOT/.checkov.yaml" --compact
 
 # --- Image scan + SBOM (build provenance) -----------------------------------
 # Gated behind trivy's presence so the checkov gate above still runs anywhere.

@@ -43,8 +43,13 @@ when {
     && resource.classification <= principal.max_classification
 };
 
-// 4) Hard guardrail: an agent whose ceiling is below "classified" (2) may NEVER read
-//    classified data — even if the delegating user is cleared or owns it. forbid wins.
+// 4) Belt-and-suspenders forbid (defense-in-depth). NOTE: under the current permit set
+//    this is REDUNDANT — P2 and P3 both cap reads at the agent's own ceiling
+//    (max_classification), so an agent with ceiling < 2 can never be GRANTED a classified
+//    read in the first place, and the dedicated test Denies by default-deny / permit-cap,
+//    not by this forbid. It is kept as an explicit fail-safe backstop: if a future permit
+//    is ever added that does NOT cap at the agent ceiling, this forbid still blocks a
+//    sub-"classified" agent from reading classified data. (Cedar: forbid always wins.)
 forbid (
     principal,
     action == Action::"ReadData",

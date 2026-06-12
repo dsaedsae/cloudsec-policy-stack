@@ -89,10 +89,14 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
   *워크로드 NHI* 통제의 레퍼런스다.
 - **AI 에이전트 인가 (실행 데모 — [`cedar/agent/`](../cedar/agent/)):** 에이전트도 NHI다. 에이전트를
   principal로, 도구호출/데이터읽기를 action으로, 데이터를 resource(등급 C/S/O)로 둔 Cedar 번들을
-  `python cedar/agent_authz.py`로 단위테스트한다(**9/9**). 핵심은 **위임 교집합**(delegation
-  intersection)으로 **confused-deputy 차단**이다 — 인가 = (에이전트 자신의 천장 `max_classification`)
-  **∧** (대행하는 사용자의 등급 `on_behalf_of.clearance`). 과잉권한 에이전트라도 저등급 사용자를
-  대행하면 그 사용자가 닿지 못하는 데이터에 닿을 수 없다. 관계로 표현한 같은 위임이 §4의 ReBAC다.
+  `python cedar/agent_authz.py`로 단위테스트한다(**12/12**). 핵심은 **위임 교집합**(delegation
+  intersection)으로 **confused-deputy 차단**이다 — *비소유* 데이터 인가 = (에이전트 자신의 천장
+  `max_classification`) **∧** (대행하는 사용자의 등급 `on_behalf_of.clearance`). 과잉권한 에이전트라도
+  저등급 사용자를 대행하면 그 사용자가 닿지 못하는 *비소유* 데이터엔 닿을 수 없다. **단, 대행 사용자가
+  *소유한* 레코드는 등급 사다리와 무관하게 에이전트 천장까지 읽을 수 있다**(owner override, `policies.cedar`
+  P3) — 즉 교집합은 비소유 데이터에 적용되고, 소유 데이터는 에이전트 천장으로만 제한된다. 테스트는
+  *반증가능*하게 설계됐다: P2를 지우면 "P2 IS LOAD-BEARING" 케이스가 Allow→Deny로 뒤집히고, P3를 지우면
+  "P3 IS LOAD-BEARING" 케이스가 뒤집힌다(mutation으로 확인). 관계로 표현한 같은 위임이 §4의 ReBAC다.
 - **AI Gateway:** API Gateway가 PEP이듯, AI/Agent Gateway는 에이전트 행동의 PEP다. 여기서 위
   인가 모델이 시행된다. 이 repo의 PDP가 그 자리에 들어갈 수 있다. NHI 생애주기 관점은
   [`nhi.md`](nhi.md) 참조.

@@ -47,7 +47,7 @@ OpenFGA `/check` HTTP API:**
 python rebac/check_live.py        # boots openfga/openfga, asserts /check, tears it down
 ```
 
-Expected: `10/10 live /check scenarios passed`. SKIPs honestly (exit 0) if docker is absent.
+Expected: `11/11 live /check scenarios passed`. SKIPs honestly (exit 0) if docker is absent.
 
 ## Honest scope
 

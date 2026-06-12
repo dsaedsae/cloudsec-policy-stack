@@ -40,6 +40,7 @@ SCENARIOS = [
     ("agent:assistant", "can_view",     "account:acct-bob",       False),  # no edge to bob
     ("agent:assistant", "can_transfer", "account:acct-bob",       False),
     ("user:carol",      "can_view",     "account:acct-alice",     False),  # unrelated
+    ("user:carol",      "can_transfer", "account:acct-alice",     False),  # unrelated (parity with store.fga.yaml)
     ("user:bob",        "can_admin",    "workload:billing-job",   True),   # member from owner_team
     ("user:alice",      "can_admin",    "workload:billing-job",   False),  # not a team member
     ("user:carol",      "can_admin",    "workload:billing-job",   False),
@@ -48,7 +49,6 @@ SCENARIOS = [
 TUPLES = [
     ("user:alice",      "owner",      "account:acct-alice"),
     ("agent:assistant", "delegate",   "user:alice"),
-    ("user:alice",      "principal",  "agent:assistant"),
     ("user:bob",        "owner",      "account:acct-bob"),
     ("user:bob",        "member",     "team:payments"),
     ("team:payments",   "owner_team", "workload:billing-job"),

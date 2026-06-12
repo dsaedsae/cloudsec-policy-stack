@@ -18,9 +18,6 @@ tuples:
   - user: agent:assistant      # alice.delegate = assistant (authorization edge)
     relation: delegate
     object: user:alice
-  - user: user:alice           # assistant.principal = alice (provenance edge / NHI)
-    relation: principal
-    object: agent:assistant
 
   # bob owns his own account (no delegation to assistant).
   - user: user:bob
