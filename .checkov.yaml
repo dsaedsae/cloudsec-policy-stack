@@ -1,6 +1,14 @@
 # Checkov baseline - documented, intentional suppressions only. Everything else must pass.
-# Real teams don't chase "0 findings"; they triage and justify. These four are
-# deliberate for a local, free demo cluster (not unexplained prod shortcuts):
+# Real teams don't chase "0 findings"; they triage and justify. THREE global suppressions
+# below (+ a scoped CKV_K8S_43 annotation on the locally-built api image in k8s/app.yaml,
+# + the ephemeral probe-pod skips in k8s/probes.yaml) are deliberate for a local demo.
+#
+# Pin the frameworks so the gate is deterministic: only kubernetes + terraform are scanned
+# (the cloudformation parser otherwise trips on the multi-doc VAP YAMLs with spurious
+# parse errors). Secret scanning is handled separately by gitleaks in CI.
+framework:
+  - kubernetes
+  - terraform
 skip-check:
   - CKV_K8S_15   # imagePullPolicy IfNotPresent is intentional for kind (images preloaded locally)
   - CKV_K8S_40   # nginx-unprivileged fixes UID 101; cannot use a >10000 UID without breaking the image

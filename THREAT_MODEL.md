@@ -19,6 +19,24 @@ client ──▶ web (frontend) ──▶ api (backend, Cedar PDP) ──▶ db 
 - Workloads are non-root, drop ALL caps, read-only rootfs, and **do not mount a
   ServiceAccount token** (`automountServiceAccountToken: false`).
 
+## Attacker model
+
+We make the adversary explicit (security claims are only meaningful against a stated
+attacker). Three concrete profiles, each mapped to the controls that stop it and the
+`verify` check that proves it:
+
+| # | Attacker | Capability | Goal | Stopped by (verify) | Residual |
+|---|----------|-----------|------|---------------------|----------|
+| **A1** | **Popped `web` pod** | RCE inside the `web` container (e.g. via a web vuln) | reach `db`, exfiltrate, beacon out, escalate | L3 drop `web→db` (`000`); egress default-deny → internet/metadata/apiserver (`000`); Tetragon SIGKILLs a spawned shell (`137`); unmounted SA token → no cluster API | A root-on-node escape; a non-shell post-exploit that stays within `web`'s allowed L7 calls |
+| **A2** | **Malicious / compromised `shop:deployers`** | can `create` Deployments/Jobs/CronJobs in `shop` (CI identity) | run a workload **as a tier identity** (`api-sa`) to *become* `api` | label↔SA admission (mismatch DENY); **SA-use gate** denies a non-operator running as a tier SA — incl. via Deployment **and CronJob** (`SA-use DENY`) | An *authorized* operator (cluster-admin / `shop:tier-operators`) is trusted by design; a `system:serviceaccount:kube-system:*` controller is trusted |
+| **A3** | **On-path between nodes** | passive capture of inter-node pod traffic | read `X-User` / account data on the wire | Cilium **WireGuard** encrypts cross-node pod traffic (ciphertext, not plaintext) | Same-node hops don't traverse the wire; a host/kernel compromise; mutual-auth (SVID) is opt-in on the demo edge |
+
+**Out of scope (stated, not hand-waved):** root-on-node / kernel compromise; a malicious
+cluster-admin (the top of every trust chain); supply-chain compromise of an upstream
+image *before* digest pinning; the unauthenticated `X-User` demo input (a real system
+derives the principal from a verified JWT/SVID). These are the honest edges — each
+control raises the bar against A1–A3, not against an attacker who owns the substrate.
+
 ## Trust boundaries
 
 | # | Boundary | Crossing | Control |
