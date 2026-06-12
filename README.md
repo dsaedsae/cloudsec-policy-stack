@@ -83,7 +83,8 @@ Two further controls are demonstrated by their own scripts (not in the always-on
 cluster substrate):
 - **Mutual auth (SPIFFE)** — `kubectl apply -f k8s/netpol-mutual.yaml` upgrades the `web→api` edge to
   `authentication.mode: required`; the request still returns **200** because the SVID handshake completes
-  (SPIRE issues each workload an identity from its ServiceAccount). Verified live.
+  (SPIRE issues each workload an identity from its ServiceAccount). Demonstrated **manually** (Lab 4, opt-in) —
+  **CONFIGURED**, not asserted in the always-on `verify` suite (coverage ID4; see `docs/mls-coverage.csv`).
 - **Secret encryption-at-rest** — `scripts/enable-secrets-encryption.*` turns on AES-CBC in etcd and proves it
   by reading the raw datastore: the stored Secret begins `k8s:enc:aescbc:v1:` with **no plaintext**. Verified live.
 
