@@ -3,6 +3,11 @@ apiVersion: kind.x-k8s.io/v1alpha4
 # Cilium replaces the CNI, so disable kind's default (kindnet).
 networking:
   disableDefaultCNI: true
+# Pin k8s >= 1.30 so the identity ValidatingAdmissionPolicy (admissionregistration
+# .k8s.io/v1, GA in 1.30) installs. Keep this in sync with terraform variables.tf
+# (var.node_image). helm/kind-action consumes the per-node `image`.
 nodes:
   - role: control-plane
+    image: kindest/node:v1.34.0
   - role: worker
+    image: kindest/node:v1.34.0

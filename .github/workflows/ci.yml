@@ -19,7 +19,7 @@ jobs:
         with: { python-version: "3.12" }
       - run: pip install -r requirements-dev.txt
 
-      - name: Cedar authz unit tests (schema validate + 7 scenarios)
+      - name: Cedar authz unit tests (schema validate + 8 scenarios)
         run: python cedar/authz.py
 
       - name: Checkov (Terraform + K8s workloads)
@@ -55,20 +55,29 @@ jobs:
           cluster_name: cloudsec
           config: .github/kind-config.yaml
 
-      - name: Install Cilium (L7 proxy) + Tetragon (runtime)
+      - name: Install Cilium (L7 + mutual auth + WireGuard) + Tetragon (runtime)
         run: |
           curl -sL https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz | sudo tar xzC /usr/local/bin
-          cilium install --version 1.16.5 --set l7Proxy=true --wait
+          cilium install --version 1.16.5 \
+            --set l7Proxy=true \
+            --set encryption.enabled=true --set encryption.type=wireguard \
+            --set authentication.mutual.spire.enabled=true \
+            --set authentication.mutual.spire.install.enabled=true \
+            --wait
           helm repo add cilium https://helm.cilium.io/ && helm repo update cilium
           helm install tetragon cilium/tetragon -n kube-system --version 1.7.0 --wait
 
-      - name: Load image + deploy app, network + runtime policies
+      - name: Load image + deploy identity, app, network + runtime policies
         run: |
           kind load docker-image cloudsec-api:local --name cloudsec
+          # Identity FIRST: the tier ServiceAccounts (rbac.yaml) must exist before
+          # app.yaml's Deployments reference them, or the ServiceAccount admission
+          # controller rejects the pods. admission-policy.yaml is the B7 control.
+          kubectl apply -f k8s/rbac.yaml -f k8s/admission-policy.yaml
           kubectl apply -f k8s/app.yaml -f k8s/netpol.yaml -f k8s/tracingpolicy.yaml
           kubectl -n shop rollout status deploy/web --timeout=180s
           kubectl -n shop rollout status deploy/api --timeout=180s
           kubectl -n shop rollout status deploy/db  --timeout=180s
 
-      - name: Verify enforcement (L3 + L7 + Cedar + egress)
+      - name: Verify enforcement (identity + L3 + L7 + Cedar + egress + runtime + encryption)
         run: bash scripts/verify.sh
