@@ -31,8 +31,12 @@ client ──▶ web (frontend) ──▶ api (backend, Cedar PDP) ──▶ db 
 | B6 | compromised workload | post-exploit behavior | Tetragon (SIGKILL shell exec in `db`) |
 | **B7** | **K8s API → pod identity** | **who may create/label pods** | **RBAC + admission policy** ← the identity TCB |
 
-B1–B6 are the live-verified layers (`scripts/verify.sh`, 14/14). **B7 is the one
-the other six all silently depend on**, and is what this round hardens.
+B1–B6 are the original live-verified layers. **B7 is the one the other six all
+silently depend on**, and is what this round hardens. `scripts/verify.{sh,ps1}`
+now also exercises B7 directly: it asserts a tier ServiceAccount has zero K8s API
+rights, that a *mismatched* forged pod (`app: api` on `web-sa`) is denied at
+admission, and — honestly — that a *self-consistent* forged pod (`app: api` +
+`api-sa`) is admitted, documenting the residual rather than hiding it.
 
 ## The identity problem (B7) — why labels are a TCB
 
@@ -60,19 +64,37 @@ portfolios, and it is exactly where this stack now adds controls.
    `kubectl auth can-i --list --as=system:serviceaccount:shop:api-sa` → only the
    public baseline; it cannot create pods, read secrets, or patch anything.
 
-2. **Label↔identity binding at admission** — `k8s/admission-policy.yaml` is a
-   `ValidatingAdmissionPolicy` (built-in, GA) that **rejects any pod in `shop`
-   whose `app` label doesn't match its ServiceAccount**. You cannot create a pod
-   labeled `app: api` running as `web-sa`; the forged-identity move is denied
-   before the object is persisted — no external admission controller required.
+2. **Label↔SA *consistency* at admission** — `k8s/admission-policy.yaml` is a
+   `ValidatingAdmissionPolicy` (built-in, GA in k8s ≥1.30 — the node image is
+   pinned accordingly) that **rejects any pod claiming `app: web|api|db` whose
+   label disagrees with its ServiceAccount**. This is a *consistency guard, not a
+   closure*: it kills the trivial forgery (`kubectl run --labels app=api`, which
+   defaults to the `default` SA → label≠SA → denied), and it lines the label up
+   with the SA so the SPIFFE SVID (derived from the SA) and the network label
+   agree. **What it does NOT do:** stop a principal who controls *both* fields
+   from minting a *self-consistent* forgery — a pod labeled `app: api` **and**
+   running as `api-sa` passes admission and is `api` to Cilium. So the VAP is a
+   necessary hygiene control, not the identity boundary. The real boundary is
+   mitigation #1 (RBAC: who may create a workload at all) plus #3 (cryptographic
+   identity). This honest residual is exactly why #3 exists.
 
-3. **Cryptographic identity (production path)** — labels are *administratively*
+3. **Cryptographic identity (mutual auth / SPIFFE)** — labels are *administratively*
    asserted; the strongest fix makes identity *cryptographic*. Cilium **mutual
-   authentication** issues each workload a SPIFFE identity (SPIRE) and can require
-   it on a policy edge (`authentication.mode: required`). `k8s/netpol-mutual.yaml`
-   shows the `web→api` edge upgraded to require mutual auth, and
-   `terraform/main.tf` carries the Helm flag to enable the SPIRE backend. Then a
-   forged label is not enough — the peer must also present a valid SVID.
+   authentication** is enabled in this repo (`terraform/main.tf`:
+   `authentication.mutual.spire.{enabled,install.enabled}=true` stands up an
+   in-cluster SPIRE), and `k8s/netpol-mutual.yaml` upgrades the `web→api` edge to
+   `authentication.mode: required`. Each workload gets a SPIFFE SVID derived from
+   its **ServiceAccount**, and the api endpoint refuses any peer that cannot
+   complete the mTLS handshake — so a forged *label* alone is necessary-but-
+   insufficient. **The remaining residual, stated plainly:** because the SVID is
+   keyed to the ServiceAccount, identity ultimately reduces to *who may run a
+   workload as `api-sa`*. Modern Kubernetes has **no `serviceaccounts/use` gate**
+   (PodSecurityPolicy, which had one, was removed in 1.25), so any principal who
+   can create a Deployment in `shop` can reference `api-sa`. Closing *that* needs
+   admission that binds the requester to the SAs they may use (e.g. a second VAP
+   or Kyverno), which is the next step beyond this portfolio. The chain here —
+   RBAC → label/SA consistency → SVID handshake — raises the bar at each layer
+   without pretending the top of the chain is sealed.
 
 ## What each layer does NOT protect against (residual risk)
 
@@ -87,19 +109,33 @@ portfolios, and it is exactly where this stack now adds controls.
   job. "0 findings" is never claimed as "secure" — see `.checkov.yaml` triage.
 - **Entities are static fixtures** baked into the api image; there is no user
   store, rotation, or revocation. Out of scope for the demo, called out as such.
-- **Supply chain:** images are pinned by `@sha256` digest (B1 integrity), but this
-  repo does not yet verify build provenance (cosign/SLSA) — see README roadmap.
+- **Supply chain:** the public images (web/db, and the curl probe) are pinned by
+  `@sha256` digest (B1 integrity); the `api` image is built locally and side-loaded
+  via `kind load`, so it has no registry digest (a *scoped* checkov skip documents
+  this — every other workload is still held to digest pinning). Build provenance
+  (cosign/SLSA) is not yet verified — see README roadmap.
+- **Data protection vs. access control.** B1–B7 govern *who may reach/do what*.
+  Separately, this stack protects the **data itself**: pod-to-pod traffic is
+  WireGuard-encrypted (data-in-transit, verified live), and Secrets can be
+  AES-CBC encrypted in etcd (data-at-rest, `scripts/enable-secrets-encryption.*`).
+  Honest scope: there is no real datastore here (the `db` tier is a placeholder
+  and entities are static fixtures), so this demonstrates the *controls* mapped to
+  data states, not a production data-lifecycle. See `docs/06-data-protection.md`.
 
 ## STRIDE quick-map
 
 | Threat | Where it would land | Control |
 |--------|--------------------|---------|
-| **S**poofing identity | forge `app:` label → become `api` | RBAC + admission policy (B7); mutual auth |
-| **T**ampering | mutate pod spec/labels | PSA `restricted` + admission policy |
+| **S**poofing identity | forge `app:` label → become `api` | RBAC (who may deploy) → label/SA admission consistency → mutual-auth SVID. *Residual:* who may run as `api-sa` (see B7). |
+| **T**ampering | mutate pod spec/labels | PSA `restricted` + label/SA admission policy |
 | **R**epudiation | who ran what in `db` | Tetragon process-exec audit trail |
 | **I**nfo disclosure | exfil to internet/metadata | Cilium egress default-deny (B5) |
+| **I**nfo disclosure | read data on the wire / in etcd | WireGuard (in-transit) + Secret encryption (at-rest) |
 | **D**enial of service | resource exhaustion | per-container CPU/memory limits |
 | **E**levation of privilege | shell in data tier | Tetragon SIGKILL (B6); drop-ALL-caps, no-priv-esc |
 
-The point of the table is not completeness — it is to show every row maps to a
-control that exists in this repo and is tested, not aspirational.
+The point of the table is not completeness — it is that every row maps to a
+control **implemented in this repo**, and that the ones billed as enforced are
+exercised by `cedar/authz.py` or the live `verify` job. Where a control only
+*raises* the bar rather than closing a threat (the Spoofing row), the row says so
+and the residual is named above — that honesty is the point, not a clean table.

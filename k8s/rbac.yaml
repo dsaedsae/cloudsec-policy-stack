@@ -11,9 +11,24 @@
 #      unmounted token). Prove it:
 #        kubectl auth can-i --list --as=system:serviceaccount:shop:api-sa
 #   2. An example least-privilege "deployer" Role: may manage Deployments/Services
-#      but NOT create bare pods and NOT touch ServiceAccounts — so a CI principal
-#      can ship the app without being able to hand-craft a forged-identity pod.
+#      but NOT create bare pods and NOT touch ServiceAccounts. This SHRINKS the
+#      blast radius (no secrets, no SA edits) — but be honest: a Deployment
+#      template still carries `labels` and `serviceAccountName`, and modern k8s has
+#      no `serviceaccounts/use` gate (PSP was removed in 1.25). So whoever holds
+#      this Role can still mint a self-consistent forged `api` via a Deployment.
+#      The forgery is constrained by trust in the deployer + closed cryptographically
+#      by mutual auth (k8s/netpol-mutual.yaml), NOT by these verb omissions alone.
 
+# The namespace lives HERE (the identity layer), not in app.yaml, because rbac.yaml
+# is applied first: a ServiceAccount cannot be created in a namespace that does not
+# exist yet. Pod Security Admission `restricted` is enforced from the start.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shop
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata: { name: web-sa, namespace: shop }
@@ -31,9 +46,10 @@ automountServiceAccountToken: false
 ---
 # Least-privilege role for whoever deploys the app (CI, an operator). Explicit
 # verbs, namespaced, no wildcards. Note what is ABSENT: no `pods` create (you
-# deploy via Deployments, you don't hand-craft pods), no `serviceaccounts`,
-# no `secrets`. That keeps the forged-identity move (B7) off the table for this
-# principal.
+# deploy via Deployments), no `serviceaccounts`, no `secrets`. This minimizes the
+# deployer's reach — but it does NOT by itself close B7: a Deployment template can
+# still set tier labels + serviceAccountName, so this principal remains trusted not
+# to forge identity. See THREAT_MODEL.md (mitigation #2/#3) for the honest residual.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata: { name: shop-deployer, namespace: shop }

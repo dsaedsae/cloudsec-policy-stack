@@ -45,5 +45,58 @@ else
   printf '  %-48s expect %-4s got %-4s %s\n' "shell exec in db (SIGKILL by TracingPolicy)" "KILL" "137" "PASS"
 fi
 
+echo "== Identity (B7): least-privilege RBAC + label<->SA admission =="
+# A tier SA has ZERO Kubernetes API rights (no RoleBinding): a popped pod's blast
+# radius on the cluster API is nil even if a token were present.
+CANI_PODS=$(kubectl --context "$CTX" auth can-i create pods --as=system:serviceaccount:shop:api-sa -n shop 2>/dev/null || true)
+CANI_SEC=$(kubectl --context "$CTX" auth can-i get secrets --as=system:serviceaccount:shop:api-sa -n shop 2>/dev/null || true)
+if [ "$CANI_PODS" = "no" ] && [ "$CANI_SEC" = "no" ]; then
+  printf '  %-48s expect %-4s got %-4s %s\n' "api-sa: no create-pods / no read-secrets" "no" "no" "PASS"
+else
+  printf '  %-48s expect %-4s got %-4s %s\n' "api-sa K8s API rights" "no" "$CANI_PODS/$CANI_SEC" "FAIL"; fail=1
+fi
+
+# Forged network identity: a pod LABELED app:api but running as web-sa. Server
+# dry-run runs the ValidatingAdmissionPolicy without persisting; expect DENY.
+CURL_IMG="curlimages/curl:8.11.1@sha256:c1fe1679c34d9784c1b0d1e5f62ac0a79fca01fb6377cdd33e90473c6f9f9a69"
+forge_pod() { # $1=name $2=serviceAccount
+  cat <<YAML
+apiVersion: v1
+kind: Pod
+metadata: { name: $1, namespace: shop, labels: { app: api } }
+spec:
+  serviceAccountName: $2
+  automountServiceAccountToken: false
+  securityContext: { runAsNonRoot: true, runAsUser: 100, seccompProfile: { type: RuntimeDefault } }
+  containers:
+    - name: c
+      image: $CURL_IMG
+      command: ["sleep", "1"]
+      securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: ["ALL"] } }
+      resources: { requests: { cpu: "5m", memory: "8Mi" }, limits: { cpu: "50m", memory: "32Mi" } }
+YAML
+}
+if forge_pod forge-mismatch web-sa | kubectl --context "$CTX" create --dry-run=server -f - >/dev/null 2>&1; then
+  printf '  %-48s expect %-4s got %-4s %s\n' "forged app:api on web-sa" "DENY" "ADMIT" "FAIL"; fail=1
+else
+  printf '  %-48s expect %-4s got %-4s %s\n' "forged app:api on web-sa -> admission DENY" "DENY" "DENY" "PASS"
+fi
+# Honest residual: a SELF-consistent pod (app:api + api-sa) IS admitted — the VAP is
+# a label<->SA consistency guard, not a forge-stopper. Cryptographic closer = mutual
+# auth (netpol-mutual.yaml); remaining gap = who may run as api-sa -> RBAC. (THREAT_MODEL.md)
+if forge_pod forge-consistent api-sa | kubectl --context "$CTX" create --dry-run=server -f - >/dev/null 2>&1; then
+  printf '  %-48s expect %-4s got %-4s %s\n' "self-consistent app:api+api-sa admitted (residual)" "ADMIT" "ADMIT" "PASS"
+else
+  printf '  %-48s expect %-4s got %-4s %s\n' "self-consistent app:api+api-sa" "ADMIT" "DENY" "FAIL"; fail=1
+fi
+
+echo "== Data-in-transit (Cilium WireGuard) =="
+ENC=$(kubectl --context "$CTX" exec -n kube-system ds/cilium -c cilium-agent -- cilium-dbg encrypt status 2>/dev/null || true)
+if echo "$ENC" | grep -qi "Wireguard"; then
+  printf '  %-48s expect %-4s got %-4s %s\n' "pod-to-pod traffic encrypted (WireGuard)" "WG" "WG" "PASS"
+else
+  printf '  %-48s expect %-4s got %-4s %s\n' "WireGuard pod-to-pod encryption" "WG" "off" "FAIL"; fail=1
+fi
+
 echo ""
 if [ "$fail" = 0 ]; then echo "ALL PASS"; else echo "FAILURES"; exit 1; fi

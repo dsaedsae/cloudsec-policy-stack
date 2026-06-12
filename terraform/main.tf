@@ -4,8 +4,12 @@
 # and reproducible. No cloud cost.
 
 resource "kind_cluster" "this" {
-  name           = var.cluster_name
-  wait_for_ready = true
+  name       = var.cluster_name
+  node_image = var.node_image # k8s >= 1.30 so the VAP identity control installs (see variables.tf)
+  # MUST be false: the CNI is disabled below, so nodes stay NotReady until Cilium is
+  # installed by the helm_release in a later apply step. wait_for_ready=true would
+  # block forever waiting for a readiness that only the not-yet-installed CNI provides.
+  wait_for_ready = false
 
   kind_config {
     kind        = "Cluster"
@@ -74,6 +78,36 @@ resource "helm_release" "cilium" {
   set {
     name  = "hubble.ui.enabled"
     value = "true"
+  }
+
+  # --- Identity (B7): cryptographic workload identity via mutual auth (SPIFFE) ---
+  # The label<->SA admission policy only makes the *label* and the *ServiceAccount*
+  # agree; it cannot stop a principal who can create a workload from choosing both
+  # consistently (a self-consistent forged `api`). Mutual authentication issues each
+  # workload a SPIFFE SVID from an in-cluster SPIRE and lets a policy edge REQUIRE it
+  # (k8s/netpol-mutual.yaml), so a forged label is no longer sufficient — the peer
+  # must also present a valid SVID. This is the actual closer for B7 (THREAT_MODEL.md).
+  set {
+    name  = "authentication.mutual.spire.enabled"
+    value = "true"
+  }
+  set {
+    name  = "authentication.mutual.spire.install.enabled"
+    value = "true"
+  }
+
+  # --- Data-in-transit: transparent pod-to-pod encryption (WireGuard) ---
+  # Defense in depth for data *protection*, not just access: even an on-path
+  # attacker between nodes sees only ciphertext. Maps to PCI-DSS req 4 / GDPR
+  # Art.32 "encryption of personal data in transit". Verified live with
+  # `cilium encrypt status` (scripts/verify.*).
+  set {
+    name  = "encryption.enabled"
+    value = "true"
+  }
+  set {
+    name  = "encryption.type"
+    value = "wireguard"
   }
 
   depends_on = [kind_cluster.this]

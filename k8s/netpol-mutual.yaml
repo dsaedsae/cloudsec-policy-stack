@@ -1,0 +1,37 @@
+# Layer 0 (identity), capstone: upgrade the web->api edge to REQUIRE mutual
+# authentication (SPIFFE). This is the cryptographic closer for B7.
+#
+# Why this exists: the label<->SA admission policy (k8s/admission-policy.yaml)
+# only forces a pod's `app` label and its ServiceAccount to AGREE. It cannot stop
+# a principal who can create a workload from choosing BOTH consistently — a
+# self-consistent forged `api` (label app:api + serviceAccountName api-sa) passes
+# admission and IS `api` to Cilium, because Cilium derives identity from labels.
+# (THREAT_MODEL.md B7 residual.)
+#
+# Mutual auth removes labels from the trust equation: Cilium's SPIRE issues every
+# workload a SPIFFE SVID derived from its ServiceAccount, and `mode: required`
+# makes the api endpoint refuse any peer that cannot complete the mTLS handshake.
+# A forged label is then necessary-but-insufficient — the peer must also hold a
+# valid SVID it cannot mint without the SA's cryptographic identity.
+#
+# This re-declares the SAME-named policy as k8s/netpol.yaml (allow-web-to-api) so
+# `kubectl apply -f k8s/netpol-mutual.yaml` UPGRADES that edge in place (rather
+# than adding a second, weaker allow-rule beside it). Apply it after netpol.yaml.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: allow-web-to-api, namespace: shop }
+spec:
+  endpointSelector: { matchLabels: { app: api } }
+  ingress:
+    - fromEndpoints: [{ matchLabels: { app: web } }]
+      # The SVID handshake is required before any traffic on this edge is allowed.
+      authentication:
+        mode: "required"
+      toPorts:
+        - ports: [{ port: "8080", protocol: TCP }]
+          rules:
+            http:
+              - method: "GET"
+                path: "/accounts/[^/]+$"
+              - method: "POST"
+                path: "/accounts/[^/]+/transfer$"
