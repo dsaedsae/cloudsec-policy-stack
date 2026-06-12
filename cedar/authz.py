@@ -20,12 +20,12 @@ import cedarpy
 HERE = Path(__file__).resolve().parent
 
 
-def main() -> int:
+def main(base: Path = HERE) -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    policies = (HERE / "policies.cedar").read_text(encoding="utf-8")
-    schema = (HERE / "schema.json").read_text(encoding="utf-8")
-    entities = (HERE / "entities.json").read_text(encoding="utf-8")
-    requests = json.loads((HERE / "requests.json").read_text(encoding="utf-8"))
+    policies = (base / "policies.cedar").read_text(encoding="utf-8")
+    schema = (base / "schema.json").read_text(encoding="utf-8")
+    entities = (base / "entities.json").read_text(encoding="utf-8")
+    requests = json.loads((base / "requests.json").read_text(encoding="utf-8"))
 
     # 1) Validate policies against the schema (policy-as-code hygiene).
     vr = cedarpy.validate_policies(policies, schema)

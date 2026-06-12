@@ -1,0 +1,37 @@
+[
+  { "name": "agent invokes an allowed tool (search)",
+    "principal": "Agent::\"agent-bob\"", "action": "Action::\"InvokeTool\"",
+    "resource": "Tool::\"search\"", "context": {}, "expect": "Allow" },
+
+  { "name": "agent invokes a tool NOT on its allowlist (transfer)",
+    "principal": "Agent::\"agent-bob\"", "action": "Action::\"InvokeTool\"",
+    "resource": "Tool::\"transfer\"", "context": {}, "expect": "Deny" },
+
+  { "name": "agent reads public data (both cleared)",
+    "principal": "Agent::\"agent-guest\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-public\"", "context": {}, "expect": "Allow" },
+
+  { "name": "CONFUSED DEPUTY: over-privileged agent, low-clearance user -> read classified",
+    "principal": "Agent::\"agent-overpriv\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-classified\"", "context": {}, "expect": "Deny" },
+
+  { "name": "agent reads classified when agent AND user are both cleared",
+    "principal": "Agent::\"agent-bob\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-classified\"", "context": {}, "expect": "Allow" },
+
+  { "name": "agent ceiling caps it: limited agent (max=1) cannot read classified even with cleared user",
+    "principal": "Agent::\"agent-limited\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-classified\"", "context": {}, "expect": "Deny" },
+
+  { "name": "owner override: agent reads the on-behalf user's OWN record",
+    "principal": "Agent::\"agent-bob\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-sensitive\"", "context": {}, "expect": "Allow" },
+
+  { "name": "CONFUSED DEPUTY: over-privileged agent, low-clearance user -> read sensitive",
+    "principal": "Agent::\"agent-overpriv\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-sensitive\"", "context": {}, "expect": "Deny" },
+
+  { "name": "forbid guardrail: low-ceiling agent never reads classified",
+    "principal": "Agent::\"agent-guest\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-classified\"", "context": {}, "expect": "Deny" }
+]

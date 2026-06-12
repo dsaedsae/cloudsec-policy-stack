@@ -1,0 +1,47 @@
+{
+  "": {
+    "entityTypes": {
+      "User": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "clearance": { "type": "Long" }
+          }
+        }
+      },
+      "Agent": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "allowed_tools": { "type": "Set", "element": { "type": "String" } },
+            "max_classification": { "type": "Long" },
+            "on_behalf_of": { "type": "Entity", "name": "User" }
+          }
+        }
+      },
+      "Tool": {
+        "shape": {
+          "type": "Record",
+          "attributes": { "name": { "type": "String" } }
+        }
+      },
+      "DataRecord": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "classification": { "type": "Long" },
+            "owner": { "type": "Entity", "name": "User" }
+          }
+        }
+      }
+    },
+    "actions": {
+      "InvokeTool": {
+        "appliesTo": { "principalTypes": ["Agent"], "resourceTypes": ["Tool"] }
+      },
+      "ReadData": {
+        "appliesTo": { "principalTypes": ["Agent"], "resourceTypes": ["DataRecord"] }
+      }
+    }
+  }
+}

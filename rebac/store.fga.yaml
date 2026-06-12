@@ -1,0 +1,85 @@
+# Executable ReBAC test store — `fga model test --tests rebac/store.fga.yaml`.
+#
+# Deterministic, in-memory (no running OpenFGA server). Each assertion maps a
+# relationship-derived decision to an expected allow/deny — the verifiable
+# criterion, exactly like cedar/authz.py's PASS/FAIL table.
+#
+# Tuples tie back to the SAME alice/bob/account entities the Cedar demo uses, so
+# this is the relationship layer the Cedar PDP would consult, not a separate world.
+
+name: cloudsec ReBAC — AI-agent delegation + NHI workload ownership
+model_file: ./model.fga
+
+tuples:
+  # alice owns her account and has delegated to her agent.
+  - user: user:alice
+    relation: owner
+    object: account:acct-alice
+  - user: agent:assistant      # alice.delegate = assistant (authorization edge)
+    relation: delegate
+    object: user:alice
+  - user: user:alice           # assistant.principal = alice (provenance edge / NHI)
+    relation: principal
+    object: agent:assistant
+
+  # bob owns his own account (no delegation to assistant).
+  - user: user:bob
+    relation: owner
+    object: account:acct-bob
+
+  # NHI ownership: the payments team owns the billing-job workload; bob is a member.
+  - user: user:bob
+    relation: member
+    object: team:payments
+  - user: team:payments
+    relation: owner_team
+    object: workload:billing-job
+
+tests:
+  - name: delegation intersection + NHI ownership are derived from the graph
+    check:
+      # Owner can always view/transfer their own account.
+      - user: user:alice
+        object: account:acct-alice
+        assertions:
+          can_view: true
+          can_transfer: true
+
+      # ReBAC PAYOFF: the agent inherits view/transfer ONLY via delegate-from-owner.
+      - user: agent:assistant
+        object: account:acct-alice
+        assertions:
+          can_view: true
+          can_transfer: true
+
+      # The agent has NO edge to bob's account -> denied (no cross-owner reach).
+      - user: agent:assistant
+        object: account:acct-bob
+        assertions:
+          can_view: false
+          can_transfer: false
+
+      # An unrelated user is denied everywhere (no relationship path).
+      - user: user:carol
+        object: account:acct-alice
+        assertions:
+          can_view: false
+          can_transfer: false
+
+      # Transitive team ownership: bob admins the workload via member-from-owner_team.
+      - user: user:bob
+        object: workload:billing-job
+        assertions:
+          can_admin: true
+
+      # alice is not on the payments team -> cannot admin its workload (isolation).
+      - user: user:alice
+        object: workload:billing-job
+        assertions:
+          can_admin: false
+
+      # Unrelated user cannot admin the workload either.
+      - user: user:carol
+        object: workload:billing-job
+        assertions:
+          can_admin: false

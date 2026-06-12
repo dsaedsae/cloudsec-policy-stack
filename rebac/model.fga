@@ -1,0 +1,46 @@
+# ReBAC (relationship-based) authorization model — OpenFGA DSL, schema 1.1.
+#
+# This fills the gap docs/authorization-model.md §4 names explicitly: the api PDP
+# is Cedar/ABAC; ReBAC (Zanzibar-style relationship graph) is the unimplemented
+# frontier. Here it is implemented as a focused, executable demo.
+#
+# The payoff edge is `delegate from owner`: an AI agent (a Non-Human Identity)
+# may view/transfer an account ONLY when the account's OWNER has delegated to that
+# agent. That is a GRAPH JOIN across two relationships
+#   (account.owner = alice)  AND  (alice.delegate = assistant)
+# which attribute-based access control cannot express cleanly — the agent's reach
+# is derived from a relationship to the owner, not from an attribute it carries.
+#
+# Tested as code in rebac/store.fga.yaml via `fga model test` (in-memory, no server),
+# the OpenFGA twin of cedar/authz.py. See rebac/README.md.
+
+model
+  schema 1.1
+
+type user
+  relations
+    # The authorization edge: a user delegates to an agent that acts for them.
+    define delegate: [agent]
+
+type agent
+  relations
+    # The provenance edge (NHI on-behalf-of): the human this agent represents.
+    define principal: [user]
+
+type team
+  relations
+    define member: [user]
+
+type account
+  relations
+    define owner: [user]
+    # ReBAC join: owner, OR an agent the owner delegated to (delegate from owner).
+    define can_view: owner or delegate from owner
+    define can_transfer: owner or delegate from owner
+
+type workload
+  relations
+    # NHI ownership: a workload is owned by a team; team members operate it.
+    define owner_team: [team]
+    define operator: [user] or member from owner_team
+    define can_admin: operator
