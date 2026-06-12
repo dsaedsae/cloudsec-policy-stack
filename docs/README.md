@@ -8,6 +8,10 @@ payoff *before* asking you to install more. Defensive/infra only.
 > 망분리 개선 로드맵」(2024-08-13)의 다층보안(MLS) 보상통제에 각 통제를 1:1 매핑하고
 > NIST 800-207·검증 항목까지 연결한다.
 >
+> **인가 모델 포지셔닝:** **[RBAC + ABAC 하이브리드 · policy-as-code · 지속평가](authorization-model.md)**
+> — 이 스택이 인가 지형(RBAC/ABAC/ReBAC/PaC/지속평가)의 어디에 정렬되는지, ReBAC 갭과
+> AI에이전트/NHI 확장까지.
+>
 > **클라우드로 가면 (비용 포함):** **[로컬 → AWS/EKS 경로 + 가격대별 실습 가이드](aws-eks-path.md)**
 > — 각 통제의 AWS 등가물(Cedar→Verified Permissions, etcd암호화→KMS 등) + **무료(로컬)부터**
 > Tier 0~3 비용 사다리와 teardown 체크리스트. 발표용 자료: [`presentation/`](../presentation/talk-outline.md).
