@@ -61,15 +61,18 @@ One asset (`api`), every layer. `scripts/verify.{sh,ps1}` runs all of these (18/
 | egress | web → kube-apiserver `10.96.0.1:443` | **000** | egress default-deny |
 | L4 runtime | shell exec inside `db` pod | **SIGKILL (137)** | Tetragon `TracingPolicy` (eBPF) |
 | identity | `api-sa` create-pods / read-secrets | **no** | least-privilege RBAC (no RoleBinding) |
-| identity | forged `app:api` on `web-sa` | **admission DENY** | `ValidatingAdmissionPolicy` (label↔SA) |
-| identity | self-consistent `app:api`+`api-sa` | **admitted (residual)** | documented gap → mutual auth closes it |
+| identity | `app:api` on `web-sa` (mismatch) | **admission DENY** | `ValidatingAdmissionPolicy` (label↔SA) |
+| identity | `app:api`+`api-sa` by authorized op | **admitted** | label↔SA satisfied + SA-use gate allows operators |
+| identity | `shop:deployers` runs workload as `api-sa` | **admission DENY** | SA-use gate (`request.userInfo`) |
+| identity | authorized operator deploys `api-sa` workload | **admitted** | SA-use gate allows named operators |
 | data-in-transit | pod-to-pod traffic | **WireGuard** | Cilium transparent encryption |
 
-That's **18/18** in `scripts/verify.{sh,ps1}`. The two 403s are a highlight: `GET /auditlogs` (blocked at L7
+That's **20/20** in `scripts/verify.{sh,ps1}`. The two 403s are a highlight: `GET /auditlogs` (blocked at L7
 before reaching the app, body `Access denied` from Envoy) vs `bob`'s account read (reaches the app, body
 `Cedar denied: ...`) — **same network path, same L7-allowed route, different principal**. The identity rows
-are the other highlight: the admission policy denies the *mismatched* forgery but **honestly admits** the
-self-consistent one — the residual that mutual auth (below) is what actually closes.
+are the other highlight: the same `api-sa` workload is **admitted for an authorized operator but denied for
+the limited `shop:deployers` principal** — identity use is bound to the requester, not open to anyone who can
+deploy.
 
 Two further controls are demonstrated by their own scripts (not in the always-on suite, since both alter the
 cluster substrate):
@@ -117,7 +120,7 @@ Each lab shows the payoff, then has you *break and fix* one layer.
   checkov validates the *workloads + Terraform*; the CiliumNetworkPolicy (a CRD it can't see) and Cedar are
   covered by the live `verify` job and `cedar/authz.py`. Images are digest-pinned (`@sha256`) except the
   locally-built api image, which carries one *scoped* (not global) skip — see `.checkov.yaml` / `k8s/app.yaml`.
-- Live enforcement — **18/18** checks in the table above pass on kind+Cilium+Tetragon (locally and in CI),
+- Live enforcement — **20/20** checks in the table above pass on kind+Cilium+Tetragon (locally and in CI),
   on a pinned `kindest/node:v1.34.0` (k8s ≥1.30 so the identity admission policy installs). Mutual auth
   (SPIFFE) and Secret encryption-at-rest are each verified live by their own scripts.
 
@@ -126,14 +129,14 @@ Each lab shows the payoff, then has you *break and fix* one layer.
 The core (IaC + zero-trust net incl. egress + inline Cedar authz + Tetragon runtime + CI) is in.
 
 Done since:
-- ✅ **Identity hardening (B7)** — threat model of label-as-identity (`THREAT_MODEL.md`), least-privilege per-tier ServiceAccounts + a `ValidatingAdmissionPolicy` binding the `app` label to its SA, and Cilium **mutual auth / SPIFFE** on the `web→api` edge (`k8s/netpol-mutual.yaml`). The residual (who may run as a tier SA) is documented honestly, not hidden.
+- ✅ **Identity hardening (B7)** — threat model of label-as-identity (`THREAT_MODEL.md`); least-privilege per-tier ServiceAccounts; a `ValidatingAdmissionPolicy` binding the `app` label to its SA; a **SA-use gate** (`k8s/admission-sa-use.yaml`) that lets only authorized operators run a workload under a tier identity (so the limited `shop:deployers` role can deploy but not impersonate a tier); and Cilium **mutual auth / SPIFFE** on the `web→api` edge (`k8s/netpol-mutual.yaml`). The full chain — who may deploy → label/SA consistency → who may use a tier SA → SVID — is live-verified.
 - ✅ **Supply chain (partial)** — public images pinned by `@sha256` digest (the local api image carries a scoped, documented exception). Build provenance (cosign/SLSA) still open.
 - ✅ **Data protection** — WireGuard pod-to-pod encryption (in transit) + Secret encryption-at-rest in etcd (`scripts/enable-secrets-encryption.*`); the three data states mapped to controls in `docs/06-data-protection.md`.
 - ✅ **Learning labs** — numbered `docs/` walkthroughs (0–5), each break-and-fix.
 
 Next:
 - **Build provenance** — `cosign verify` + SLSA attestation for the api image.
-- **SA-use admission** — bind the requesting identity to the ServiceAccounts it may reference (close the B7 residual).
+- **SA-use gate coverage** — extend the admission policy to CronJob and a generated, cluster-wide form (Kyverno/Gatekeeper) so the pattern is not hand-maintained per resource type.
 
 ## Notes
 

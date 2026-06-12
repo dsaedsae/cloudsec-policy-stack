@@ -18,8 +18,8 @@ cilium status --context "$CTX" --wait
 docker build -t cloudsec-api:local -f "$ROOT/app/api/Dockerfile" "$ROOT"
 kind load docker-image cloudsec-api:local --name cloudsec
 
-# Identity first (SAs + label<->SA admission policy), then workloads, then policy.
-kubectl --context "$CTX" apply -f "$ROOT/k8s/rbac.yaml" -f "$ROOT/k8s/admission-policy.yaml"
+# Identity first (ns + SAs + label<->SA and SA-use admission policies), then workloads.
+kubectl --context "$CTX" apply -f "$ROOT/k8s/rbac.yaml" -f "$ROOT/k8s/admission-policy.yaml" -f "$ROOT/k8s/admission-sa-use.yaml"
 kubectl --context "$CTX" apply -f "$ROOT/k8s/app.yaml" -f "$ROOT/k8s/netpol.yaml" -f "$ROOT/k8s/tracingpolicy.yaml"
 for d in web api db; do kubectl --context "$CTX" -n shop rollout status "deploy/$d" --timeout=180s; done
 echo "Up. Run scripts/verify.sh"

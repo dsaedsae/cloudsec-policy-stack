@@ -81,13 +81,49 @@ if forge_pod forge-mismatch web-sa | kubectl --context "$CTX" create --dry-run=s
 else
   printf '  %-48s expect %-4s got %-4s %s\n' "forged app:api on web-sa -> admission DENY" "DENY" "DENY" "PASS"
 fi
-# Honest residual: a SELF-consistent pod (app:api + api-sa) IS admitted — the VAP is
-# a label<->SA consistency guard, not a forge-stopper. Cryptographic closer = mutual
-# auth (netpol-mutual.yaml); remaining gap = who may run as api-sa -> RBAC. (THREAT_MODEL.md)
+# A self-consistent pod (app:api + api-sa) created by an AUTHORIZED requester (this
+# script runs as admin) is admitted: label<->SA satisfied, SA-use gate allows
+# authorized operators. Expected baseline.
 if forge_pod forge-consistent api-sa | kubectl --context "$CTX" create --dry-run=server -f - >/dev/null 2>&1; then
-  printf '  %-48s expect %-4s got %-4s %s\n' "self-consistent app:api+api-sa admitted (residual)" "ADMIT" "ADMIT" "PASS"
+  printf '  %-48s expect %-4s got %-4s %s\n' "self-consistent app:api+api-sa as admin -> ADMIT" "ADMIT" "ADMIT" "PASS"
 else
-  printf '  %-48s expect %-4s got %-4s %s\n' "self-consistent app:api+api-sa" "ADMIT" "DENY" "FAIL"; fail=1
+  printf '  %-48s expect %-4s got %-4s %s\n' "self-consistent app:api+api-sa as admin" "ADMIT" "DENY" "FAIL"; fail=1
+fi
+
+# SA-use gate: the limited shop:deployers principal MAY create Deployments but may NOT
+# run one as a tier ServiceAccount. Impersonate that group (expect DENY); then confirm
+# an authorized operator (admin) still deploys the same workload (ADMIT).
+sa_use_deploy() {
+  cat <<YAML
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: sa-use-probe, namespace: shop, labels: { app: api } }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: api } }
+  template:
+    metadata: { labels: { app: api } }
+    spec:
+      serviceAccountName: api-sa
+      automountServiceAccountToken: false
+      securityContext: { runAsNonRoot: true, runAsUser: 100, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: c
+          image: $CURL_IMG
+          command: ["sleep", "1"]
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: ["ALL"] } }
+          resources: { requests: { cpu: "5m", memory: "8Mi" }, limits: { cpu: "50m", memory: "32Mi" } }
+YAML
+}
+if sa_use_deploy | kubectl --context "$CTX" --as=ci-deployer --as-group=shop:deployers create --dry-run=server -f - >/dev/null 2>&1; then
+  printf '  %-48s expect %-4s got %-4s %s\n' "shop:deployers runs workload as api-sa" "DENY" "ADMIT" "FAIL"; fail=1
+else
+  printf '  %-48s expect %-4s got %-4s %s\n' "shop:deployers runs workload as api-sa -> DENY" "DENY" "DENY" "PASS"
+fi
+if sa_use_deploy | kubectl --context "$CTX" create --dry-run=server -f - >/dev/null 2>&1; then
+  printf '  %-48s expect %-4s got %-4s %s\n' "authorized operator deploys api-sa workload -> ADMIT" "ADMIT" "ADMIT" "PASS"
+else
+  printf '  %-48s expect %-4s got %-4s %s\n' "authorized operator deploys api-sa workload" "ADMIT" "DENY" "FAIL"; fail=1
 fi
 
 echo "== Data-in-transit (Cilium WireGuard) =="

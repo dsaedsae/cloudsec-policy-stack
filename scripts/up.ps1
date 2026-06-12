@@ -37,9 +37,10 @@ Step "load image into kind" { kind load docker-image cloudsec-api:local --name c
 
 # Identity FIRST: rbac.yaml creates the `shop` namespace + tier ServiceAccounts that
 # app.yaml's Deployments reference. admission-policy.yaml is the B7 label<->SA control.
-Step "deploy identity (ns + SAs + admission policy)" {
+Step "deploy identity (ns + SAs + admission policies)" {
     kubectl --context $ctx apply -f (Join-Path $Root "k8s\rbac.yaml")
     kubectl --context $ctx apply -f (Join-Path $Root "k8s\admission-policy.yaml")
+    kubectl --context $ctx apply -f (Join-Path $Root "k8s\admission-sa-use.yaml")
 }
 Step "deploy app + network + runtime policies" {
     kubectl --context $ctx apply -f (Join-Path $Root "k8s\app.yaml")

@@ -85,14 +85,43 @@ spec:
     if ($LASTEXITCODE -ne 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "forged app:api on web-sa -> admission DENY", "DENY", "DENY", "PASS" }
     else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "forged app:api on web-sa", "DENY", "ADMIT", "FAIL"; $script:fail = 1 }
 
-    # Honest residual: a SELF-consistent pod (app:api + api-sa) IS admitted — the VAP
-    # is a label<->SA consistency guard, not a forge-stopper. The cryptographic closer
-    # is mutual auth (k8s/netpol-mutual.yaml); the remaining gap is who may run as
-    # api-sa (no serviceaccounts/use gate in modern k8s) -> RBAC. See THREAT_MODEL.md.
+    # A self-consistent pod (app:api + api-sa) created by an AUTHORIZED requester
+    # (this script runs as admin) is admitted — the label<->SA policy is satisfied
+    # and the SA-use gate allows authorized operators. This is the expected baseline.
     $consistent = ($forge -replace "web-sa", "api-sa") -replace "forge-mismatch", "forge-consistent"
     $consistent | kubectl --context $ctx create --dry-run=server -f - 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "self-consistent app:api+api-sa admitted (residual)", "ADMIT", "ADMIT", "PASS" }
-    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "self-consistent app:api+api-sa", "ADMIT", "DENY", "FAIL"; $script:fail = 1 }
+    if ($LASTEXITCODE -eq 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "self-consistent app:api+api-sa as admin -> ADMIT", "ADMIT", "ADMIT", "PASS" }
+    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "self-consistent app:api+api-sa as admin", "ADMIT", "DENY", "FAIL"; $script:fail = 1 }
+
+    # SA-use gate: the limited shop:deployers principal MAY create Deployments but may
+    # NOT run one as a tier ServiceAccount. Impersonate that group; expect DENY. Then
+    # confirm an authorized operator (admin) still deploys the same workload (ADMIT).
+    $saUse = @"
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: sa-use-probe, namespace: shop, labels: { app: api } }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: api } }
+  template:
+    metadata: { labels: { app: api } }
+    spec:
+      serviceAccountName: api-sa
+      automountServiceAccountToken: false
+      securityContext: { runAsNonRoot: true, runAsUser: 100, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: c
+          image: $curlImg
+          command: ["sleep", "1"]
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: ["ALL"] } }
+          resources: { requests: { cpu: "5m", memory: "8Mi" }, limits: { cpu: "50m", memory: "32Mi" } }
+"@
+    $saUse | kubectl --context $ctx --as=ci-deployer --as-group=shop:deployers create --dry-run=server -f - 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "shop:deployers runs workload as api-sa -> DENY", "DENY", "DENY", "PASS" }
+    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "shop:deployers runs workload as api-sa", "DENY", "ADMIT", "FAIL"; $script:fail = 1 }
+    $saUse | kubectl --context $ctx create --dry-run=server -f - 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "authorized operator deploys api-sa workload -> ADMIT", "ADMIT", "ADMIT", "PASS" }
+    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "authorized operator deploys api-sa workload", "ADMIT", "DENY", "FAIL"; $script:fail = 1 }
 
     Write-Host "== Data-in-transit (Cilium WireGuard) =="
     $enc = (kubectl --context $ctx exec -n kube-system ds/cilium -c cilium-agent -- cilium-dbg encrypt status 2>$null) -join "`n"

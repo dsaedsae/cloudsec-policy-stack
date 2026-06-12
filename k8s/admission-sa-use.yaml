@@ -1,0 +1,92 @@
+# Layer 0 (identity), the SA-use gate: bind *use of a tier ServiceAccount* to an
+# authorized requester. This closes the residual the label<->SA policy leaves open.
+#
+# Recap (THREAT_MODEL.md B7): the label<->SA policy (admission-policy.yaml) makes a
+# pod's `app` label and its ServiceAccount AGREE, but it cannot stop a principal who
+# can create a workload from choosing BOTH consistently (`app:api` + `api-sa`).
+# Kubernetes has no built-in `serviceaccounts/use` check, so by default anyone who
+# can create a Deployment may run it as any SA in the namespace.
+#
+# This ValidatingAdmissionPolicy supplies that missing check at the WORKLOAD level
+# (where the residual actually lives — a Deployment's pod template carries the SA):
+# a workload whose pod runs as web-sa/api-sa/db-sa is admitted ONLY when the
+# requester is a Kubernetes controller (system:*), a cluster admin (system:masters),
+# or a member of `shop:tier-operators` (the identity entrusted to ship the standard
+# app). The limited `shop:deployers` role can still deploy other things, but can no
+# longer run a workload under a tier identity. failurePolicy: Fail = fail closed.
+#
+# Scope (honest): covers Pods + apps workloads (Deployment/ReplicaSet/StatefulSet/
+# DaemonSet) + batch Jobs in `shop`. CronJob and other namespaces would apply the
+# same pattern; full, generic coverage is what a policy engine (Kyverno/Gatekeeper)
+# generates. The legitimate rollout is unaffected: app.yaml is applied by an admin,
+# and the resulting pods are created by the ReplicaSet controller (system:*).
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: shop-sa-use
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["jobs"]
+  variables:
+    # Resolve the effective ServiceAccount whether the object is a bare Pod
+    # (spec.serviceAccountName) or a workload with a pod template
+    # (spec.template.spec.serviceAccountName).
+    - name: tmplSA
+      expression: >
+        (has(object.spec.template) && has(object.spec.template.spec) &&
+         has(object.spec.template.spec.serviceAccountName))
+        ? object.spec.template.spec.serviceAccountName : ''
+    - name: podSA
+      expression: "has(object.spec.serviceAccountName) ? object.spec.serviceAccountName : ''"
+    - name: sa
+      expression: "variables.tmplSA != '' ? variables.tmplSA : variables.podSA"
+    - name: isTierSA
+      expression: "variables.sa in ['web-sa', 'api-sa', 'db-sa']"
+    # Requester identity (guarded so a missing field never errors under Fail).
+    - name: uname
+      expression: "(has(request.userInfo) && has(request.userInfo.username)) ? request.userInfo.username : ''"
+    - name: ugroups
+      expression: "(has(request.userInfo) && has(request.userInfo.groups)) ? request.userInfo.groups : []"
+    # Authorized = a Kubernetes controller (system:*), a cluster admin, or the named
+    # tier-operator group. The admin group differs by version: kubeadm >=1.29 puts
+    # admin.conf in `kubeadm:cluster-admins` (system:masters moved to super-admin.conf),
+    # so both are accepted. `shop:tier-operators` is the portable, intended knob.
+    - name: requesterAuthorized
+      expression: >
+        variables.uname.startsWith('system:') ||
+        ('system:masters' in variables.ugroups) ||
+        ('kubeadm:cluster-admins' in variables.ugroups) ||
+        ('shop:tier-operators' in variables.ugroups)
+  validations:
+    # Non-tier workloads are unaffected. Tier workloads require an authorized requester.
+    - expression: "!variables.isTierSA || variables.requesterAuthorized"
+      messageExpression: >
+        "running a workload as tier ServiceAccount '" + variables.sa +
+        "' requires an authorized operator (a system controller, system:masters, " +
+        "or shop:tier-operators); requester '" + variables.uname +
+        "' is not — see THREAT_MODEL.md B7 (SA-use gate)"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: shop-sa-use-binding
+spec:
+  policyName: shop-sa-use
+  validationActions: ["Deny"]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: shop

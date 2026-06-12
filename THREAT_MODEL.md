@@ -33,10 +33,10 @@ client ──▶ web (frontend) ──▶ api (backend, Cedar PDP) ──▶ db 
 
 B1–B6 are the original live-verified layers. **B7 is the one the other six all
 silently depend on**, and is what this round hardens. `scripts/verify.{sh,ps1}`
-now also exercises B7 directly: it asserts a tier ServiceAccount has zero K8s API
-rights, that a *mismatched* forged pod (`app: api` on `web-sa`) is denied at
-admission, and — honestly — that a *self-consistent* forged pod (`app: api` +
-`api-sa`) is admitted, documenting the residual rather than hiding it.
+now also exercises B7 directly: a tier ServiceAccount has zero K8s API rights; a
+*mismatched* workload (`app: api` on `web-sa`) is denied at admission; the limited
+`shop:deployers` principal trying to run a workload as `api-sa` is denied by the
+SA-use gate, while an authorized operator deploying the same workload is admitted.
 
 ## The identity problem (B7) — why labels are a TCB
 
@@ -72,29 +72,43 @@ portfolios, and it is exactly where this stack now adds controls.
    defaults to the `default` SA → label≠SA → denied), and it lines the label up
    with the SA so the SPIFFE SVID (derived from the SA) and the network label
    agree. **What it does NOT do:** stop a principal who controls *both* fields
-   from minting a *self-consistent* forgery — a pod labeled `app: api` **and**
-   running as `api-sa` passes admission and is `api` to Cilium. So the VAP is a
-   necessary hygiene control, not the identity boundary. The real boundary is
-   mitigation #1 (RBAC: who may create a workload at all) plus #3 (cryptographic
-   identity). This honest residual is exactly why #3 exists.
+   from minting a *self-consistent* workload — a pod labeled `app: api` **and**
+   running as `api-sa`. So the VAP is a necessary hygiene control, not the identity
+   boundary on its own; that self-consistent case is what mitigation #3 addresses.
 
-3. **Cryptographic identity (mutual auth / SPIFFE)** — labels are *administratively*
-   asserted; the strongest fix makes identity *cryptographic*. Cilium **mutual
+3. **SA-use gate — bind *use of a tier ServiceAccount* to an authorized requester**
+   — `k8s/admission-sa-use.yaml` supplies the check Kubernetes lacks natively. The
+   self-consistent case above survives the label↔SA policy because anyone who can
+   create a Deployment may set `serviceAccountName: api-sa` (there is **no
+   `serviceaccounts/use` gate** — PodSecurityPolicy, which had one, was removed in
+   1.25). This `ValidatingAdmissionPolicy` reads `request.userInfo` and admits a
+   workload running as `web-sa`/`api-sa`/`db-sa` **only** when the requester is a
+   Kubernetes controller (`system:*`), a cluster admin (`system:masters`), or a
+   member of `shop:tier-operators`. So the limited `shop:deployers` role can still
+   deploy, but **can no longer run a workload under a tier identity** — verified
+   live (impersonating `shop:deployers` to deploy as `api-sa` is denied; an admin
+   deploy of the same workload is admitted). **Honest scope:** it covers Pods + apps
+   workloads (Deployment/ReplicaSet/StatefulSet/DaemonSet) + batch Jobs in `shop`;
+   CronJob and other namespaces apply the same pattern, and fully generic coverage
+   is what a policy engine (Kyverno/Gatekeeper) generates from one rule. The trust
+   is now **explicit and minimized** (named operators) rather than "anyone who can
+   deploy."
+
+4. **Cryptographic identity (mutual auth / SPIFFE)** — #1–#3 are *administrative*;
+   the strongest layer makes identity *cryptographic*. Cilium **mutual
    authentication** is enabled in this repo (`terraform/main.tf`:
    `authentication.mutual.spire.{enabled,install.enabled}=true` stands up an
    in-cluster SPIRE), and `k8s/netpol-mutual.yaml` upgrades the `web→api` edge to
    `authentication.mode: required`. Each workload gets a SPIFFE SVID derived from
    its **ServiceAccount**, and the api endpoint refuses any peer that cannot
    complete the mTLS handshake — so a forged *label* alone is necessary-but-
-   insufficient. **The remaining residual, stated plainly:** because the SVID is
-   keyed to the ServiceAccount, identity ultimately reduces to *who may run a
-   workload as `api-sa`*. Modern Kubernetes has **no `serviceaccounts/use` gate**
-   (PodSecurityPolicy, which had one, was removed in 1.25), so any principal who
-   can create a Deployment in `shop` can reference `api-sa`. Closing *that* needs
-   admission that binds the requester to the SAs they may use (e.g. a second VAP
-   or Kyverno), which is the next step beyond this portfolio. The chain here —
-   RBAC → label/SA consistency → SVID handshake — raises the bar at each layer
-   without pretending the top of the chain is sealed.
+   insufficient. The chain — RBAC (who may deploy) → label/SA consistency → SA-use
+   gate (who may run as a tier SA) → SVID handshake — raises the bar at every step.
+   **What remains, stated plainly:** the SA-use gate trusts the admission layer and
+   the named operators; a compromised admin or a gap in resource coverage (e.g.
+   CronJob) is out of scope here, and a root-on-node attacker is below the whole
+   model. The point is that each link is now a *named, minimized* trust rather than
+   an open default.
 
 ## What each layer does NOT protect against (residual risk)
 
@@ -126,7 +140,7 @@ portfolios, and it is exactly where this stack now adds controls.
 
 | Threat | Where it would land | Control |
 |--------|--------------------|---------|
-| **S**poofing identity | forge `app:` label → become `api` | RBAC (who may deploy) → label/SA admission consistency → mutual-auth SVID. *Residual:* who may run as `api-sa` (see B7). |
+| **S**poofing identity | claim `app:` label to become `api` | RBAC (who may deploy) → label/SA consistency → SA-use gate (who may run as a tier SA) → mutual-auth SVID. Each link a named, minimized trust (B7). |
 | **T**ampering | mutate pod spec/labels | PSA `restricted` + label/SA admission policy |
 | **R**epudiation | who ran what in `db` | Tetragon process-exec audit trail |
 | **I**nfo disclosure | exfil to internet/metadata | Cilium egress default-deny (B5) |

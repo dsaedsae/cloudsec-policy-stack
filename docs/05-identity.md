@@ -66,16 +66,55 @@ This kills the easy attack: `kubectl run --labels app=api ...` defaults to the
 
 ## The honest part — what Control 2 does NOT close
 
-Now change `web-sa` to `api-sa` above and re-run. It is **admitted**. The policy
-only enforces label↔SA *consistency*; a self-consistent pod (`app: api` + `api-sa`)
-is a perfectly valid `api`. And because modern Kubernetes has no
-`serviceaccounts/use` gate (PodSecurityPolicy was removed in 1.25), anyone who can
-create a Deployment in `shop` can choose `serviceAccountName: api-sa`. So the
-admission policy is a *consistency guard*, not the identity boundary. The real
-boundaries are (1) RBAC over who may create workloads at all, and (2) cryptographic
-identity, next.
+Now change `web-sa` to `api-sa` above and re-run. It is **admitted**. Control 2 only
+enforces label↔SA *consistency*; a self-consistent pod (`app: api` + `api-sa`) is a
+perfectly valid `api`. And because modern Kubernetes has no `serviceaccounts/use`
+gate (PodSecurityPolicy was removed in 1.25), anyone who can create a Deployment in
+`shop` could otherwise choose `serviceAccountName: api-sa`. So Control 2 is a
+*consistency guard*, not the identity boundary — that boundary is Control 3.
 
-## Control 3 — cryptographic identity (mutual auth / SPIFFE)
+## Control 3 — SA-use gate (who may run as a tier identity)
+
+`k8s/admission-sa-use.yaml` adds the missing `serviceaccounts/use` check at the
+workload level. It reads `request.userInfo` and admits a workload running as
+`web-sa`/`api-sa`/`db-sa` **only** for a Kubernetes controller (`system:*`), a
+cluster admin (`system:masters`), or the `shop:tier-operators` group. Try it as the
+limited deploy role (impersonation; this group has `create deployments` but is not a
+tier operator):
+
+```bash
+cat <<'YAML' | kubectl --as=ci-deployer --as-group=shop:deployers create --dry-run=server -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: probe, namespace: shop, labels: { app: api } }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: api } }
+  template:
+    metadata: { labels: { app: api } }
+    spec:
+      serviceAccountName: api-sa            # run as the api tier identity
+      containers: [{ name: c, image: curlimages/curl:8.11.1, command: ["sleep","1"],
+        securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true,
+        runAsNonRoot: true, runAsUser: 100, capabilities: { drop: ["ALL"] },
+        seccompProfile: { type: RuntimeDefault } } }]
+YAML
+```
+
+Expected — denied:
+
+```
+... running a workload as tier ServiceAccount 'api-sa' requires an authorized
+    operator ...; requester 'ci-deployer' is not — see THREAT_MODEL.md B7 (SA-use gate)
+```
+
+Drop the `--as` flags (run as admin) and the **same** workload is admitted — the
+legitimate rollout is unaffected, and so are the controller-created pods of the real
+app (the ReplicaSet controller is a `system:*` requester). So *use* of a tier
+identity is now bound to a named, minimized set of requesters, not open to anyone who
+can deploy. The `verify` scripts assert both the deny and the admit.
+
+## Control 4 — cryptographic identity (mutual auth / SPIFFE)
 
 `terraform/main.tf` enables Cilium mutual authentication (an in-cluster SPIRE issues
 each workload a SPIFFE SVID derived from its ServiceAccount), and
@@ -92,17 +131,20 @@ kubectl -n shop exec "$WEB" -- curl -s -o /dev/null -w '%{http_code}\n' -H 'X-Us
 ```
 
 Now a forged *label* is necessary-but-insufficient: the peer must also present a
-valid SVID, which it cannot mint without the SA's cryptographic identity. The one
-residual that remains — who may run a workload *as* `api-sa` — is an RBAC/admission
-question (bind the requester to the SAs they may use), and is named honestly as the
-next step in the threat model.
+valid SVID, which it cannot mint without the SA's cryptographic identity. The full
+chain is now: **who may deploy** (RBAC) → **label matches SA** (Control 2) → **who
+may run as a tier SA** (Control 3) → **must hold the SVID** (Control 4). What remains
+is named honestly in the threat model — the SA-use gate trusts the admission layer
+and the named operators, and a resource it doesn't yet match (e.g. CronJob) would
+extend the same one rule.
 
 ## Make it yours
 
 The `verify` scripts assert all of this: `api-sa` has no API rights, the mismatched
-forgery is denied, and (documented, not hidden) the self-consistent one is admitted.
-Try adding a fourth tier (`app: cache` + `cache-sa`) to `k8s/rbac.yaml` and the
-admission policy, then watch a `cache`-labeled pod on the wrong SA get denied.
+workload is denied, the limited `shop:deployers` principal is denied from running a
+workload as `api-sa`, and an authorized operator deploying the same workload is
+admitted. Try adding a fourth tier (`app: cache` + `cache-sa`) to `k8s/rbac.yaml` and
+both admission policies, then watch a `cache`-labeled pod on the wrong SA get denied.
 
 ---
 

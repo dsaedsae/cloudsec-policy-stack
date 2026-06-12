@@ -73,7 +73,7 @@ jobs:
           # Identity FIRST: the tier ServiceAccounts (rbac.yaml) must exist before
           # app.yaml's Deployments reference them, or the ServiceAccount admission
           # controller rejects the pods. admission-policy.yaml is the B7 control.
-          kubectl apply -f k8s/rbac.yaml -f k8s/admission-policy.yaml
+          kubectl apply -f k8s/rbac.yaml -f k8s/admission-policy.yaml -f k8s/admission-sa-use.yaml
           kubectl apply -f k8s/app.yaml -f k8s/netpol.yaml -f k8s/tracingpolicy.yaml
           kubectl -n shop rollout status deploy/web --timeout=180s
           kubectl -n shop rollout status deploy/api --timeout=180s
