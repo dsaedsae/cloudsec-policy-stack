@@ -39,10 +39,20 @@ probe probe-web "web->kube-apiserver blocked"            000 -k "https://10.96.0
 
 echo "== Tetragon runtime (eBPF) =="
 DBPOD=$(kubectl --context "$CTX" -n shop get pod -l tier=data -o jsonpath='{.items[0].metadata.name}')
-if kubectl --context "$CTX" -n shop exec "$DBPOD" -- sh -c 'echo x' >/dev/null 2>&1; then
-  printf '  %-48s expect %-4s got %-4s %s\n' "shell exec in db pod" "KILL" "RAN" "FAIL"; fail=1
+# Prove a SELECTIVE in-kernel kill, robustly: a NON-shell exec (`id`) still runs (pod
+# healthy, rc=0) while a shell exec is SIGKILLed (rc=137). Requiring BOTH rules out a
+# false-pass on container-not-Ready / no-sh / RBAC-deny / wrong-context — all of which
+# would ALSO break `id`. Only a Tetragon policy that kills the shell specifically (and
+# leaves a legit binary alone) passes. (`id` execs /usr/bin/id, not /busybox, so the
+# TracingPolicy's shell-postfix match does not hit it.)
+set +e
+kubectl --context "$CTX" -n shop exec "$DBPOD" -- id >/dev/null 2>&1; rc_id=$?
+kubectl --context "$CTX" -n shop exec "$DBPOD" -- sh -c 'echo x' >/dev/null 2>&1; rc_sh=$?
+set -e
+if [ "$rc_id" = 0 ] && { [ "$rc_sh" = 137 ] || [ "$rc_sh" = 143 ]; }; then
+  printf '  %-48s expect %-4s got %-4s %s\n' "shell killed (137), id runs (0): selective Tetragon" "137" "$rc_sh" "PASS"
 else
-  printf '  %-48s expect %-4s got %-4s %s\n' "shell exec in db (SIGKILL by TracingPolicy)" "KILL" "137" "PASS"
+  printf '  %-48s expect %-4s got %-4s %s\n' "Tetragon selective kill (id=$rc_id sh=$rc_sh)" "137" "$rc_sh" "FAIL"; fail=1
 fi
 
 echo "== Identity (B7): least-privilege RBAC + label<->SA admission =="
@@ -129,6 +139,37 @@ if sa_use_deploy | kubectl --context "$CTX" create --dry-run=server -f - >/dev/n
   printf '  %-48s expect %-4s got %-4s %s\n' "authorized operator deploys api-sa workload -> ADMIT" "ADMIT" "ADMIT" "PASS"
 else
   printf '  %-48s expect %-4s got %-4s %s\n' "authorized operator deploys api-sa workload" "ADMIT" "DENY" "FAIL"; fail=1
+fi
+# SA-use also covers the CronJob jobTemplate path: a CI SA scheduling a CronJob as api-sa is DENIED.
+sa_use_cron() {
+  cat <<YAML
+apiVersion: batch/v1
+kind: CronJob
+metadata: { name: sa-use-cron, namespace: shop }
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata: { labels: { app: api } }
+        spec:
+          serviceAccountName: api-sa
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext: { runAsNonRoot: true, runAsUser: 100, seccompProfile: { type: RuntimeDefault } }
+          containers:
+            - name: c
+              image: $CURL_IMG
+              command: ["sleep", "1"]
+              securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: ["ALL"] } }
+              resources: { requests: { cpu: "5m", memory: "8Mi" }, limits: { cpu: "50m", memory: "32Mi" } }
+YAML
+}
+CRON_OUT=$(sa_use_cron | kubectl --context "$CTX" --as=system:serviceaccount:shop:ci-deployer --as-group=shop:deployers create --dry-run=server -f - 2>&1 || true)
+if echo "$CRON_OUT" | grep -qE "SA-use gate|shop-sa-use|authorized operator"; then
+  printf '  %-48s expect %-4s got %-4s %s\n' "CI SA schedules CronJob as api-sa -> SA-use DENY" "DENY" "DENY" "PASS"
+else
+  printf '  %-48s expect %-4s got %-4s %s\n' "CI SA schedules CronJob as api-sa (SA-use gate)" "DENY" "?" "FAIL"; fail=1
 fi
 
 echo "== Data-in-transit (Cilium WireGuard) =="

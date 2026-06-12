@@ -50,10 +50,14 @@ try {
     Probe "probe-web" "web->kube-apiserver blocked"           "000" @("-k", "https://10.96.0.1:443/")
 
     Write-Host "== Tetragon runtime (eBPF) =="
+    # Prove a SELECTIVE in-kernel kill, robustly: a NON-shell exec (id) still runs
+    # (pod healthy, rc=0) while a shell exec is SIGKILLed (rc=137). Requiring BOTH rules
+    # out a false-pass on container-not-Ready / no-sh / RBAC-deny (those break id too).
     $dbpod = kubectl --context $ctx -n shop get pod -l tier=data -o jsonpath="{.items[0].metadata.name}"
-    kubectl --context $ctx -n shop exec $dbpod -- sh -c "echo x" 2>$null | Out-Null
-    if ($LASTEXITCODE -ne 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "shell exec in db (SIGKILL by TracingPolicy)", "KILL", "137", "PASS" }
-    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "shell exec in db pod", "KILL", "RAN", "FAIL"; $script:fail = 1 }
+    kubectl --context $ctx -n shop exec $dbpod -- id 2>$null | Out-Null; $rcId = $LASTEXITCODE
+    kubectl --context $ctx -n shop exec $dbpod -- sh -c "echo x" 2>$null | Out-Null; $rcSh = $LASTEXITCODE
+    if ($rcId -eq 0 -and ($rcSh -eq 137 -or $rcSh -eq 143)) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "shell killed (137), id runs (0): Tetragon", "137", "$rcSh", "PASS" }
+    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "Tetragon selective kill (id=$rcId sh=$rcSh)", "137", "$rcSh", "FAIL"; $script:fail = 1 }
 
     Write-Host "== Identity (B7): least-privilege RBAC + label<->SA admission =="
     # A tier SA has ZERO Kubernetes API rights (no RoleBinding), so a popped pod's
@@ -127,6 +131,33 @@ spec:
     $saUse | kubectl --context $ctx create --dry-run=server -f - 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "authorized operator deploys api-sa workload -> ADMIT", "ADMIT", "ADMIT", "PASS" }
     else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "authorized operator deploys api-sa workload", "ADMIT", "DENY", "FAIL"; $script:fail = 1 }
+
+    # SA-use also covers the CronJob jobTemplate path: a CI SA scheduling a CronJob as api-sa is DENIED.
+    $saUseCron = @"
+apiVersion: batch/v1
+kind: CronJob
+metadata: { name: sa-use-cron, namespace: shop }
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata: { labels: { app: api } }
+        spec:
+          serviceAccountName: api-sa
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext: { runAsNonRoot: true, runAsUser: 100, seccompProfile: { type: RuntimeDefault } }
+          containers:
+            - name: c
+              image: $curlImg
+              command: ["sleep", "1"]
+              securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: ["ALL"] } }
+              resources: { requests: { cpu: "5m", memory: "8Mi" }, limits: { cpu: "50m", memory: "32Mi" } }
+"@
+    $cronOut = ($saUseCron | kubectl --context $ctx --as="system:serviceaccount:shop:ci-deployer" --as-group=shop:deployers create --dry-run=server -f - 2>&1) -join "`n"
+    if ($LASTEXITCODE -ne 0 -and $cronOut -match "SA-use gate|shop-sa-use|authorized operator") { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "CI SA schedules CronJob as api-sa -> SA-use DENY", "DENY", "DENY", "PASS" }
+    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "CI SA schedules CronJob as api-sa (SA-use gate)", "DENY", "?", "FAIL"; $script:fail = 1 }
 
     Write-Host "== Data-in-transit (Cilium WireGuard) =="
     $enc = (kubectl --context $ctx exec -n kube-system ds/cilium -c cilium-agent -- cilium-dbg encrypt status 2>$null) -join "`n"

@@ -77,8 +77,10 @@ gate (PodSecurityPolicy was removed in 1.25), anyone who can create a Deployment
 
 `k8s/admission-sa-use.yaml` adds the missing `serviceaccounts/use` check at the
 workload level. It reads `request.userInfo` and admits a workload running as
-`web-sa`/`api-sa`/`db-sa` **only** for a Kubernetes controller (`system:*`), a
-cluster admin (`system:masters`), or the `shop:tier-operators` group. Try it as the
+`web-sa`/`api-sa`/`db-sa` **only** for a kube-system workload controller
+(`system:serviceaccount:kube-system:*`), a cluster admin (`system:masters` /
+`kubeadm:cluster-admins`), or the `shop:tier-operators` group — **not** the broad
+`system:*` (which would also match a CI/app SA and be a bypass). Try it as the
 limited deploy role (impersonation; this group has `create deployments` but is not a
 tier operator):
 
@@ -110,7 +112,7 @@ Expected — denied:
 
 Drop the `--as` flags (run as admin) and the **same** workload is admitted — the
 legitimate rollout is unaffected, and so are the controller-created pods of the real
-app (the ReplicaSet controller is a `system:*` requester). So *use* of a tier
+app (created by `system:serviceaccount:kube-system:*` controllers). So *use* of a tier
 identity is now bound to a named, minimized set of requesters, not open to anyone who
 can deploy. The `verify` scripts assert both the deny and the admit.
 

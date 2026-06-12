@@ -83,8 +83,10 @@ portfolios, and it is exactly where this stack now adds controls.
    `serviceaccounts/use` gate** — PodSecurityPolicy, which had one, was removed in
    1.25). This `ValidatingAdmissionPolicy` reads `request.userInfo` and admits a
    workload running as `web-sa`/`api-sa`/`db-sa` **only** when the requester is a
-   Kubernetes controller (`system:*`), a cluster admin (`system:masters`), or a
-   member of `shop:tier-operators`. So the limited `shop:deployers` role can still
+   kube-system workload controller (`system:serviceaccount:kube-system:*`), a cluster
+   admin (`system:masters` / `kubeadm:cluster-admins`), or a member of
+   `shop:tier-operators` — deliberately **not** the broad `system:*` (which also
+   matches a CI/app SA and would be a bypass). So the limited `shop:deployers` role can still
    deploy, but **can no longer run a workload under a tier identity** — verified
    live (impersonating `shop:deployers` to deploy as `api-sa` is denied; an admin
    deploy of the same workload is admitted). **Honest scope:** it covers Pods + apps

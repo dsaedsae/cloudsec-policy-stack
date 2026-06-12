@@ -9,17 +9,20 @@
 #
 # This ValidatingAdmissionPolicy supplies that missing check at the WORKLOAD level
 # (where the residual actually lives — a Deployment's pod template carries the SA):
-# a workload whose pod runs as web-sa/api-sa/db-sa is admitted ONLY when the
-# requester is a Kubernetes controller (system:*), a cluster admin (system:masters),
-# or a member of `shop:tier-operators` (the identity entrusted to ship the standard
-# app). The limited `shop:deployers` role can still deploy other things, but can no
-# longer run a workload under a tier identity. failurePolicy: Fail = fail closed.
+# a workload whose pod runs as web-sa/api-sa/db-sa is admitted ONLY when the requester
+# is a kube-system workload controller (system:serviceaccount:kube-system:*), a cluster
+# admin (system:masters or, on kubeadm >=1.29, kubeadm:cluster-admins), or a member of
+# `shop:tier-operators` (the identity entrusted to ship the standard app). NOTE: it is
+# deliberately NOT `system:*` — that prefix also matches system:serviceaccount:<any-ns>
+# (a CI/app SA) and would be a bypass; we scope to the kube-system namespace only.
+# The limited `shop:deployers` role can still deploy other things, but can no longer run
+# a workload under a tier identity. failurePolicy: Fail = fail closed.
 #
 # Scope (honest): covers Pods + apps workloads (Deployment/ReplicaSet/StatefulSet/
-# DaemonSet) + batch Jobs in `shop`. CronJob and other namespaces would apply the
-# same pattern; full, generic coverage is what a policy engine (Kyverno/Gatekeeper)
-# generates. The legitimate rollout is unaffected: app.yaml is applied by an admin,
-# and the resulting pods are created by the ReplicaSet controller (system:*).
+# DaemonSet) + batch Jobs + CronJobs in `shop`. Other namespaces would apply the same
+# pattern; full, generic coverage is what a policy engine (Kyverno/Gatekeeper) generates.
+# The legitimate rollout is unaffected: app.yaml is applied by an admin, and the
+# resulting pods are created by system:serviceaccount:kube-system:* controllers.
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicy
 metadata:
@@ -39,20 +42,28 @@ spec:
       - apiGroups: ["batch"]
         apiVersions: ["v1"]
         operations: ["CREATE", "UPDATE"]
-        resources: ["jobs"]
+        resources: ["jobs", "cronjobs"]
   variables:
-    # Resolve the effective ServiceAccount whether the object is a bare Pod
-    # (spec.serviceAccountName) or a workload with a pod template
-    # (spec.template.spec.serviceAccountName).
+    # Resolve the effective ServiceAccount across all matched kinds:
+    #  - bare Pod:        spec.serviceAccountName
+    #  - apps/batch Job:  spec.template.spec.serviceAccountName
+    #  - CronJob:         spec.jobTemplate.spec.template.spec.serviceAccountName
     - name: tmplSA
       expression: >
         (has(object.spec.template) && has(object.spec.template.spec) &&
          has(object.spec.template.spec.serviceAccountName))
         ? object.spec.template.spec.serviceAccountName : ''
+    - name: cronSA
+      expression: >
+        (has(object.spec.jobTemplate) && has(object.spec.jobTemplate.spec) &&
+         has(object.spec.jobTemplate.spec.template) &&
+         has(object.spec.jobTemplate.spec.template.spec) &&
+         has(object.spec.jobTemplate.spec.template.spec.serviceAccountName))
+        ? object.spec.jobTemplate.spec.template.spec.serviceAccountName : ''
     - name: podSA
       expression: "has(object.spec.serviceAccountName) ? object.spec.serviceAccountName : ''"
     - name: sa
-      expression: "variables.tmplSA != '' ? variables.tmplSA : variables.podSA"
+      expression: "variables.cronSA != '' ? variables.cronSA : (variables.tmplSA != '' ? variables.tmplSA : variables.podSA)"
     - name: isTierSA
       expression: "variables.sa in ['web-sa', 'api-sa', 'db-sa']"
     # Requester identity (guarded so a missing field never errors under Fail).
@@ -82,7 +93,7 @@ spec:
     - expression: "!variables.isTierSA || variables.requesterAuthorized"
       messageExpression: >
         "running a workload as tier ServiceAccount '" + variables.sa +
-        "' requires an authorized operator (a system controller, system:masters, " +
+        "' requires an authorized operator (a kube-system controller, a cluster admin, " +
         "or shop:tier-operators); requester '" + variables.uname +
         "' is not — see THREAT_MODEL.md B7 (SA-use gate)"
 ---
