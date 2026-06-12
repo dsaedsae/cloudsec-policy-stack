@@ -46,7 +46,7 @@
 | zero-trust (egress) | 4 / 4 | — |
 | credential-forgery (B7) | 4 / 7 | SPIFFE opt-in, 토큰미마운트 미assert, 타 ns 미포함 |
 | least-privilege | 6 / 7 | deployer RBAC 부분 |
-| encryption-in-transit | 2 / 2 | 크로스노드 암호화 + tcpdump 패킷캡처(WG UDP/51871 ≥40pkt 존재, eth0 평문 0; 트래픽게이트) — scripts/capture-wg.sh |
+| encryption-in-transit | 2 / 2 | 크로스노드 암호화 + tcpdump 패킷캡처(WG UDP/51871 40pkt·캡처상한 존재, eth0 평문 0) — scripts/capture-wg.sh |
 | encryption-at-rest | 1 / 3 | 키회전·KMS는 수동/문서 |
 | detection (EDR) | 1 / 3 | 프로세스감사·광역룰 미assert |
 | shift-left | 4 / 6 | gitleaks는 CI만; 이미지 서명(cosign)은 ECR 경로(레지스트리 필요) |

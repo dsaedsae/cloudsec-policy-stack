@@ -38,16 +38,21 @@ kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg encrypt stat
 
 **Packet-captured proof (opt-in evidence — `scripts/capture-wg.sh`).** For the stronger
 claim, a `tcpdump` capture on the db node's host netns (`docker exec`, avoiding the
-PSA-restricted privileged-pod trap), gated on app traffic actually flowing (20/20 requests
-succeeded), shows during that window: **≥40 WireGuard packets (UDP/51871)** between the two
-nodes (ciphertext present — app + node background) and **0 plaintext bytes** (no
-`X-User`/`HTTP/1` on `tcp/8080` over `eth0`). The **dispositive** evidence is the WireGuard
-packets plus the cross-node placement; the plaintext-absence is **corroborating** — note that
-cross-node pod traffic is *encapsulated*, so plaintext would not appear on `eth0` as `tcp/8080`
-even under encapsulation, and the script says so. This upgrades ET2 from CONFIGURED to
-**VERIFIED** (as gated evidence). It SKIPs honestly when `tcpdump` is unavailable or no
-traffic flowed — never asserting "no plaintext" vacuously — so it is evidence, not one of the
-always-on 21 checks.
+PSA-restricted privileged-pod trap), driven by real api→db traffic, showed during that
+window: **40 WireGuard packets (UDP/51871)** between the two nodes (ciphertext present) and
+**0 plaintext bytes** (no `X-User`/`HTTP/1` on `tcp/8080` over `eth0`). The **dispositive**
+evidence is the WireGuard packets plus the cross-node placement; the plaintext-absence is
+**corroborating** — cross-node pod traffic is *encapsulated*, so plaintext would not appear on
+`eth0` as `tcp/8080` even under encapsulation, and the script says so. This upgrades ET2 from
+CONFIGURED to **VERIFIED** (as gated evidence). The script SKIPs honestly when `tcpdump` is
+unavailable or no traffic flowed — never asserting "no plaintext" vacuously.
+
+> The committed evidence
+> ([`docs/assets/evidence/wg-capture-summary.txt`](assets/evidence/wg-capture-summary.txt)) is
+> the *original* run (capped at `-c 40`, so 40 is the capture ceiling, not a measured total).
+> The current script removes the cap and adds a traffic-flow gate; re-run it on a live
+> cross-node cluster to regenerate a measured summary. So it is evidence — not one of the
+> always-on 21 checks.
 
 ```bash
 bash scripts/capture-wg.sh      # -> docs/assets/evidence/wg-capture-summary.txt

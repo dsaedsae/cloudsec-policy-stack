@@ -100,9 +100,9 @@ flowchart TB
 | 항목 | 결과 |
 |------|------|
 | **검증가능성 커버리지 (정량 헤드라인)** | 워크로드 적용가능 MLS 보상통제 sub-requirement의 **67% (26/39)** 가 *코드로 검증* — 갭(CONFIGURED 7·NOT-COVERED 6·GOVERNANCE 2)을 정직하게 공개. [→ 평가](docs/evaluation-coverage.md) |
-| 라이브 방어심층 검증 (기능 회귀 스위트) | **21 / 21 PASS** — 차단/허용 enforcement 전부. WireGuard는 api/db를 **다른 노드로 강제**(podAntiAffinity)하고, **tcpdump 패킷캡처**로 선상의 WG 암호문(UDP/51871, ≥40pkt) 존재 + 평문 0을 확인(트래픽 흐름 게이트 통과 시) — 결정적 증거는 WG패킷+노드분산, 평문부재는 보강(`scripts/capture-wg.sh`) |
+| 라이브 방어심층 검증 (기능 회귀 스위트) | **21 / 21 PASS** — 차단/허용 enforcement 전부. WireGuard는 api/db를 **다른 노드로 강제**(podAntiAffinity)하고, **tcpdump 패킷캡처**로 선상의 WG 암호문(UDP/51871, 40pkt·캡처 상한) 존재 + 평문 0을 확인 — 결정적 증거는 WG패킷+노드분산, 평문부재는 보강(`scripts/capture-wg.sh`) |
 | Cedar 인가 단위테스트 | **8 / 8** (코어) · **12 / 12** AI-에이전트 위임(confused-deputy 차단; P2·P3 mutation으로 반증가능) |
-| ReBAC 관계 테스트 (OpenFGA) | **11 / 11** `fga model test` + 라이브 `/check` 10/10 — 인가 모델의 ReBAC 갭을 실행으로 충족 |
+| ReBAC 관계 테스트 (OpenFGA) | **11 / 11** `fga model test` + 라이브 `/check` 11/11 — 인가 모델의 ReBAC 갭을 실행으로 충족 |
 | 공급망: 이미지 스캔 + SBOM (trivy) | 게이트가 **실제 CVE 1건(HIGH) 포착→remediation→green** · CycloneDX SBOM **103 컴포넌트** |
 | checkov shift-left | **452 pass / 0 fail / 5 documented skip** |
 | 적대적 검토가 찾은 실제 버그 | **CRITICAL 1** (SA-use 우회) + 다수 — 전부 수정·검증 |
