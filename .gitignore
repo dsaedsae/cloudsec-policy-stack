@@ -18,3 +18,7 @@ kubeconfig
 *.key
 *-key.pem
 terraform/cloudsec-config
+
+# Runtime encryption-at-rest material: generated AES key + apiserver manifest
+# backup (scripts/enable-secrets-encryption.*). NEVER commit the key.
+terraform/.enc/

@@ -1,13 +1,9 @@
 # Demo 3-tier app: web -> api -> db. Every workload is hardened (non-root,
 # no privilege escalation, all caps dropped, read-only rootfs, seccomp, limits)
 # so the checkov gate (scripts/scan.ps1) passes — "secure by default" workloads.
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: shop
-  labels:
-    pod-security.kubernetes.io/enforce: restricted
----
+# The `shop` namespace (with PSA `restricted`) is created by k8s/rbac.yaml, which
+# is applied BEFORE this file, so the tier ServiceAccounts exist when these
+# Deployments reference them.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,7 +25,7 @@ spec:
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: web
-          image: nginxinc/nginx-unprivileged:1.27-alpine
+          image: nginxinc/nginx-unprivileged:1.27-alpine@sha256:65e3e85dbaed8ba248841d9d58a899b6197106c23cb0ff1a132b7bfe0547e4c0
           ports: [{ containerPort: 8080 }]
           imagePullPolicy: IfNotPresent
           readinessProbe: { httpGet: { path: /, port: 8080 }, initialDelaySeconds: 3, periodSeconds: 10 }
@@ -63,6 +59,12 @@ metadata:
   name: api
   namespace: shop
   labels: { app: api, tier: backend }
+  annotations:
+    # The api image is built locally from app/api/ and side-loaded into kind
+    # (`kind load`); it has no registry @sha256 digest to pin. web/db/probe images
+    # ARE digest-pinned. Scoped skip (not a global one) so every OTHER workload is
+    # still held to digest pinning by CKV_K8S_43.
+    checkov.io/skip1: CKV_K8S_43=locally-built image (cloudsec-api:local), loaded via `kind load`; no registry digest exists
 spec:
   replicas: 1
   selector: { matchLabels: { app: api } }
@@ -119,7 +121,7 @@ spec:
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: db
-          image: nginxinc/nginx-unprivileged:1.27-alpine  # stands in for a backend datastore
+          image: nginxinc/nginx-unprivileged:1.27-alpine@sha256:65e3e85dbaed8ba248841d9d58a899b6197106c23cb0ff1a132b7bfe0547e4c0  # stands in for a backend datastore
           ports: [{ containerPort: 8080 }]
           imagePullPolicy: IfNotPresent
           readinessProbe: { httpGet: { path: /, port: 8080 }, initialDelaySeconds: 3, periodSeconds: 10 }

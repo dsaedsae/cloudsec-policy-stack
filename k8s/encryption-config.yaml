@@ -1,0 +1,24 @@
+# Data-at-rest: Kubernetes EncryptionConfiguration for Secrets in etcd.
+#
+# By DEFAULT a Kubernetes Secret is only base64-encoded in etcd — anyone who can
+# read the etcd datastore (a disk image, a backup, a node) reads every secret in
+# plaintext. This config makes the kube-apiserver encrypt Secrets with AES-CBC
+# before they are written to etcd (data-at-rest protection — GDPR Art.32 /
+# PCI-DSS req 3 / ISMS-P 2.7). `identity` is kept LAST so already-written
+# (unencrypted) secrets can still be read during the rollover.
+#
+# This is a TEMPLATE. The 32-byte AES key is a secret and is NOT committed: the
+# scripts/enable-secrets-encryption.* generate a fresh random key at runtime and
+# substitute it for __ENC_KEY_B64__, writing the result to a gitignored file that
+# is mounted into the control-plane node. See docs/06-data-protection.md.
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key1
+              secret: __ENC_KEY_B64__
+      - identity: {}

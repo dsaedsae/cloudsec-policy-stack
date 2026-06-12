@@ -3,8 +3,11 @@
 # deliberate for a local, free demo cluster (not unexplained prod shortcuts):
 skip-check:
   - CKV_K8S_15   # imagePullPolicy IfNotPresent is intentional for kind (images preloaded locally)
-  - CKV_K8S_43   # image-digest pinning omitted for readability; pin digests in production
   - CKV_K8S_40   # nginx-unprivileged fixes UID 101; cannot use a >10000 UID without breaking the image
+  # CKV_K8S_43 (image digest pinning) is NO LONGER globally skipped: web/db/probe
+  # images are pinned by @sha256. The one exception (the locally-built api image,
+  # which has no registry digest) carries a SCOPED checkov.io/skip annotation in
+  # k8s/app.yaml, so every other workload is still held to digest pinning.
   - CKV2_K8S_6   # a network policy IS present as CiliumNetworkPolicy (a CRD checkov's native check cannot see)
 compact: true
 quiet: true
