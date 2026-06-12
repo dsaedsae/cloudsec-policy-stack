@@ -3,6 +3,11 @@
 A guided way to study this repo — each lab builds on the last and shows the
 payoff *before* asking you to install more. Defensive/infra only.
 
+> **Why this matters (금융 망분리 완화):** 이 스택이 *어떤 규제 맥락에서 왜 중요한지*는
+> **[금융 망분리 완화(MLS) ↔ 통제 매핑](financial-mls-mapping.md)** 참고 — FSC 「금융분야
+> 망분리 개선 로드맵」(2024-08-13)의 다층보안(MLS) 보상통제에 각 통제를 1:1 매핑하고
+> NIST 800-207·검증 항목까지 연결한다.
+
 | Lab | You'll learn | Needs | Time |
 |-----|--------------|-------|------|
 | [0 — Authorization as code](01-authz-no-cluster.md) | Cedar policies + how `forbid`/limits/roles work, unit-tested | Python only | 5 min |
