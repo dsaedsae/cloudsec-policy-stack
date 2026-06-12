@@ -47,8 +47,8 @@
 | 7 | 깊게 1: 신원/자격증명 위조 확인 | "내부 = 신원" 깨기. **라이브 DENY**는 admission(라벨↔SA, SA-use gate); SPIFFE는 *설정됨*(SPIRE up, `netpol-mutual.yaml` opt-in)으로 보여줌(데모 DENY는 admission 단계) |
 | 8 | 깊게 2: 한 요청·세 결정 | 같은 네트워크 경로, 같은 L7 허용 경로, **다른 principal → 200 vs 403** |
 | 9 | 깊게 3: 데이터 보호 | 전송(WireGuard) + 저장(etcd 암호문 `k8s:enc:aescbc`) + 런타임 차단 |
-| 10 | **라이브 데모** (§4) | verify 20/20 → 위조 DENY → bob 403 vs alice 200 → 셸 SIGKILL → etcd 암호문 |
-| 11 | 결과 | cedar 8/8, checkov 452/0, **verify 20/20 라이브**, CI 통합 |
+| 10 | **라이브 데모** (§4) | verify 21/21 → 위조 DENY → bob 403 vs alice 200 → 셸 SIGKILL → etcd 암호문 |
+| 11 | 결과 | cedar 8/8, checkov 452/0, **verify 21/21 라이브**, CI 통합 |
 | 12 | **정직한 한계** | 데모 스코프·WireGuard 노드간·X-User 미인증·전사 MLS의 일부. *과대주장 안 함* |
 | 13 | NIST 800-207 / ISMS-P 매핑 | 글로벌 제로트러스트 표준과 정합 (§MLS 문서) |
 | 14 | 테이크아웨이 | 보상통제는 "있다"가 아니라 "막는 걸 매번 증명한다" — 자율보안의 본질 |
@@ -73,8 +73,8 @@
 # 0. (사전) 클러스터 up — 발표 전 미리 띄워둘 것 (3~5분 소요)
 pwsh scripts/up.ps1            # 또는  bash scripts/up.sh
 
-# 1. 전체 방어를 한 번에 — 20/20 라이브
-pwsh scripts/verify.ps1        # 표로 20개 통제 PASS
+# 1. 전체 방어를 한 번에 — 21/21 라이브
+pwsh scripts/verify.ps1        # 표로 21개 통제 PASS
 
 # 2. 신원 위조 차단 (말로: "내부에 있으니 api다 — 를 막는다")
 #    forged app:api on web-sa  -> admission DENY   (verify 출력에서 강조)

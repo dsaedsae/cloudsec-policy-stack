@@ -46,7 +46,7 @@ application authorization — each enforced and verified live, with a shift-left
 
 ## The defense-in-depth proof (verified live + in CI)
 
-One asset (`api`), every layer. `scripts/verify.{sh,ps1}` runs all of these (20/20 PASS):
+One asset (`api`), every layer. `scripts/verify.{sh,ps1}` runs all of these (21/21 PASS):
 
 | Layer | Test | Result | Enforced by |
 |-------|------|--------|-------------|
@@ -69,9 +69,10 @@ One asset (`api`), every layer. `scripts/verify.{sh,ps1}` runs all of these (20/
 | identity | `app:api`+`api-sa` by authorized op | **admitted** | label↔SA satisfied + SA-use gate allows operators |
 | identity | `shop:deployers` runs workload as `api-sa` | **admission DENY** | SA-use gate (`request.userInfo`) |
 | identity | authorized operator deploys `api-sa` workload | **admitted** | SA-use gate allows named operators |
+| identity | CI SA schedules CronJob as `api-sa` | **admission DENY** | SA-use gate (jobTemplate path) |
 | data-in-transit | pod-to-pod traffic | **WireGuard** | Cilium transparent encryption |
 
-That's **20/20** in `scripts/verify.{sh,ps1}`. The two 403s are a highlight: `GET /auditlogs` (blocked at L7
+That's **21/21** in `scripts/verify.{sh,ps1}`. The two 403s are a highlight: `GET /auditlogs` (blocked at L7
 before reaching the app, body `Access denied` from Envoy) vs `bob`'s account read (reaches the app, body
 `Cedar denied: ...`) — **same network path, same L7-allowed route, different principal**. The identity rows
 are the other highlight: the same `api-sa` workload is **admitted for an authorized operator but denied for
@@ -129,7 +130,7 @@ break-glass, tier onboarding, deploy/rollback, AWS teardown. **Cloud + cost:**
   checkov validates the *workloads + Terraform*; the CiliumNetworkPolicy (a CRD it can't see) and Cedar are
   covered by the live `verify` job and `cedar/authz.py`. Images are digest-pinned (`@sha256`) except the
   locally-built api image, which carries one *scoped* (not global) skip — see `.checkov.yaml` / `k8s/app.yaml`.
-- Live enforcement — **20/20** checks in the table above pass on kind+Cilium+Tetragon (locally and in CI),
+- Live enforcement — **21/21** checks in the table above pass on kind+Cilium+Tetragon (locally and in CI),
   on a pinned `kindest/node:v1.34.0` (k8s ≥1.30 so the identity admission policy installs). Mutual auth
   Secret encryption-at-rest is verified by its own script (`enable-secrets-encryption`);
   mutual auth (SPIFFE) is applied opt-in (`k8s/netpol-mutual.yaml`) and verified live manually

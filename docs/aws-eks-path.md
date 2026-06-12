@@ -39,7 +39,7 @@
 ### Tier 0 — 로컬 kind · **$0** · "거의 전부 여기서 배운다"
 - **무엇:** 현재 `scripts/up` 스택. Cilium(L3/L4/L7+egress) · Cedar(자체) · 라벨↔SA/SA-use admission · SPIFFE 상호인증 · Tetragon · WireGuard · etcd Secret 암호화 · checkov.
 - **배우는 것:** 제로트러스트·마이크로세분화·정책as코드·런타임탐지·암호화 — MLS 보상통제 6종 전부.
-- **비용:** **$0** (노트북 RAM만). **verify 20/20**까지 무료로 재현.
+- **비용:** **$0** (노트북 RAM만). **verify 21/21**까지 무료로 재현.
 - **언제 충분한가:** 면접·포트폴리오·세미나 데모·개념 학습의 거의 전부. **여기서 멈춰도 된다.**
 
 ### Tier 1 — EKS 단발 랩(같은 날 teardown) · **세션당 약 $1–3**

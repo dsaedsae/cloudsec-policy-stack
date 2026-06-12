@@ -19,7 +19,7 @@
 **배포 후 게이트:**
 ```bash
 ./.venv/Scripts/python.exe cedar/authz.py              # 8/8
-pwsh scripts/verify.ps1                                 # 20/20 (회귀 0)
+pwsh scripts/verify.ps1                                 # 21/21 (회귀 0)
 ```
 
 ---

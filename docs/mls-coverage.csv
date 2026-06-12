@@ -1,0 +1,39 @@
+id,family,sub_requirement,source,category,evidence
+NS1,micro-segmentation,default-deny ingress (모든 파드),A,VERIFIED,verify:L1 web->db 000
+NS2,micro-segmentation,default-deny egress (모든 파드),A,VERIFIED,verify:egress 000 x3
+NS3,micro-segmentation,least-privilege L3 hops (web->api->db only),A,VERIFIED,verify:web->db 000 / api->db 200
+NS4,micro-segmentation,L7 method+path restriction (Envoy),A,VERIFIED,verify:L2 /auditlogs 403
+NS5,micro-segmentation,cross-namespace isolation,B,CONFIGURED,netpol scoped to shop; no inter-ns test
+ZT1,zero-trust,egress to internet blocked,A,VERIFIED,verify:web->internet 000
+ZT2,zero-trust,egress to cloud metadata (169.254.169.254) blocked,A,VERIFIED,verify:metadata 000
+ZT3,zero-trust,egress to kube-apiserver blocked,A,VERIFIED,verify:apiserver 000
+ZT4,zero-trust,per-request re-evaluation (not cached grant),A,VERIFIED,verify:Cedar evaluated each probe
+ID1,credential-forgery,label<->SA consistency at admission,A,VERIFIED,verify:forged app:api on web-sa DENY
+ID2,credential-forgery,requester<->SA binding (SA-use gate),A,VERIFIED,verify:CI SA as api-sa DENY / admin ADMIT
+ID3,credential-forgery,SA-use covers CronJob path,A,VERIFIED,verify:CronJob as api-sa DENY
+ID4,credential-forgery,SPIFFE SVID mutual-auth on edge,A,CONFIGURED,opt-in netpol-mutual; Lab4 manual; not in suite
+ID5,credential-forgery,tier SA has zero K8s API rights,A,VERIFIED,verify:api-sa no create-pods/secrets
+ID6,credential-forgery,SA token not mounted,A,CONFIGURED,automountServiceAccountToken:false; not asserted
+ID7,credential-forgery,SA-use other namespaces,A,NOT_COVERED,policy scoped to shop ns
+LP1,least-privilege,Cedar owner check,A,VERIFIED,verify:bob GET alice 403
+LP2,least-privilege,Cedar transfer limit,A,VERIFIED,verify:transfer 5000 403
+LP3,least-privilege,Cedar frozen-account forbid,A,VERIFIED,verify:frozen 403
+LP4,least-privilege,Cedar positive-amount guard,A,VERIFIED,verify:-100 403
+LP5,least-privilege,Cedar role hierarchy (auditlog),A,VERIFIED,authz.py:auditor allow / customer deny
+LP6,least-privilege,input charset validation (X-User),A,VERIFIED,verify:malformed X-User 400
+LP7,least-privilege,deployer minimal RBAC (no pods/secrets/SA),A,CONFIGURED,Role defined; partially via SA-use test
+ET1,encryption-transit,WireGuard pod-to-pod enabled,B,CONFIGURED,verify:feature enabled; single-worker intra-node not on-wire
+ET2,encryption-transit,cross-node ciphertext proven,B,NOT_COVERED,single worker; needs 2-node + anti-affinity
+ER1,encryption-rest,etcd Secret AES-CBC,B,VERIFIED,enable-secrets-encryption: k8s:enc:aescbc / no plaintext
+ER2,encryption-rest,key rotation procedure,B,CONFIGURED,runbook 02 2-key flow; not automated/tested
+ER3,encryption-rest,managed KMS/HSM key mgmt,B,NOT_COVERED,local demo; AWS path documented only
+ED1,detection-edr,runtime shell-exec kill (data tier),A,VERIFIED,verify:shell rc=137 + id rc=0 (selective kill)
+ED2,detection-edr,process-exec audit trail,B,CONFIGURED,Tetragon logs present; not asserted in suite
+ED3,detection-edr,broader runtime policies (nc/python/curl),B,NOT_COVERED,only shell in data tier
+SL1,shift-left,IaC + K8s manifest scan (checkov),B,VERIFIED,checkov 452 pass / 0 fail
+SL2,shift-left,secret scan (gitleaks),B,CONFIGURED,CI step; not in verify suite
+SL3,shift-left,CI enforcement gate,B,VERIFIED,CI runs verify.sh on push
+GV1,governance,C/S/O data classification governance,G,GOVERNANCE,workload cannot test; NIS MLS process
+GV2,governance,CEO/board reporting + 시정요구 대응,G,GOVERNANCE,organizational; out of workload scope
+GV3,governance,DLP (data loss prevention),G,NOT_COVERED,enterprise control; absent here
+GV4,governance,SIEM / centralized audit integration,G,NOT_COVERED,signal export points noted; no integration
