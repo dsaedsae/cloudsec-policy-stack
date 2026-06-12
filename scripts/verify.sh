@@ -180,7 +180,7 @@ echo "== Data-in-transit (Cilium WireGuard, cross-node) =="
 ENC=$(kubectl --context "$CTX" exec -n kube-system ds/cilium -c cilium-agent -- cilium-dbg encrypt status 2>/dev/null || true)
 API_NODE=$(kubectl --context "$CTX" -n shop get pod -l tier=backend -o jsonpath='{.items[0].spec.nodeName}')
 DB_NODE=$(kubectl --context "$CTX" -n shop get pod -l tier=data -o jsonpath='{.items[0].spec.nodeName}')
-if echo "$ENC" | grep -qi "Wireguard" && [ -n "$API_NODE" ] && [ "$API_NODE" != "$DB_NODE" ]; then
+if echo "$ENC" | grep -qi "Wireguard" && [ -n "$API_NODE" ] && [ -n "$DB_NODE" ] && [ "$API_NODE" != "$DB_NODE" ]; then
   printf '  %-48s expect %-7s got %-7s %s\n' "api->db cross-node, WireGuard-encrypted" "WG+xnode" "WG+xnode" "PASS"
 else
   printf '  %-48s expect %-7s got %-7s %s\n' "WireGuard cross-node (api=$API_NODE db=$DB_NODE)" "WG+xnode" "?" "FAIL"; fail=1

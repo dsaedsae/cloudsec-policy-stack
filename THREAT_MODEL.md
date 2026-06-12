@@ -27,7 +27,7 @@ attacker). Three concrete profiles, each mapped to the controls that stop it and
 
 | # | Attacker | Capability | Goal | Stopped by (verify) | Residual |
 |---|----------|-----------|------|---------------------|----------|
-| **A1** | **Popped `web` pod** | RCE inside the `web` container (e.g. via a web vuln) | reach `db`, exfiltrate, beacon out, escalate | L3 drop `web→db` (`000`); egress default-deny → internet/metadata/apiserver (`000`); Tetragon SIGKILLs a spawned shell (`137`); unmounted SA token → no cluster API | A root-on-node escape; a non-shell post-exploit that stays within `web`'s allowed L7 calls |
+| **A1** | **Popped `web` pod** | RCE inside the `web` container (e.g. via a web vuln) | reach `db`, exfiltrate, beacon out, escalate | L3 drop `web→db` (`000`); egress default-deny → internet/metadata/apiserver (`000`); unmounted SA token → no cluster API. (Note: Tetragon's shell-kill targets `tier: data`, so it protects `db` *if* the attacker pivots there — not `web` itself.) | A root-on-node escape; a non-shell post-exploit that stays within `web`'s allowed L7 calls |
 | **A2** | **Malicious / compromised `shop:deployers`** | can `create` Deployments/Jobs/CronJobs in `shop` (CI identity) | run a workload **as a tier identity** (`api-sa`) to *become* `api` | label↔SA admission (mismatch DENY); **SA-use gate** denies a non-operator running as a tier SA — incl. via Deployment **and CronJob** (`SA-use DENY`) | An *authorized* operator (cluster-admin / `shop:tier-operators`) is trusted by design; a `system:serviceaccount:kube-system:*` controller is trusted |
 | **A3** | **On-path between nodes** | passive capture of inter-node pod traffic | read `X-User` / account data on the wire | Cilium **WireGuard** encrypts cross-node pod traffic (ciphertext, not plaintext) | Same-node hops don't traverse the wire; a host/kernel compromise; mutual-auth (SVID) is opt-in on the demo edge |
 
@@ -108,9 +108,10 @@ portfolios, and it is exactly where this stack now adds controls.
    deploy, but **can no longer run a workload under a tier identity** — verified
    live (impersonating `shop:deployers` to deploy as `api-sa` is denied; an admin
    deploy of the same workload is admitted). **Honest scope:** it covers Pods + apps
-   workloads (Deployment/ReplicaSet/StatefulSet/DaemonSet) + batch Jobs in `shop`;
-   CronJob and other namespaces apply the same pattern, and fully generic coverage
-   is what a policy engine (Kyverno/Gatekeeper) generates from one rule. The trust
+   workloads (Deployment/ReplicaSet/StatefulSet/DaemonSet) + batch Jobs **and CronJobs**
+   in `shop` (each resolved to the SA via its own template path); *other namespaces*
+   apply the same pattern, and fully generic coverage is what a policy engine
+   (Kyverno/Gatekeeper) generates from one rule. The trust
    is now **explicit and minimized** (named operators) rather than "anyone who can
    deploy."
 
@@ -125,9 +126,9 @@ portfolios, and it is exactly where this stack now adds controls.
    insufficient. The chain — RBAC (who may deploy) → label/SA consistency → SA-use
    gate (who may run as a tier SA) → SVID handshake — raises the bar at every step.
    **What remains, stated plainly:** the SA-use gate trusts the admission layer and
-   the named operators; a compromised admin or a gap in resource coverage (e.g.
-   CronJob) is out of scope here, and a root-on-node attacker is below the whole
-   model. The point is that each link is now a *named, minimized* trust rather than
+   the named operators; a compromised admin, resource kinds outside the matched set
+   (other namespaces; a future API kind), or a root-on-node attacker are out of scope
+   here. The point is that each link is now a *named, minimized* trust rather than
    an open default.
 
 ## What each layer does NOT protect against (residual risk)

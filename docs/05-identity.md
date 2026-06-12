@@ -137,8 +137,9 @@ valid SVID, which it cannot mint without the SA's cryptographic identity. The fu
 chain is now: **who may deploy** (RBAC) → **label matches SA** (Control 2) → **who
 may run as a tier SA** (Control 3) → **must hold the SVID** (Control 4). What remains
 is named honestly in the threat model — the SA-use gate trusts the admission layer
-and the named operators, and a resource it doesn't yet match (e.g. CronJob) would
-extend the same one rule.
+and the named operators, and a resource kind outside the matched set (it covers
+Pods/Deployments/RS/STS/DS/Jobs/CronJobs in `shop`; other namespaces or a future API
+kind) would extend the same one rule.
 
 ## Make it yours
 

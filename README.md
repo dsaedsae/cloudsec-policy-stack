@@ -148,7 +148,8 @@ Done since:
 
 Next:
 - **Build provenance** — `cosign verify` + SLSA attestation for the api image.
-- **SA-use gate coverage (known open path)** — the gate matches Pods/Deployments/RS/STS/DS/Jobs, but **NOT CronJob**: a CronJob's SA lives at `spec.jobTemplate.spec.template.spec.serviceAccountName`, so a CronJob running as a tier SA is currently *unmatched → admitted*. Closing it = add the CronJob path (and ideally a generated, cluster-wide form via Kyverno/Gatekeeper so the rule isn't hand-maintained per resource type). Tracked, not yet closed.
+- **SA-use gate — cluster-wide generalization** — the gate now matches Pods/Deployments/RS/STS/DS/Jobs **and CronJobs** in `shop` (each resolved to its SA, live-verified). The remaining work is a *generated, cluster-wide* form (Kyverno/Gatekeeper) so the rule isn't hand-maintained per resource kind, and extending beyond the `shop` namespace.
+- **WireGuard packet capture** — the cross-node hop is proven by node-placement + `encrypt status` (Cilium encrypts cross-node traffic); a `tcpdump`/`cilium monitor` ciphertext capture is the stronger, still-pending evidence.
 
 ## Notes
 

@@ -165,7 +165,7 @@ spec:
     $enc = (kubectl --context $ctx exec -n kube-system ds/cilium -c cilium-agent -- cilium-dbg encrypt status 2>$null) -join "`n"
     $apiNode = kubectl --context $ctx -n shop get pod -l tier=backend -o jsonpath="{.items[0].spec.nodeName}"
     $dbNode  = kubectl --context $ctx -n shop get pod -l tier=data -o jsonpath="{.items[0].spec.nodeName}"
-    if ($enc -match "Wireguard" -and $apiNode -and $apiNode -ne $dbNode) { "{0,-46} expect {1,-8} got {2,-8} {3}" -f "api->db cross-node, WireGuard-encrypted", "WG+xnode", "WG+xnode", "PASS" }
+    if ($enc -match "Wireguard" -and $apiNode -and $dbNode -and $apiNode -ne $dbNode) { "{0,-46} expect {1,-8} got {2,-8} {3}" -f "api->db cross-node, WireGuard-encrypted", "WG+xnode", "WG+xnode", "PASS" }
     else { "{0,-46} expect {1,-8} got {2,-8} {3}" -f "WireGuard cross-node (api=$apiNode db=$dbNode)", "WG+xnode", "?", "FAIL"; $script:fail = 1 }
 }
 finally {
