@@ -9,43 +9,34 @@ hide:
 **검증 가능한 다층보안(MLS) 보상통제를 코드로 — 한 요청이 신원·세분화·인가·암호화·탐지를
 전부 통과해야 데이터에 닿는다. 그리고 그 사실을 매번 라이브로 증명한다.**
 
-<div class="hero-badges" markdown>
-[라이브 검증 21/21](docs/evaluation-coverage.md){ .chip .chip--verified } [검증가능 커버리지 72%](docs/evaluation-coverage.md){ .chip .chip--verified } [적대적 검증 CRITICAL 1 발견·수정](THREAT_MODEL.md){ .chip .chip--verified } [무료 로컬 $0](docs/aws-eks-path.md){ .chip }
-</div>
+[**라이브 검증 21/21**](docs/evaluation-coverage.md) · [**검증가능 커버리지 72%**](docs/evaluation-coverage.md) · [**적대적 검증: CRITICAL 1 발견·수정**](THREAT_MODEL.md) · **무료 로컬 $0**
 
-<div class="hero-cta" markdown>
-[🏁 여기서 시작 — M0 재구현 (클러스터 불필요·Python만)](labs/m0/README.md){ .md-button .md-button--primary }
-[트랙 전체 보기](labs/README.md){ .md-button }
-</div>
+🏁 **[여기서 시작 — M0 재구현 (클러스터 불필요·Python만)](labs/m0/README.md)** · [트랙 전체 보기](labs/README.md)
 
 > ⚖️ 교육·포트폴리오 목적의 보상통제 설계 레퍼런스입니다 — **법률/금융 자문도, 공식 FSC 컴플라이언스 매핑도 아닙니다.** 규제 세부(고시·조문·시행일)는 1차 출처 대조가 필요하다.
 
-!!! abstract "한 문단 요약"
-    한국 금융권은 10년간 **물리/논리 망분리**로 보안을 유지했다. FSC(금융위원회) 「금융분야 망분리 개선
-    [로드맵](docs/financial-mls-mapping.md)」(2024-08-13)이 이를 위험기반 **다층보안(MLS)** 으로 전환하면서, "네트워크 위치로
-    신뢰"가 사라진 자리를 **보상통제(compensating controls)** 로 메워야 한다. 이 프로젝트는
-    그 보상통제를 **하나의 워크로드 위에 코드로 구현하고, 21개 통제를 라이브로 검증**한
-    재현 가능한 레퍼런스다. 적대적(LLM) 재검토가 우리 자신의 인가 정책에서 **실제 우회 취약점**
-    을 찾아 수정한 과정까지 정직하게 포함한다.
+> **한 문단 요약** — 한국 금융권은 10년간 **물리/논리 망분리**로 보안을 유지했다. FSC(금융위원회) 「금융분야 망분리 개선 [로드맵](docs/financial-mls-mapping.md)」(2024-08-13)이 이를 위험기반 **다층보안(MLS)** 으로 전환하면서, "네트워크 위치로 신뢰"가 사라진 자리를 **보상통제(compensating controls)** 로 메워야 한다. 이 프로젝트는 그 보상통제를 **하나의 워크로드 위에 코드로 구현하고, 21개 통제를 라이브로 검증**한 재현 가능한 레퍼런스다. 적대적(LLM) 재검토가 우리 자신의 인가 정책에서 **실제 우회 취약점**을 찾아 수정한 과정까지 정직하게 포함한다.
 
 ---
 
 ## 왜 중요한가 (the problem)
 
-=== "전 — 망분리"
+**전 — 망분리**
 
-    ```
-    인터넷망  ══(에어갭)══  업무망     "경계만 지키면 안쪽은 평평하게 신뢰"
-    ```
-    안전하지만 SaaS·클라우드·생성형 AI·개발도구가 막혀 경쟁력이 떨어진다.
+```
+인터넷망  ══(에어갭)══  업무망     "경계만 지키면 안쪽은 평평하게 신뢰"
+```
 
-=== "후 — MLS (망분리 완화)"
+안전하지만 SaaS·클라우드·생성형 AI·개발도구가 막혀 경쟁력이 떨어진다.
 
-    ```
-    "업무 목적에 따라 통제된 연결"     위치 ≠ 신뢰
-    데이터 등급 C/S/O · 등급별 차등 · 다층 보상통제
-    ```
-    망을 풀면 **그 신뢰를 보상통제로 대체**해야 한다 — 바로 이 프로젝트가 구현·검증하는 것.
+**후 — MLS (망분리 완화)**
+
+```
+"업무 목적에 따라 통제된 연결"     위치 ≠ 신뢰
+데이터 등급 C/S/O · 등급별 차등 · 다층 보상통제
+```
+
+망을 풀면 **그 신뢰를 보상통제로 대체**해야 한다 — 바로 이 프로젝트가 구현·검증하는 것.
 
 > 망분리 완화의 안전성은 보상통제가 *실제로 막는지*에 달렸다 — 슬라이드가 아니라 **실행과 검증**으로.
 
@@ -83,30 +74,10 @@ flowchart TB
 
 ## 기여 (contributions)
 
-<div class="grid cards" markdown>
-
--   🗺️ **규제 → 통제 매핑**
-
-    FSC 망분리 완화/MLS 보상통제 6종을 NIST SP 800-207·ISMS-P·**검증 항목**에 1:1 매핑.
-    [→ MLS 매핑](docs/financial-mls-mapping.md)
-
--   ✅ **검증가능성 기준 + 커버리지 측정**
-
-    "각 규제 요구는 시행을 증명하는 실행 테스트에 대응돼야 한다"를 기준으로 삼고, MLS 보상통제의
-    **72%가 코드로 검증가능**함을 *정량화*(갭 공개). [→ 평가](docs/evaluation-coverage.md)
-
--   🛡️ **정직한 적대적 검증**
-
-    LLM 멀티에이전트 재검토가 **우리 SA-use 정책의 실제 우회(CRITICAL)** 를 발견 → 수정 →
-    라이브 재검증. 과대주장 대신 잔여위험 명시.
-
--   ⚖️ **현재 인가 흐름에 정렬 + 프런티어**
-
-    RBAC+ABAC 하이브리드 · policy-as-code · 지속평가. **AI-에이전트 위임(Cedar)·ReBAC(OpenFGA)**
-    을 실행 데모로 충족(NHI 생애주기 프레이밍 포함).
-    [→ 인가 모델](docs/authorization-model.md)
-
-</div>
+- 🗺️ **규제 → 통제 매핑** — FSC 망분리 완화/MLS 보상통제 6종을 NIST SP 800-207·ISMS-P·**검증 항목**에 1:1 매핑. [→ MLS 매핑](docs/financial-mls-mapping.md)
+- ✅ **검증가능성 기준 + 커버리지 측정** — "각 규제 요구는 시행을 증명하는 실행 테스트에 대응돼야 한다"를 기준으로, MLS 보상통제의 **72%가 코드로 검증가능**함을 *정량화*(갭 공개). [→ 평가](docs/evaluation-coverage.md)
+- 🛡️ **정직한 적대적 검증** — LLM 멀티에이전트 재검토가 **우리 SA-use 정책의 실제 우회(CRITICAL)** 를 발견 → 수정 → 라이브 재검증. 과대주장 대신 잔여위험 명시.
+- ⚖️ **현재 인가 흐름에 정렬 + 프런티어** — RBAC+ABAC 하이브리드 · policy-as-code · 지속평가. **AI-에이전트 위임(Cedar)·ReBAC(OpenFGA)** 을 실행 데모로 충족(NHI 생애주기 프레이밍 포함). [→ 인가 모델](docs/authorization-model.md)
 
 ---
 
@@ -127,17 +98,9 @@ flowchart TB
 
 ## 어디로 갈 것인가
 
-<div class="grid cards" markdown>
+- **직접 익히려면** → [재구현 트랙 M0](labs/m0/README.md) — 빈 파일에서 작성하면 자동채점이 판정 (클러스터 불필요)
+- **개념부터 읽으려면** → [읽으며 따라가기: 개념 페이지 6편](docs/README.md) (각 페이지가 재구현 모듈과 짝)
+- **왜 중요한지** → [금융 망분리 완화 매핑](docs/financial-mls-mapping.md) · [위협 모델](THREAT_MODEL.md)
+- **운영·클라우드·발표** → [런북](runbooks/README.md) · [AWS 경로](docs/aws-eks-path.md) · [토크 아웃라인](presentation/talk-outline.md)
 
--   **직접 익히려면** → [재구현 트랙 M0](labs/m0/README.md) — 빈 파일에서 작성하면 자동채점이 판정 (클러스터 불필요)
--   **개념부터 읽으려면** → [읽으며 따라가기: 개념 페이지 6편](docs/README.md) (각 페이지가 재구현 모듈과 짝)
--   **왜 중요한지** → [금융 망분리 완화 매핑](docs/financial-mls-mapping.md) · [위협 모델](THREAT_MODEL.md)
--   **운영·클라우드·발표** → [런북](runbooks/README.md) · [AWS 경로](docs/aws-eks-path.md) · [토크 아웃라인](presentation/talk-outline.md)
-
-</div>
-
-!!! note "정직 메모"
-    이것은 *워크로드 보상통제 레이어*의 레퍼런스다 — 인증서가 아니다. 실 데이터스토어 없음,
-    X-User는 미인증 데모 입력, WireGuard는 노드간 암호화(api/db를 다른 노드로 강제해 크로스노드
-    증명 + tcpdump 패킷캡처로 암호문 확인), 규제 세부는 1차 출처 대조 필요.
-    한계를 명시하는 것 자체가 MLS의 "자율보안·정직성"에 부합한다.
+> **정직 메모** — 이것은 *워크로드 보상통제 레이어*의 레퍼런스다(인증서가 아니다). 실 데이터스토어 없음, X-User는 미인증 데모 입력, WireGuard는 노드간 암호화(api/db를 다른 노드로 강제해 크로스노드 증명 + tcpdump 패킷캡처로 암호문 확인), 규제 세부는 1차 출처 대조 필요. 한계를 명시하는 것 자체가 MLS의 "자율보안·정직성"에 부합한다.
