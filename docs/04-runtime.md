@@ -49,6 +49,15 @@ Add `"/python"` (or `/nc`, `/curl`) to the `values:` list in
 `k8s/tracingpolicy.yaml`, `kubectl apply` it, and try to exec that binary in the
 db pod — it's now killed too. You just wrote a runtime-security rule.
 
+## 정직한 한계 — syscall 표면의 회피 클래스 (io_uring)
+
+이 룰은 `execve` **syscall**에 건 kprobe다. `execve`는 io_uring 오피코드가 없어 *셸 실행* 차단은
+견고하다. 하지만 **파일/네트워크 같은 광역 syscall-kprobe 룰은 `io_uring`으로 우회될 수 있다** —
+공격자가 read/write/connect 대신 io_uring 제출큐로 I/O를 수행하면 감시 중인 syscall이 발동하지
+않는다(ARMO "Curing" PoC, 2025). 더 견고한 답은 syscall 표면이 아니라 **LSM 레이어(BPF-LSM / KRSI)**
+에 거는 것 — 호출 방식과 무관하게 커널 *연산* 자체를 관측한다. 이 데모의 단일 `execve` 룰은
+*의도적으로 좁은* 예시이지 일반 런타임-회피 방어가 아니다(잔여위험으로 명시 — `THREAT_MODEL.md`).
+
 ---
 
 That's the full stack: **provision (Terraform) → network L3/L7 + egress (Cilium)

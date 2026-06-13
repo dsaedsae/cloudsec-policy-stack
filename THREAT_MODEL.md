@@ -144,6 +144,15 @@ portfolios, and it is exactly where this stack now adds controls.
   This is deliberate scoping for a local portfolio, stated in the README too.
 - **Cilium identity still trusts the CNI and kernel.** mutual auth raises the bar
   to "compromise SPIRE or the node," but a root-on-node attacker is out of scope.
+- **Runtime detection watches the *syscall* surface — which has a known evasion class.**
+  Tetragon's data-tier kill rule (B6) hooks `execve` (a kprobe). `execve` has no io_uring
+  opcode, so the *shell-exec* defense itself holds; but any broader syscall-kprobe rule
+  (file read/write, network connect) can be bypassed by an attacker issuing I/O through
+  **io_uring**'s submission queue instead of the watched syscalls (ARMO "Curing" PoC, 2025).
+  The robust answer is to hook at the **LSM layer (BPF-LSM / KRSI)**, which observes the
+  kernel *operation* regardless of how it was invoked, rather than the syscall surface.
+  This is a stated residual (doc-only / NOT_COVERED) — the demo's single `execve` rule is
+  intentionally narrow, not a general runtime-evasion defense.
 - **checkov sees manifests, not runtime.** It cannot see the CiliumNetworkPolicy
   CRD or Cedar logic; those are covered by `cedar/authz.py` and the live `verify`
   job. "0 findings" is never claimed as "secure" — see `.checkov.yaml` triage.

@@ -21,6 +21,7 @@
 | kind 클러스터 | **EKS** 또는 *EC2 위 kind* | 관리형 컨트롤플레인 vs 직접 | EKS $0.10/hr(≈$73/월). EC2 위 kind는 EC2값만 |
 | Cilium CNI(L3/L4/**L7**) | **Cilium on EKS**(OSS) 또는 VPC CNI+SG | Cilium 유지 시 L7·정책 동일 | Cilium 무료. VPC CNI는 L7 없음 |
 | Cilium **WireGuard**(전송암호화) | Cilium encryption on EKS | 동일 OSS | 무료(컴퓨팅만). 노드 간 암호화 |
+| **egress default-deny → 메타데이터(169.254.169.254) 차단**(ZT2) | **IMDSv2 강제(세션 토큰 필수) + hop-limit=1**(EC2/EKS) · Azure **Metadata Security Protocol** | 관리형 호스트 통제 | 무료(설정) |
 | **Cedar PDP**(자체) | **Amazon Verified Permissions**(관리형 Cedar) | 정책 그대로 포팅 | **$5 / 100만 요청**, 최소·선결제 없음 → 데모 볼륨 수 센트 |
 | etcd **Secret 암호화**(AES) | **EKS envelope encryption + KMS** | 관리형 키 | **KMS 키 $1/월** + $0.03/만요청(2만 무료) |
 | **SPIFFE/SPIRE** 상호인증 | SPIRE on EKS, 또는 **IRSA / EKS Pod Identity** | 워크로드 신원 관리형 | IRSA/Pod Identity 무료. SPIRE 자체호스팅도 가능 |
@@ -31,6 +32,13 @@
 
 > 포인트: **Cedar → Amazon Verified Permissions**, **etcd암호화 → KMS 봉투암호화**가 가장 깔끔한
 > "코드 그대로, 관리형으로" 전환이다. 발표(특히 Summit)에서 이 두 개를 강조하라.
+>
+> 🛡️ **메타데이터 차단(ZT2)의 클라우드 등가물 — SSRF 자격증명 탈취 방어.** 이 repo는 워크로드 egress를
+> `169.254.169.254`로 default-deny한다. 클라우드에선 같은 위협(앱 **SSRF**로 인스턴스 메타데이터의 임시
+> 자격증명 탈취)을 **IMDSv2**(요청에 세션 토큰 필수 → 단순 SSRF GET 무력화)와 **hop-limit=1**(프록시/컨테이너
+> 한 홉 너머의 메타데이터 도달 차단)로 막고, Azure는 **Metadata Security Protocol**로 대응한다. 최근 사례:
+> Azure OpenAI **SSRF CVE-2025-53767**(CVSS 10). *doc-only 매핑*이며 이 repo의 라이브 검증은 in-cluster
+> egress-block(ZT2 `metadata 000`)에 한정된다.
 
 ### 1-1. 빌드 프로비넌스: 이미지 서명(cosign) — *레지스트리 경로 전용*
 
