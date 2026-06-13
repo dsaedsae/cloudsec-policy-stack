@@ -1,5 +1,7 @@
 # M6 — 프런티어: AI 에이전트 위임 인가 (ABAC 교집합 + ReBAC)
 
+[모듈 7 / 7]{ .lab-progress } · [클러스터 불필요]{ .lab-badge .no-cluster }
+
 **미션:** 같은 "위임" 문제를 두 모델로 구현한다 — **(A) Cedar ABAC 교집합**으로 confused-deputy를
 막고, **(B) OpenFGA ReBAC** 관계 그래프로 같은 위임을 표현한다. 클러스터 불필요(python + docker).
 

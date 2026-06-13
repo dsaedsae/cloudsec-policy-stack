@@ -1,5 +1,7 @@
 # M3 — 네트워크: Cilium 제로트러스트 (L3/L7 + egress)
 
+[모듈 4 / 7]{ .lab-progress } · [클러스터 필요]{ .lab-badge .cluster }
+
 **미션:** default-deny에서 시작해 **최소권한 홉**(외부→web→api→db)만 여는 CiliumNetworkPolicy를
 직접 구성한다. L7으로 web→api 경로를 메서드/path까지 제한하고, egress도 default-deny로 막는다.
 

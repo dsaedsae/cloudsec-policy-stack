@@ -1,6 +1,7 @@
 ---
 hide:
   - navigation
+  - toc
 ---
 
 # 망분리를 풀면, 신뢰를 무엇으로 대체하는가
@@ -8,7 +9,14 @@ hide:
 **검증 가능한 다층보안(MLS) 보상통제를 코드로 — 한 요청이 신원·세분화·인가·암호화·탐지를
 전부 통과해야 데이터에 닿는다. 그리고 그 사실을 매번 라이브로 증명한다.**
 
-<p align="center"><strong>🟢 라이브 검증 21/21 &nbsp;·&nbsp; 📊 검증가능 커버리지 67% &nbsp;·&nbsp; 🛡️ 적대적 자기검증이 CRITICAL 1건 발견·수정 &nbsp;·&nbsp; 💰 무료 로컬</strong></p>
+<div class="hero-badges" markdown>
+[라이브 검증 21/21](docs/evaluation-coverage.md){ .chip .chip--verified } [검증가능 커버리지 67%](docs/evaluation-coverage.md){ .chip .chip--configured } [적대적 검증 CRITICAL 1 발견·수정](THREAT_MODEL.md){ .chip .chip--notcovered } [무료 로컬 $0](docs/aws-eks-path.md){ .chip .chip--governance }
+</div>
+
+<div class="hero-cta" markdown>
+[:material-flag-checkered: 여기서 시작 — M0 재구현 (클러스터 불필요·Python만)](labs/m0/README.md){ .md-button .md-button--primary }
+[트랙 전체 보기](labs/README.md){ .md-button }
+</div>
 
 !!! abstract "한 문단 요약"
     한국 금융권은 10년간 **물리/논리 망분리**로 보안을 유지했다. FSC 「금융분야 망분리 개선
@@ -114,10 +122,10 @@ flowchart TB
 
 <div class="grid cards" markdown>
 
--   **처음이면** → [실습 랩 0–5](docs/README.md) (Lab 0은 Python만, 5분)
+-   **직접 익히려면** → [재구현 트랙 M0](labs/m0/README.md) — 빈 파일에서 작성하면 자동채점이 판정 (클러스터 불필요)
+-   **개념부터 읽으려면** → [읽으며 따라가기 랩 0–5](docs/README.md) (Lab 0은 Python만, 5분)
 -   **왜 중요한지** → [금융 망분리 완화 매핑](docs/financial-mls-mapping.md) · [위협 모델](THREAT_MODEL.md)
--   **운영** → [런북](runbooks/README.md) · **클라우드+비용** → [AWS 경로](docs/aws-eks-path.md)
--   **발표** → [토크 아웃라인](presentation/talk-outline.md)
+-   **운영·클라우드·발표** → [런북](runbooks/README.md) · [AWS 경로](docs/aws-eks-path.md) · [토크 아웃라인](presentation/talk-outline.md)
 
 </div>
 

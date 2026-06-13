@@ -1,5 +1,7 @@
 # M1 — 쉬프트레프트: 심어둔 결함을 사냥해 게이트를 green으로
 
+[모듈 2 / 7]{ .lab-progress } · [클러스터 불필요]{ .lab-badge .no-cluster }
+
 **미션:** 신입이 짜온 `labs/m1/workload.yaml`을 checkov가 **0 실패**로 통과하도록 *고친다*.
 클러스터 불필요 — checkov만 돌린다. 처음엔 **16개 위반**이 잡힌다.
 
