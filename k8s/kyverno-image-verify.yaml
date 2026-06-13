@@ -29,6 +29,10 @@ spec:
       verifyImages:
         - imageReferences:
             - "kind-registry:5000/*"
+          # RESIDUAL (admission-time only): mutateDigest:false admits a TAG ref as-is, leaving a
+          # verify-then-pull TOCTOU re-tag window (cf. CVE-2022-47633). Fine for this opt-in demo
+          # (verify-image-signing.ps1 admits by digest); PRODUCTION should set mutateDigest:true to
+          # pin the admitted Pod to the verified digest, or restrict imageReferences to digest refs.
           mutateDigest: false
           verifyDigest: false
           required: true

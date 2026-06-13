@@ -20,7 +20,7 @@ import pathlib
 import cedarpy
 from fastapi import FastAPI, Header, HTTPException, Request
 
-from auth import principal_for
+from auth import principal_for, principal_id
 
 CEDAR = pathlib.Path(__file__).parent / "cedar"
 POLICIES = (CEDAR / "policies.cedar").read_text(encoding="utf-8")
@@ -70,8 +70,10 @@ def view_account(
     x_user: str = Header(default="anonymous"),
     authorization: str | None = Header(default=None),
 ) -> dict:
-    authorize(resolve_principal(authorization, x_user), 'Action::"ViewAccount"', f'Account::"{acct}"')
-    return {"account": acct, "viewer": x_user, "decision": "Allow"}
+    uid = resolve_principal(authorization, x_user)
+    authorize(uid, 'Action::"ViewAccount"', f'Account::"{acct}"')
+    # Attribute to the RESOLVED principal (Bearer sub when present), not the X-User header.
+    return {"account": acct, "viewer": principal_id(uid), "decision": "Allow"}
 
 
 @app.post("/accounts/{acct}/transfer")
@@ -90,8 +92,9 @@ async def transfer(
         amount = int(body.get("amount", 10**9))
     except (TypeError, ValueError):
         amount = 10**9
-    authorize(resolve_principal(authorization, x_user), 'Action::"Transfer"', f'Account::"{acct}"', {"amount": amount})
-    return {"account": acct, "by": x_user, "amount": amount, "decision": "Allow"}
+    uid = resolve_principal(authorization, x_user)
+    authorize(uid, 'Action::"Transfer"', f'Account::"{acct}"', {"amount": amount})
+    return {"account": acct, "by": principal_id(uid), "amount": amount, "decision": "Allow"}
 
 
 @app.get("/auditlogs/{log}")
@@ -100,5 +103,6 @@ def view_audit_log(
     x_user: str = Header(default="anonymous"),
     authorization: str | None = Header(default=None),
 ) -> dict:
-    authorize(resolve_principal(authorization, x_user), 'Action::"ViewAuditLog"', f'AuditLog::"{log}"')
-    return {"auditlog": log, "viewer": x_user, "decision": "Allow"}
+    uid = resolve_principal(authorization, x_user)
+    authorize(uid, 'Action::"ViewAuditLog"', f'AuditLog::"{log}"')
+    return {"auditlog": log, "viewer": principal_id(uid), "decision": "Allow"}

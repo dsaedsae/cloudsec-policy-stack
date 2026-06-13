@@ -51,8 +51,11 @@ db pod — it's now killed too. You just wrote a runtime-security rule.
 
 ## 정직한 한계 — syscall 표면의 회피 클래스 (io_uring)
 
-이 룰은 `execve` **syscall**에 건 kprobe다. `execve`는 io_uring 오피코드가 없어 *셸 실행* 차단은
-견고하다. 하지만 **파일/네트워크 같은 광역 syscall-kprobe 룰은 `io_uring`으로 우회될 수 있다** —
+이 룰은 `sys_execve` kprobe로 **arg0(파일명) postfix**를 본다. ⚠️ **이 룰은 견고한 셸 차단이 아니다(나이브
+직접 셸 execve만 죽인다):** `cp /bin/busybox /tmp/x && /tmp/x sh`(이름 변경 → arg0 미매칭)·`execveat`(미후킹
+별도 syscall)·fd-exec로 우회된다 — robust 답은 해소된 바이너리 매칭(`matchBinaries`/LSM)이다(`THREAT_MODEL.md`).
+한편 `execve`는 io_uring 오피코드가 없어 io_uring이 *이 룰*을 우회하진 않지만, **파일/네트워크 같은 광역
+syscall-kprobe 룰은 `io_uring`으로 우회될 수 있다** —
 공격자가 read/write/connect 대신 io_uring 제출큐로 I/O를 수행하면 감시 중인 syscall이 발동하지
 않는다(ARMO "Curing" PoC, 2025). 더 견고한 답은 syscall 표면이 아니라 **LSM 레이어(BPF-LSM / KRSI)**
 에 거는 것 — 호출 방식과 무관하게 커널 *연산* 자체를 관측한다(정확히는 Tetragon의 *기본 syscall 정책*이

@@ -53,6 +53,13 @@ def verify_bearer(token: str) -> str:
     return validate_user(str(claims.get("sub", "")))
 
 
+def principal_id(uid: str) -> str:
+    """Extract the bare id from a Cedar principal UID — `User::"alice"` -> `alice`.
+    Used for response attribution so a Bearer-authenticated action is reported as the
+    RESOLVED principal (the JWT sub), never the client-controlled X-User header."""
+    return uid.split('"')[1] if '"' in uid else uid
+
+
 def principal_for(authorization: str | None, x_user: str) -> str:
     """Resolve the Cedar principal UID. A verified Bearer token wins; otherwise the
     unauthenticated X-User demo fallback. Raises ValueError on any auth failure

@@ -32,6 +32,7 @@ contribution is honestly below big-four (single/dual-layer policy verification i
 
 from __future__ import annotations
 
+import ast
 import re
 import sys
 from pathlib import Path
@@ -79,18 +80,29 @@ def cedar_grants(action: str) -> bool:
 
 def l7_reachable(action: str, rules: list[tuple[str, str]]) -> bool:
     method, path = ACTION_HTTP[action]
-    return any(m == method and re.match(p, path) for m, p in rules)
+    path = path.split("?", 1)[0]  # Envoy/Cilium L7 matches the path, not the query string
+    # fullmatch (not match): Cilium/Envoy RE2 is a FULL match. Using match would be only
+    # coincidentally correct because every committed rule ends in $; fullmatch stays sound
+    # even for a future rule transcribed without a trailing $.
+    return any(m == method and re.fullmatch(p, path) for m, p in rules)
 
 
 def gated_in_app(action: str) -> bool:
-    """True iff the app route serving this action invokes the Cedar PDP (calls authorize()).
-    DERIVED from app/api/main.py — a route added without an authorize() call would be an
-    ungated, Cedar-bypassing path and surface as an UNGATED witness below. (So the UNGATED
-    check is real and falsifiable, not a hardcoded constant.)"""
-    src = APP_MAIN.read_text(encoding="utf-8")
+    """True iff the app route serving this action invokes the Cedar PDP. DERIVED from
+    app/api/main.py via AST (not a regex/substring): find the handler FunctionDef and check
+    for an authorize()/resolve_principal() Call WITHIN that node only — so a helper appended
+    after the last handler can't be mis-attributed, and the check keys on a real call, not the
+    literal 'authorize(' substring. A route added without a PDP call surfaces as UNGATED."""
     fn = ACTION_HANDLER[action]
-    m = re.search(r"\n(?:async )?def " + re.escape(fn) + r"\(.*?(?=\n@app|\Z)", src, re.DOTALL)
-    return bool(m) and "authorize(" in m.group(0)
+    tree = ast.parse(APP_MAIN.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == fn:
+            return any(
+                isinstance(c, ast.Call) and isinstance(c.func, ast.Name)
+                and c.func.id in ("authorize", "resolve_principal")
+                for c in ast.walk(node)
+            )
+    return False  # no handler found -> treat as not-gated (fail toward surfacing a gap)
 
 
 def _enum(solver_facts, A, prop) -> list[str]:

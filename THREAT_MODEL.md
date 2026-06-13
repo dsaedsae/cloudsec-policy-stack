@@ -145,18 +145,27 @@ portfolios, and it is exactly where this stack now adds controls.
   This is deliberate scoping for a local portfolio, stated in the README too.
 - **Cilium identity still trusts the CNI and kernel.** mutual auth raises the bar
   to "compromise SPIRE or the node," but a root-on-node attacker is out of scope.
+- **The shipped shell-kill rule is NOT a robust shell-block (honest scope of ED1).** It hooks
+  `sys_execve` and matches arg0 (the caller-supplied filename) by Postfix over shell basenames
+  in `tier: data`. That deterministically kills the *naive* case (`kubectl exec … sh` → rc 137,
+  verified) — but a capable attacker in the db pod evades it: (a) **renamed binary** — the pod
+  has a writable `/tmp` emptyDir + a readable busybox, so `cp /bin/busybox /tmp/x && /tmp/x sh`
+  execs path `/tmp/x` (no postfix match) → no SIGKILL; (b) **execveat** — a distinct syscall this
+  `sys_execve` kprobe never sees (fexecve/memfd path); (c) **fd-exec** — arg0 is `/proc/self/fd/N`.
+  So ED1's claim is precisely "naive direct shell-named execve is killed," NOT "a shell cannot
+  run." Robust fix: match the **resolved binary** (Tetragon `matchBinaries` / `sched_process_exec`
+  tracepoint / LSM `security_bprm_creds_for_exec`) and/or hook `execveat`, or allowlist exec in
+  the data tier instead of denylisting shell names. Documented residual; not yet hardened (would
+  need live validation). Surfaced by expert review; explored in Lab M8.
 - **Runtime detection watches the *syscall* surface — which has a known evasion class.**
-  Tetragon's data-tier kill rule (B6) hooks `execve` (a kprobe). `execve` has no io_uring
-  opcode, so the *shell-exec* defense itself holds; but any broader syscall-kprobe rule
-  (file read/write, network connect) can be bypassed by an attacker issuing I/O through
-  **io_uring**'s submission queue instead of the watched syscalls (ARMO "Curing" PoC, 2025).
-  The robust answer is to hook at the **LSM layer (BPF-LSM / KRSI)**, which observes the
-  kernel *operation* regardless of how it was invoked, rather than the syscall surface.
-  Precision (per ARMO): it is Tetragon's **default syscall policies** that are io_uring-blind,
-  not Tetragon itself — its kprobe/LSM hooks *can* see io_uring — so the honest phrasing is
-  "default syscall policies are blind; LSM/KRSI would see it," NOT "Tetragon is bypassed."
-  This is a stated residual (doc-only / NOT_COVERED) — the demo's single `execve` rule is
-  intentionally narrow, not a general runtime-evasion defense.
+  `execve` has no io_uring opcode, so io_uring does not route around THIS rule — a *narrow* fact,
+  NOT "the shell defense is unbypassable" (see the bullet above for its real bypasses). Broader
+  syscall-kprobe rules (file read/write, network connect) CAN be bypassed via **io_uring**'s
+  submission queue (ARMO "Curing" PoC, 2025). Robust answer: hook the **LSM layer (BPF-LSM/KRSI)**,
+  which observes the kernel *operation* regardless of invocation. Precision (per ARMO): Tetragon's
+  **default syscall policies** are io_uring-blind, not Tetragon itself — kprobe/LSM hooks *can* see
+  io_uring — so "default syscall policies are blind; LSM/KRSI would see it," NOT "Tetragon is
+  bypassed." Stated residual (doc-only / NOT_COVERED); the single `execve` rule is intentionally narrow.
 - **The kill is detection-grade for I/O, prevention-grade only for execve (timing).** The
   execve+Sigkill rule kills *before the new image loads* (the shell never runs its first
   command — prevention-grade). But Tetragon's own docs note a SIGKILL sent during a `write()`
@@ -167,6 +176,13 @@ portfolios, and it is exactly where this stack now adds controls.
   (`scripts/verify-runtime-scope.ps1`: sh=137 / id=0 / cat=0), while the I/O write-window is
   *explored* (documented Tetragon caveat + a SKIP-prone learner policy, not measured here) and the
   execve pre-image-load timing is documented kprobe semantics. ED1 stays VERIFIED — M8 sharpens its meaning, not its status.
+- **Egress allows unrestricted DNS — a residual covert-exfil/C2 channel.** The egress
+  baseline (B5) lets every pod resolve via kube-dns with `matchPattern: "*"` (k8s/netpol.yaml).
+  A popped pod that cannot open a TCP beacon CAN still tunnel data out over DNS queries
+  (DNS-tunnel exfil) — so "cannot beacon out" is precise about *TCP* egress, not a claim of
+  zero covert egress. Hardening: restrict the pattern to in-cluster suffixes
+  (`*.svc.cluster.local` + the needed upstreams) or add egress-DNS inspection. Named here as a
+  residual (surfaced by expert review).
 - **checkov sees manifests, not runtime.** It cannot see the CiliumNetworkPolicy
   CRD or Cedar logic; those are covered by `cedar/authz.py` and the live `verify`
   job. "0 findings" is never claimed as "secure" — see `.checkov.yaml` triage.

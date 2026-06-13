@@ -100,6 +100,10 @@ PASS: Secret is AES-CBC encrypted at rest in etcd.
 
 Maps to **GDPR Art.32 / PCI-DSS req 3 / ISMS-P 2.7** "encryption of stored data."
 
+> ⚠️ 정직 메모(암호 선택): 데모는 **aescbc**를 쓰는데 upstream Kubernetes는 이를 **Weak**로 분류한다(AEAD/무결성
+> 없음, 패딩-오라클 우려 — kubernetes#73514). 컴플라이언스 등급 주장에는 **aesgcm/secretbox**(또는 KMS 봉투암호화)
+> 가 적절하다. 여기 aescbc는 2-키 회전 런북([runbooks/02](https://github.com/dsaedsae/cloudsec-policy-stack/blob/main/runbooks/02-key-rotation.md))을 보이기 위한 선택이며, 실 적용 시 cipher는 aesgcm/KMS로.
+
 ## In use — data minimization by design
 
 Protecting data *while processing it* is mostly about not exposing it in the first

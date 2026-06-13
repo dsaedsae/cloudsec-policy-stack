@@ -55,8 +55,13 @@ write → SIGKILL → 정책 제거 후 읽어 `bytes>0` 확인. **kind/LinuxKit
 ```
 id -> rc=0 (비셸 exec 생존)        cat /etc/passwd -> rc=0 (파일 읽기 생존)
 ```
-룰의 범위는 *셸 이름의 execve*다. 비셸 바이너리 실행도, **비-execve I/O(파일 읽기)** 도 이 룰 밖이다 → ED3
-"broader runtime rules"는 **NOT_COVERED 그대로**(이 사실이 그걸 *확인*한다). 같은 파일 읽기를 **io_uring**
+룰의 범위는 *셸 **이름**의 execve*다(arg0 postfix 매칭). 비셸 바이너리·**비-execve I/O(파일 읽기)** 뿐 아니라
+— **더 중요하게** — 셸을 *다른 이름으로* 실행하면 우회된다: `/tmp`에 쓰기가능 emptyDir + busybox가 있어
+`cp /bin/busybox /tmp/x && /tmp/x sh`는 arg0=`/tmp/x`라 postfix 미매칭 → kill 안 됨. **execveat**(별도 syscall,
+미후킹)·**fd-exec**(arg0=`/proc/self/fd/N`)도 우회한다. 즉 ED1은 "*나이브* 직접 셸 execve를 죽인다"이지 "셸을
+못 띄운다"가 아니다(전문가 리뷰가 확인) → ED3 NOT_COVERED 확인. **robust 답:** 해소된 바이너리 매칭
+(`matchBinaries` / `sched_process_exec` 트레이스포인트 / LSM `security_bprm_creds_for_exec`) 또는 data-tier exec
+allowlist. 별개로, 같은 파일 읽기를 **io_uring**
 (`IORING_OP_READ`)으로 하면 Tetragon의 *기본 syscall 정책*엔 안 보인다(ARMO "Curing", 2025) — **단 LSM/KRSI 훅은
 본다.** "Tetragon이 우회됐다"가 아니라 "기본 syscall 정책이 io_uring에 blind, LSM 훅이 해법"이 정확한 표현.
 (셸 룰 자체는 io_uring과 무관 — io_uring엔 execve 오피코드가 없다. 실제 익스플로잇은 만들지 않는다.)

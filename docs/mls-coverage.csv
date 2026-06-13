@@ -15,7 +15,7 @@ ID4,credential-forgery,SPIFFE SVID mutual-auth on edge,A,CONFIGURED,opt-in netpo
 ID5,credential-forgery,tier SA has zero K8s API rights,A,VERIFIED,verify:api-sa no create-pods/secrets
 ID6,credential-forgery,SA token not mounted,A,VERIFIED,live: web/api token path ABSENT (kubectl exec) + 3 tiers automountServiceAccountToken=false / no kube-api-access volume
 ID7,credential-forgery,SA-use other namespaces,A,VERIFIED,verify-kyverno: Kyverno SA-use ClusterPolicy DENY in 2nd ns (kyv-demo) - cluster-wide proven (opt-in capstone)
-ID8,credential-forgery,requester Bearer-JWT signature+audience verification (RFC 8707),A,CONFIGURED,auth_test.py 13/13 verifier logic (fixture key/no cluster) rejects bad-aud/sig/expiry/forged/non-Bearer; live API not Bearer-mandatory (X-User fallback) so enforcement not live-asserted
+ID8,credential-forgery,requester Bearer-JWT signature+audience verification (RFC 8707),A,CONFIGURED,auth_test.py 14/14 verifier logic (fixture key/no cluster) rejects bad-aud/sig/expiry/forged/non-Bearer; live API not Bearer-mandatory (X-User fallback) so enforcement not live-asserted
 LP1,least-privilege,Cedar owner check,A,VERIFIED,verify:bob GET alice 403
 LP2,least-privilege,Cedar transfer limit,A,VERIFIED,verify:transfer 5000 403
 LP3,least-privilege,Cedar frozen-account forbid,A,VERIFIED,verify:frozen 403
@@ -28,7 +28,7 @@ ET2,encryption-transit,packet-captured ciphertext (tcpdump),B,VERIFIED,capture-w
 ER1,encryption-rest,etcd Secret AES-CBC,B,VERIFIED,enable-secrets-encryption: k8s:enc:aescbc / no plaintext
 ER2,encryption-rest,key rotation procedure,B,CONFIGURED,runbook 02 2-key flow; not automated/tested
 ER3,encryption-rest,managed KMS/HSM key mgmt,B,NOT_COVERED,local demo; AWS path documented only
-ED1,detection-edr,runtime shell-exec kill (data tier),A,VERIFIED,verify:shell rc=137 + id rc=0 (selective; execve-entry kill = pre-image-load; scope = execve-of-shell-names - see Lab M8)
+ED1,detection-edr,runtime shell-exec kill (data tier),A,VERIFIED,verify:shell rc=137 + id rc=0 (NAIVE direct shell-named execve only; bypassable via renamed-binary/execveat/fd-exec - robust=matchBinaries/LSM; see Lab M8/THREAT_MODEL)
 ED2,detection-edr,process-exec audit trail,B,CONFIGURED,Tetragon logs present; not asserted in suite
 ED3,detection-edr,broader runtime policies (nc/python/curl),B,NOT_COVERED,only shell in data tier
 SL1,shift-left,IaC + K8s manifest scan (checkov),B,VERIFIED,checkov 452 pass / 0 fail

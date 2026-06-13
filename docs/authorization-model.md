@@ -125,7 +125,7 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
   | P1 도구 allowlist | ASI02 Tool Misuse (도구 오남용) | VERIFIED (agent 17/17) |
   | P2 위임 교집합 / P3 owner override | **ASI03 Identity & Privilege Abuse** (권한 오남용/confused-deputy) | VERIFIED (mutation 반증) |
   | P5 깊이 cap / P6 홉별 클램프 / P7 출처 게이트(fail-closed) | **ASI08 Cascading Failures** (위임 연쇄·증폭 방지) | VERIFIED (P5·P6·P7 각각 mutation 반증) |
-  | (PDP 엣지) Bearer-JWT audience 검증 | **ASI03 Identity & Privilege Abuse** (신원 위조/token replay) | 검증기 단위테스트 `auth_test.py` 13/13; **라이브 강제 아님 → coverage ID8 = CONFIGURED** |
+  | (PDP 엣지) Bearer-JWT audience 검증 | **ASI03 Identity & Privilege Abuse** (신원 위조/token replay) | 검증기 단위테스트 `auth_test.py` 14/14; **라이브 강제 아님 → coverage ID8 = CONFIGURED** |
   | 메모리/RAG 오염 | ASI06 Memory & Context Poisoning | **NOT_COVERED — doc-only** (이 스택은 인가 계층; 메모리 무결성은 범위 밖) |
   | 에이전트 간 통신 신뢰 | ASI07 Insecure Inter-Agent Communication | **doc-only** — SPIFFE 상호인증(ID4, CONFIGURED)이 *부분* 토대이나 에이전트 프로토콜 수준 미구현 |
 
@@ -134,7 +134,7 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
 - **요청자 인증 / OAuth 2.1 (PDP 엣지, [`app/api/auth.py`](../app/api/auth.py)):** PDP는 `Authorization:
   Bearer` 토큰이 제시되면 **서명 + audience**(이 리소스용으로 발급됐는지, **RFC 8707** resource indicator)
   를 검증한 뒤에야 그 `sub`를 principal로 삼고, 검증 실패·미지원 스킴은 **fail-closed(401)** 한다 — 다른
-  서비스용 토큰의 재생(replay)을 막는다(`auth_test.py` 13/13). **단 인증은 강제가 아니다:** Authorization이
+  서비스용 토큰의 재생(replay)을 막는다(`auth_test.py` 14/14). **단 인증은 강제가 아니다:** Authorization이
   없으면 미인증 **X-User 데모 폴백**으로 내려가므로, 이 통제는 coverage에서 **VERIFIED가 아니라
   ID8 = CONFIGURED**다(검증기 로직은 단위테스트됐으나 라이브 강제는 미배선). **데모 한계:** 서명키는
   로컬 HS256 픽스처이고(프로덕션은 IdP **JWKS** 비대칭 검증). **프로덕션 매핑(doc-only):** OAuth 2.1
