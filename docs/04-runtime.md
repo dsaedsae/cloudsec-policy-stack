@@ -55,8 +55,17 @@ db pod — it's now killed too. You just wrote a runtime-security rule.
 견고하다. 하지만 **파일/네트워크 같은 광역 syscall-kprobe 룰은 `io_uring`으로 우회될 수 있다** —
 공격자가 read/write/connect 대신 io_uring 제출큐로 I/O를 수행하면 감시 중인 syscall이 발동하지
 않는다(ARMO "Curing" PoC, 2025). 더 견고한 답은 syscall 표면이 아니라 **LSM 레이어(BPF-LSM / KRSI)**
-에 거는 것 — 호출 방식과 무관하게 커널 *연산* 자체를 관측한다. 이 데모의 단일 `execve` 룰은
-*의도적으로 좁은* 예시이지 일반 런타임-회피 방어가 아니다(잔여위험으로 명시 — `THREAT_MODEL.md`).
+에 거는 것 — 호출 방식과 무관하게 커널 *연산* 자체를 관측한다(정확히는 Tetragon의 *기본 syscall 정책*이
+io_uring에 blind이지 Tetragon 자체가 아니다 — LSM 훅은 본다). 이 데모의 단일 `execve` 룰은 *의도적으로 좁은*
+예시이지 일반 런타임-회피 방어가 아니다(잔여위험 — `THREAT_MODEL.md`).
+
+**kill 타이밍 — execve엔 prevention, I/O엔 detection:** execve+Sigkill은 *이미지 load 이전*에 죽여 셸이 첫
+명령도 못 한다(prevention-grade). 반면 Tetragon 문서는 *write() 중 SIGKILL이 바이트 미기록을 보장하지 않는다*
+고 명시 — 프로세스는 동기적으로 죽어도 커널이 이미 I/O를 했을 수 있다(detection-point ≠ prevention-point).
+I/O 룰을 prevention-grade로 하려면 Sigkill+**Override**가 필요하다. **[Lab M8](../labs/m8/README.md)** 은 *범위*를
+라이브 측정(`scripts/verify-runtime-scope.ps1`: sh=137/id=0/cat=0)하고, I/O write-window는 *탐구*한다(문서화 caveat
++ SKIP-prone 학습 정책, 여기서 미측정); execve pre-image-load 타이밍은 문서화된 kprobe 의미론이다. ED1은
+VERIFIED 그대로이고 M8은 그 *의미를 날카롭게* 한다.
 
 ---
 

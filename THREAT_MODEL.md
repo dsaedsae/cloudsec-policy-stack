@@ -152,8 +152,21 @@ portfolios, and it is exactly where this stack now adds controls.
   **io_uring**'s submission queue instead of the watched syscalls (ARMO "Curing" PoC, 2025).
   The robust answer is to hook at the **LSM layer (BPF-LSM / KRSI)**, which observes the
   kernel *operation* regardless of how it was invoked, rather than the syscall surface.
+  Precision (per ARMO): it is Tetragon's **default syscall policies** that are io_uring-blind,
+  not Tetragon itself — its kprobe/LSM hooks *can* see io_uring — so the honest phrasing is
+  "default syscall policies are blind; LSM/KRSI would see it," NOT "Tetragon is bypassed."
   This is a stated residual (doc-only / NOT_COVERED) — the demo's single `execve` rule is
   intentionally narrow, not a general runtime-evasion defense.
+- **The kill is detection-grade for I/O, prevention-grade only for execve (timing).** The
+  execve+Sigkill rule kills *before the new image loads* (the shell never runs its first
+  command — prevention-grade). But Tetragon's own docs note a SIGKILL sent during a `write()`
+  does **not** guarantee the bytes were not written — the process dies synchronously, yet the
+  kernel may already have done the I/O (detection-point ≠ prevention-point). Making a kprobe
+  rule prevention-grade for I/O requires combining Sigkill with the **Override** action; our
+  shell rule is Sigkill-only by design. In **Lab M8** (`labs/m8/`) the *scope* is measured live
+  (`scripts/verify-runtime-scope.ps1`: sh=137 / id=0 / cat=0), while the I/O write-window is
+  *explored* (documented Tetragon caveat + a SKIP-prone learner policy, not measured here) and the
+  execve pre-image-load timing is documented kprobe semantics. ED1 stays VERIFIED — M8 sharpens its meaning, not its status.
 - **checkov sees manifests, not runtime.** It cannot see the CiliumNetworkPolicy
   CRD or Cedar logic; those are covered by `cedar/authz.py` and the live `verify`
   job. "0 findings" is never claimed as "secure" — see `.checkov.yaml` triage.

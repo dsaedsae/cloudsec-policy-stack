@@ -127,6 +127,30 @@ flowchart LR
 
     [:octicons-arrow-right-24: M6 시작](m6/README.md)
 
+-   :material-numeric-7-circle:{ .lg .middle } **M7 · 심화 (교차계층 일관성, formal)**
+
+    ---
+
+    [클러스터 불필요]{ .lab-badge .no-cluster }
+
+    Cilium L7 × Cedar의 그림자/dead-rule을 z3로 탐지(ViewAuditLog shadow, 반증가능).
+
+    `python formal/cross_layer.py`{ .lab-grade }
+
+    [:octicons-arrow-right-24: M7 시작](../formal/README.md)
+
+-   :material-numeric-8-circle:{ .lg .middle } **M8 · 심화 (런타임 kill 경계)**
+
+    ---
+
+    [클러스터 필요]{ .lab-badge .cluster }
+
+    Tetragon shell-kill의 정직한 경계: detection≠prevention, execve vs I/O, io_uring 클래스.
+
+    `scripts/verify-runtime-scope.ps1`{ .lab-grade }
+
+    [:octicons-arrow-right-24: M8 시작](m8/README.md)
+
 </div>
 
 ## 형식 (모든 모듈 공통)
@@ -157,6 +181,8 @@ flowchart LR
 - [ ] **M4** — `bash labs/m4/grade.sh` → **id=0 + sh=137** (클러스터)
 - [ ] **M5** — `bash labs/m5/grade.sh` → **ET1 PASS** + capture-wg/etcd 해석 (클러스터)
 - [ ] **M6** — `python labs/m6/grade.py` → **17/17 + 11/11**
+- [ ] **M7** (심화) — `python formal/cross_layer.py` → SHADOW 탐지 + `--ungate-transfer` 반증
+- [ ] **M8** (심화) — `scripts/verify-runtime-scope.ps1` → sh=137/id=0/cat=0 + detection≠prevention 설명
 
-> 7개를 다 졸업하면 → [캡스톤 · 면접 노트](capstone.md)를 채워라. 무엇을 재구현했고, 각 통제가
+> 코어 7개(M0–M6)를 다 졸업하면 → [캡스톤 · 면접 노트](capstone.md)를 채워라. 무엇을 재구현했고, 각 통제가
 > *막는 것*과 *막지 못하는 것*을 정직하게 적으면 그대로 포트폴리오·면접 답변이 된다.

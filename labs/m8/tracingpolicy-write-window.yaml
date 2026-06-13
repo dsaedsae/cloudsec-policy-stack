@@ -1,0 +1,33 @@
+# MEASUREMENT-ONLY artifact for Lab M8 Station C — NOT a production control.
+#
+# It hooks sys_write + Sigkill so you can MEASURE Tetragon's own documented caveat: a
+# SIGKILL delivered during a write() syscall does NOT guarantee the bytes were not written
+# (synchronous-process-kill != pre-operation). That is the honest "detection-point !=
+# prevention-point" window — it exists for I/O syscalls, NOT for the shipped execve rule
+# (execve+Sigkill is pre-image-load).
+#
+# WHY A DEDICATED SELECTOR: a sys_write+Sigkill rule kills ANY process that writes — it
+# would crash nginx (the db tier). So this targets ONLY a throwaway pod you label
+# `m8-write-window: "true"`, never the running db. Apply, run ONE controlled write from
+# that pod, read the file back AFTER removing this policy, and check bytes_written > 0.
+# SKIP (do not FAIL) if the kprobe won't load / no kill fires — known on kind/LinuxKit
+# (cilium/tetragon#4883). To make such a rule PREVENTION-grade you must combine Sigkill
+# with the Override action (return an error from the syscall); this rule is Sigkill-only
+# precisely to expose the window.
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: m8-measure-write-window
+spec:
+  podSelector:
+    matchLabels:
+      m8-write-window: "true"   # ONLY a dedicated throwaway pod — never the real db
+  kprobes:
+    - call: "sys_write"
+      syscall: true
+      args:
+        - index: 0
+          type: "int"
+      selectors:
+        - matchActions:
+            - action: Sigkill
