@@ -63,7 +63,8 @@
   automount=false), **ID7**(Kyverno SA-use ClusterPolicy가 *다른* 네임스페이스에서 cross-ns DENY —
   `scripts/verify-kyverno`), **SL6**(Kyverno verifyImages가 cosign-signed→ADMIT / unsigned→DENY —
   `scripts/verify-image-signing`, 로컬 OCI 레지스트리 + 키풀 cosign). `verify.sh` 21/21은 Kyverno 활성
-  상태에서도 회귀 없이 PASS. (#1/#2/#4 opt-in 캡스톤 — 항상-on 스위트엔 미포함, 재현 스크립트로 증명.)
+  상태에서도 회귀 없이 PASS. (모두 opt-in — 항상-on 스위트엔 미포함. ID7·SL6은 재현 스크립트(`verify-kyverno`·
+  `verify-image-signing`)로, ID6은 정적 매니페스트(`app.yaml`의 automount=false·SA토큰 볼륨 부재)+라이브 exec로 증명.)
 - **ID8(요청자 JWT audience 검증) — 그 자체로는 헤드라인을 *낮춘* 항목(정직한 방향).** 이전까지 PDP의
   명시된 #1 잔여는 *미인증 X-User 헤더*였고, 산문으로만 추적되던 갭이었다. 이번에 **인벤토리 행(ID8)으로
   정식 편입**했다. 서명 + **audience 바인딩(RFC 8707)**·만료·위조·미지원 스킴을 fail-closed로 거절하는

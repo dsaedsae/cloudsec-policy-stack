@@ -40,7 +40,7 @@ principal, 그리고 확장 스레드인 AI 에이전트(`cedar/agent/`). 그래
 | | 요청별 Cedar ABAC + 에이전트 위임 | LP1–LP6 · `cedar/agent/` 17/17 | ✅ VERIFIED |
 | **ROTATE** (자격증명 위생) | SPIRE 단명 SVID 자동회전(~1h) | ID4 | ⚙️ CONFIGURED |
 | | etcd Secret 키 회전 절차(2-key) | ER2 | ⚙️ CONFIGURED (런북·미자동) |
-| | SA 토큰 미마운트(정적 시크릿 회피) | ID6 | ⚙️ CONFIGURED (미assert) |
+| | SA 토큰 미마운트(정적 시크릿 회피) | ID6 | ✅ VERIFIED (라이브: 토큰 경로 부재 + 3티어 automount=false) |
 | **DETECT** (오작동 NHI 포착) | 런타임 셸 즉시 SIGKILL(data tier) | ED1 | ✅ VERIFIED |
 | | egress default-deny(beacon 차단) | ZT1–ZT3 | ✅ VERIFIED |
 | | 프로세스 감사·광역 룰 | ED2·ED3 | ⚙️/⛔ CONFIGURED/NOT_COVERED |
