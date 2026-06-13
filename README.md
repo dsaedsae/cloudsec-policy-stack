@@ -98,23 +98,38 @@ scripts/     up / verify / scan / down (.ps1+.sh) .github/   CI workflow + kind 
 
 ## Quickstart
 
-Prereqs: Docker, `kind`, `kubectl`, `helm`, `cilium`, `terraform`, Python 3.12.
+Prereqs: Python 3.12; for the cluster path also Docker, `kind`, `kubectl`, `helm`,
+**cilium-cli**, `terraform`, and **Git for Windows** (provides Git Bash — the `.sh`
+scripts/graders run there, not in PowerShell).
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.venv\Scripts\python.exe cedar\authz.py     # authz unit tests, no cluster -> 8/8
+powershell -File scripts\up.ps1             # provision kind+Cilium, build api, deploy
+bash scripts/verify.sh                      # (Git Bash) prove all 3 layers live
+powershell -File scripts\down.ps1           # tear down
+```
+
+**Linux / macOS / CI (bash):**
 
 ```bash
 python -m venv .venv && ./.venv/bin/python -m pip install -r requirements-dev.txt
-
-./.venv/bin/python cedar/authz.py     # authz unit tests, no cluster needed -> 8/8
-bash scripts/up.sh    || pwsh scripts/up.ps1       # provision kind+Cilium, build api, deploy
-bash scripts/verify.sh|| pwsh scripts/verify.ps1   # prove all 3 layers live (table above)
-bash scripts/down.sh  || pwsh scripts/down.ps1     # tear down
+./.venv/bin/python cedar/authz.py
+bash scripts/up.sh && bash scripts/verify.sh && bash scripts/down.sh
 ```
 
-(Windows: `.venv\Scripts\python`, and the `.ps1` scripts. CI runs the `bash` path on Linux.)
+> `.ps1` → PowerShell, `.sh` → bash (Git Bash on Windows). `pwsh`(7) 미설치면 `powershell` 사용.
 
 ## Learn it
 
-New here? Follow the **[guided labs](docs/)** — Lab 0 needs only Python (5 min):
-authz-as-code → shift-left scanning → network+authz on a cluster → eBPF runtime →
+New here? Two ways, same controls:
+- **직접 만들며 익히기 (권장)** — the self-graded **[re-implementation track](labs/README.md)**:
+  rebuild each control from a blank file, the autograder judges. Start: **[환경 준비](labs/SETUP.md)** → **[M0](labs/m0/README.md)** (Python only, 5 min).
+- **개념부터 읽기** — the **[guided concept labs](docs/)** (read-along):
+  authz-as-code → shift-left scanning → network+authz on a cluster → eBPF runtime →
 identity (B7) → data protection. Each lab shows the payoff, then has you *break and
 fix* one layer. **Why it matters** (금융 망분리 완화/MLS): see
 [`docs/financial-mls-mapping.md`](docs/financial-mls-mapping.md). **Run it in

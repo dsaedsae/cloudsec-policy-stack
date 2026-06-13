@@ -2,6 +2,9 @@
 
 [모듈 1 / 7]{ .lab-progress } · [클러스터 불필요]{ .lab-badge .no-cluster }
 
+> **준비(한 번만):** 클론엔 `.venv`가 없다 → `python -m venv .venv` 후
+> `.venv\Scripts\python.exe -m pip install -r requirements-dev.txt`. 자세히는 [SETUP](../SETUP.md).
+
 **미션:** 핀테크 데모의 인가 정책을 **스펙만 보고** 직접 작성해 채점기 11/11을 달성한다.
 클러스터 불필요 — 노트북에서 python만으로 한다.
 

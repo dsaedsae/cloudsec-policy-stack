@@ -9,6 +9,7 @@ checkov를 venv 모듈 엔트리(`python -m checkov.main`)로 호출한다(scan.
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -20,21 +21,34 @@ CFG = HERE / ".checkov.yaml"
 
 
 def main() -> int:
+    # Print Korean cleanly even when the console codepage is cp949 (Korean Windows).
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
     # Cheating guard: inline checkov skip annotations hide a finding instead of fixing it.
     text = WORKLOAD.read_text(encoding="utf-8")
     sneaky = re.findall(r"checkov\.io/skip|checkov:skip", text)
     if sneaky:
-        print(f"⚠  workload.yaml에 스킵 주석 {len(sneaky)}개 발견 — 은폐가 아니라 *수정*하라 "
+        print(f"[!] workload.yaml에 스킵 주석 {len(sneaky)}개 발견 — 은폐가 아니라 *수정*하라 "
               f"(하든드 워크로드에는 스킵 주석이 필요 없다). 그래도 채점은 진행한다.\n")
 
+    # PYTHONUTF8=1 so checkov reads --config-file as UTF-8 regardless of OS locale
+    # (cp949 Windows otherwise crashes on any non-ASCII byte in the config).
     proc = subprocess.run(
         [sys.executable, "-m", "checkov.main", "-f", str(WORKLOAD),
          "--config-file", str(CFG), "--compact"],
-        capture_output=True, text=True,
+        capture_output=True, text=True, env={**os.environ, "PYTHONUTF8": "1"},
     )
     out = proc.stdout + proc.stderr
     m = re.search(r"Failed checks:\s*(\d+)", out)
     if not m:
+        if "No module named 'checkov'" in out or "ModuleNotFoundError" in out:
+            print("checkov가 설치되어 있지 않습니다. 먼저 의존성을 설치하세요:\n"
+                  "  .venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt\n"
+                  "  (환경 점검: scripts\\doctor.ps1)")
+            return 2
         print("checkov 출력을 해석하지 못했습니다. 원문:\n" + out[-1500:])
         return 2
     failed = int(m.group(1))

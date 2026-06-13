@@ -105,6 +105,7 @@ nav:
   - 시작하기: index.md
   - 재구현 트랙:
     - labs/README.md
+    - 환경 준비 (Windows): labs/SETUP.md
     - M0 · Cedar 인가 재구현: labs/m0/README.md
     - M1 · 쉬프트레프트 결함 사냥: labs/m1/README.md
     - M2 · 신원 admission CEL: labs/m2/README.md

@@ -2,6 +2,9 @@
 
 [모듈 7 / 7]{ .lab-progress } · [클러스터 불필요]{ .lab-badge .no-cluster }
 
+> **준비:** `.venv`(requirements-dev) — [SETUP](../SETUP.md). **Part B(ReBAC)는 Docker Desktop 필요**
+> (없으면 Part A만 채점, 졸업 표시 안 됨).
+
 **미션:** 같은 "위임" 문제를 두 모델로 구현한다 — **(A) Cedar ABAC 교집합**으로 confused-deputy를
 막고, **(B) OpenFGA ReBAC** 관계 그래프로 같은 위임을 표현한다. 클러스터 불필요(python + docker).
 
