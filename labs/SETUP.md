@@ -58,6 +58,8 @@ python -m venv .venv
 
 ### 한 세션으로 (RAM 규율)
 
+> 운영 상세(모듈별 기대결과·OOM 복구·다른 클러스터 보존)는 **[런북 00 — 랩 클러스터 세션](../runbooks/00-lab-cluster-session.md)**.
+
 M2–M5는 클러스터를 **한 번 띄워** 연속으로 한 뒤 내린다:
 
 ```powershell

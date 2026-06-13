@@ -143,7 +143,8 @@ flowchart LR
   곧 정답지다 — 졸업 **후** `diff`로 내 답과 비교하는 것이 마지막 단계다.
 - **편집은 `labs/<모듈>/` 안의 작업 파일만.** canonical을 건드리면 스택·채점기가 같이 망가진다.
 - **채점기가 유일한 판정자다.** "된 것 같다"는 없다 — 이 repo의 철학 그대로.
-- **클러스터 모듈(M2–M5)은 한 세션에 묶어서**: `scripts/up.ps1` → M2→M3→M4→M5 연속 → `scripts/down.ps1`.
+- **클러스터 모듈(M2–M5)은 한 세션에 묶어서**: `scripts/up.ps1` → M2→M3→M4→M5 연속 → `scripts/down.ps1`
+  (정확한 명령·기대결과·OOM 복구는 [런북 00](../runbooks/00-lab-cluster-session.md), 설치는 [SETUP](SETUP.md)).
 
 ## 진도 체크리스트
 

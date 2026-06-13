@@ -10,6 +10,7 @@
 
 | 런북 | 언제 | 핵심 |
 |------|------|------|
+| [00 랩 클러스터 세션](00-lab-cluster-session.md) | 재구현 트랙 M2–M5 실습 | up → M2→M3→M4→M5 → down (한 세션, RAM) |
 | [01 사고대응](01-incident-response.md) | Tetragon SIGKILL / Cedar 403 급증 / Cilium DROP 급증 | 분류 → 격리 → 증거수집 → 복구 |
 | [02 키 회전](02-key-rotation.md) | 정기/유출의심: etcd AES키·SPIRE·(AWS)KMS | 무중단 회전 + 검증 |
 | [03 브레이크글래스](03-break-glass.md) | 정상 경로가 막혀 긴급 접근 필요 | 시간제한·감사남기는 비상 접근 + 사후 원복 |

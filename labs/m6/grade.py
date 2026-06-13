@@ -23,7 +23,12 @@ sys.path.insert(0, str(ROOT / "cedar"))
 
 
 def grade_agent() -> int:
-    from authz import main  # canonical harness
+    try:
+        from authz import main  # canonical harness
+    except ImportError as e:
+        print(f"의존성 누락({e}). 먼저: .venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt "
+              "(점검: scripts\\doctor.ps1)")
+        return 2
     with tempfile.TemporaryDirectory() as td:
         base = Path(td)
         shutil.copy(HERE / "agent-policies.cedar", base / "policies.cedar")

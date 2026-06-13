@@ -21,7 +21,13 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 sys.path.insert(0, str(ROOT / "cedar"))
 
-from authz import main  # noqa: E402  (after sys.path tweak)
+try:
+    from authz import main  # noqa: E402  (after sys.path tweak)
+except ImportError as _e:
+    print(f"의존성 누락({_e}). 먼저 설치하세요:\n"
+          "  .venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt\n"
+          "  (환경 점검: scripts\\doctor.ps1 · 자세히: labs/SETUP.md)")
+    raise SystemExit(2)
 
 # 개념 넛지(정답이 아님) — 시나리오 이름 → 어느 요건이고 무엇을 점검할지. --hint 일 때만 출력.
 HINTS = {

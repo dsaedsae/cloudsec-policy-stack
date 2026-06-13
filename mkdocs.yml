@@ -129,6 +129,7 @@ nav:
       - 5 · 데이터 보호: docs/06-data-protection.md
   - 운영 런북:
     - runbooks/README.md
+    - 00 · 랩 클러스터 세션: runbooks/00-lab-cluster-session.md
     - 01 · 사고대응: runbooks/01-incident-response.md
     - 02 · 키 회전: runbooks/02-key-rotation.md
     - 03 · 브레이크글래스: runbooks/03-break-glass.md
