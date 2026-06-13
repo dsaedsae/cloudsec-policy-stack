@@ -143,4 +143,4 @@ ext 시나리오 3개: ① auditor가 남의 계좌 조회 → Allow ② auditor
 - [ ] **이제 정답지를 열어라:** `git diff --no-index labs/m0/policies.cedar cedar/policies.cedar` —
   내 답과 원본의 차이를 읽고, 각 차이가 *스타일*인지 *의미*인지 판별할 수 있다
 
-다음: [M1 — 쉬프트레프트 스캐닝](../README.md#모듈-사다리) (준비되면 추가됨)
+다음: **[M1 — 쉬프트레프트 결함 사냥](../m1/README.md)** (클러스터 불필요).

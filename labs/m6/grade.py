@@ -54,6 +54,13 @@ def grade_rebac() -> int:
 
 
 if __name__ == "__main__":
+    # Print Korean cleanly on cp949 (Korean Windows). The agent/all paths run authz.main()
+    # (which reconfigures) first, but `grade.py rebac` does not — guard here so every path
+    # is safe, including the docker-absent SKIP message.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
     which = sys.argv[1] if len(sys.argv) > 1 else "all"
     rc_agent = grade_agent() if which in ("agent", "all") else 0
     rc_rebac = None

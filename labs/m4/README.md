@@ -50,7 +50,7 @@ selectors:
   잡는다. `/usr/bin/id`는 목록에 없으니 안 잡힌다 → **선택적**.
 - `action: Sigkill` = 커널에서 즉시 종료(rc=137).
 
-```powershell
+```bash
 bash labs/m4/grade.sh        # id=0 PASS + sh=137 PASS → M4 GRADUATED. 채점 후 canonical 복원.
 ```
 

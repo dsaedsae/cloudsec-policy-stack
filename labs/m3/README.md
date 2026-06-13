@@ -57,7 +57,7 @@ ingress:
 | `egress-web-to-api` | app:api 로 8080 |
 | `egress-api-to-db` | app:db 로 8080 |
 
-```powershell
+```bash
 bash labs/m3/grade.sh        # 7/7 PASS → M3 GRADUATED. 채점 후 canonical 자동 복원.
 ```
 
