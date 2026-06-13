@@ -1,6 +1,6 @@
 # M4 — 런타임: Tetragon eBPF로 셸 실행 차단
 
-[모듈 5 / 7]{ .lab-progress } · [클러스터 필요]{ .lab-badge .cluster }
+[모듈 5 / 7]{ .lab-progress } · [스택 Tetragon eBPF]{ .lab-badge } · [소요 ~20–35m]{ .lab-badge } · [클러스터 필요 · RAM~6–8GB]{ .lab-badge .cluster } · [비용 $0 로컬]{ .lab-badge }
 
 **미션:** data tier 파드에서 셸(`/bin/sh` 류) 실행을 커널에서 즉시 SIGKILL하되, 정상 바이너리는
 건드리지 않는 **선택적** TracingPolicy를 작성한다. DB 컨테이너가 셸을 띄울 일은 없다 — 그건 침입이다.

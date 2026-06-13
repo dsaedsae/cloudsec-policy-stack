@@ -1,6 +1,6 @@
 # M8 — Beat the eBPF cop: 런타임 kill의 정직한 경계 (detection ≠ prevention)
 
-[심화 / 측정]{ .lab-progress } · [클러스터 필요]{ .lab-badge .cluster }
+[심화 / 측정]{ .lab-progress } · [스택 Tetragon]{ .lab-badge } · [소요 ~30–45m]{ .lab-badge } · [클러스터 필요 · RAM~6–8GB]{ .lab-badge .cluster } · [비용 $0 로컬]{ .lab-badge }
 
 > **선행:** M4(셀렉티브 shell-kill을 *직접 만든다*). M8은 그 통제의 **한계를 측정**한다 — 과장도 과소도 없이.
 > **준비:** `scripts/up.ps1`(Tetragon 포함) + Git Bash/PowerShell. 클러스터 없으면 SKIP(FAIL 아님).

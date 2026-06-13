@@ -1,6 +1,6 @@
 # M0 — 인가 as-code: Cedar 정책을 빈 파일에서 재구현
 
-[모듈 1 / 7]{ .lab-progress } · [클러스터 불필요]{ .lab-badge .no-cluster }
+[모듈 1 / 7]{ .lab-progress } · [스택 Cedar]{ .lab-badge } · [소요 ~3–6h]{ .lab-badge } · [클러스터 불필요]{ .lab-badge .no-cluster } · [비용 $0 로컬]{ .lab-badge }
 
 > **준비(한 번만):** 클론엔 `.venv`가 없다 → `python -m venv .venv` 후
 > `.venv\Scripts\python.exe -m pip install -r requirements-dev.txt`. 자세히는 [SETUP](../SETUP.md).

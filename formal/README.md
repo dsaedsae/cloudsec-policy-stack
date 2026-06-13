@@ -1,6 +1,6 @@
 # formal/ — cross-layer policy consistency (M7, formal stretch)
 
-[클러스터 불필요]{ .lab-badge .no-cluster }
+[심화 / formal]{ .lab-progress } · [스택 z3 (SMT)]{ .lab-badge } · [소요 ~1–2h]{ .lab-badge } · [클러스터 불필요]{ .lab-badge .no-cluster } · [비용 $0 로컬]{ .lab-badge }
 
 ## 왜 (the gap nobody tests)
 

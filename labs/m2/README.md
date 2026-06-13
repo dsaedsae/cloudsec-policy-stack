@@ -1,6 +1,6 @@
 # M2 — K8s 신원: 라벨↔SA 일관성을 admission CEL로 (B7)
 
-[모듈 3 / 7]{ .lab-progress } · [클러스터 필요]{ .lab-badge .cluster }
+[모듈 3 / 7]{ .lab-progress } · [스택 VAP+CEL]{ .lab-badge } · [소요 ~30–45m]{ .lab-badge } · [클러스터 필요 · RAM~6–8GB]{ .lab-badge .cluster } · [비용 $0 로컬]{ .lab-badge }
 
 **미션:** Cilium이 신뢰하는 `app` 라벨을 파드의 ServiceAccount에 묶는 `ValidatingAdmissionPolicy`의
 **CEL 검증식**을 직접 써서, 위조 신원(label≠SA)을 admission에서 거부한다.

@@ -41,6 +41,27 @@ flowchart LR
     클러스터 채점기는 학습자 아티팩트를 적용해 검증한 뒤 **canonical 정책을 자동 복원**한다 —
     스택은 항상 known-good 상태로 돌아온다.
 
+## 한눈에 — 모듈별 스택 · 시간 · 비용
+
+> ⏱ 시간은 *대략치*(읽기 + 재구현 + break/fix 포함, 첫 채점은 더 빠름). 💵 비용은 **전부 로컬 $0** —
+> 클러스터 랩의 진짜 비용은 돈이 아니라 **RAM ~6–8GB**다. AWS는 *선택*(관리형 등가물 단발 체험 ~$1–3/세션;
+> 끄는 걸 잊으면 월 $178 함정) → [비용 사다리](../docs/aws-eks-path.md).
+
+| 모듈 | 스택 | 하는 일 (졸업 기준) | 클러스터 | ~시간 | 비용 |
+|---|---|---|---|---|---|
+| **[M0](m0/README.md)** | Cedar | 인가 정책을 빈 파일에서 재구현 (11/11) | 불필요 (Python) | ~3–6h | **$0** |
+| **[M1](m1/README.md)** | checkov | IaC 결함 16개 사냥·수정 (Failed 0) | 불필요 (Python) | ~1.5–3h | **$0** |
+| **[M2](m2/README.md)** | VAP + CEL | 라벨↔SA admission CEL 작성 (5/5) | 필요 · RAM ~6–8GB | ~30–45m | **$0** |
+| **[M3](m3/README.md)** | Cilium L3/L7 | 최소권한 네트워크 홉 재구성 (7/7) | 필요 · RAM ~6–8GB | ~30–45m | **$0** |
+| **[M4](m4/README.md)** | Tetragon eBPF | 선택적 셸 SIGKILL 룰 (id=0·sh=137) | 필요 · RAM ~6–8GB | ~20–35m | **$0** |
+| **[M5](m5/README.md)** | WireGuard + etcd | 전송·저장 암호화 실행·해석 (ET1) | 필요 · RAM ~6–8GB | ~30–45m | **$0** |
+| **[M6](m6/README.md)** | Cedar + OpenFGA | 에이전트 위임 ABAC+ReBAC (17/17 + 11/11) | 불필요 (Part B는 Docker) | ~2–4h | **$0** |
+| **[M7](../formal/README.md)** | z3 (formal) | 교차계층 shadow/dead-rule 탐지 (심화) | 불필요 (Python) | ~1–2h | **$0** |
+| **[M8](m8/README.md)** | Tetragon | 런타임 kill 경계 측정 — detect≠prevent (심화) | 필요 · RAM ~6–8GB | ~30–45m | **$0** |
+
+> 🧩 클러스터 랩(**M2–M5**)은 **한 세션에 묶어라**: `scripts/up.ps1`(스탠드업 ~5–10m) → M2→M3→M4→M5 → `scripts/down.ps1`.
+> M8은 별도 클러스터 세션. 무클러스터(M0·M1·M6·M7)는 아무 때나 독립 실행.
+
 <div class="grid cards" markdown>
 
 -   :material-numeric-0-circle:{ .lg .middle } **M0 · 인가 as-code (Cedar)**
@@ -119,7 +140,7 @@ flowchart LR
 
     ---
 
-    [클러스터 불필요]{ .lab-badge .no-cluster }
+    [클러스터 불필요 · Part B Docker]{ .lab-badge .no-cluster }
 
     AI 에이전트 위임을 ABAC 교집합 + ReBAC 그래프로. 졸업: **17/17 + 11/11**.
 
