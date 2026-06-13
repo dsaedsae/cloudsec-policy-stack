@@ -75,6 +75,8 @@ a.chip:hover { border-color: currentColor; }
 .lab-badge.cluster    { background: #fff3e0; color: #bf360c; }   /* data palette — needs RAM */
 [data-md-color-scheme="slate"] .lab-badge.no-cluster { background: #2a2f4a; color: #c5cae9; }
 [data-md-color-scheme="slate"] .lab-badge.cluster    { background: #3a2c1c; color: #ffcc80; }
+/* header pill row: wrap cleanly on narrow viewports, gap replaces the old " · " separators */
+.md-typeset .lab-pills { display: flex; flex-wrap: wrap; gap: .35rem .5rem; align-items: center; margin: .5rem 0 1rem; }
 
 /* The grade command = the judge. Terminal look, lime-on-dark to rhyme with the
  * autograder verdict (id rc=0 / sh rc=137 etc.). */

@@ -1,6 +1,8 @@
 # M8 — eBPF kill의 정직한 경계: detection ≠ prevention
 
-[심화 / 측정]{ .lab-progress } · [스택 Tetragon]{ .lab-badge } · [소요 ~30–45m]{ .lab-badge } · [클러스터 필요 · RAM ~6–8GB]{ .lab-badge .cluster } · [비용 $0 로컬]{ .lab-badge }
+<div class="lab-pills">
+<span class="lab-progress">심화 / 측정</span> <span class="lab-badge">스택 Tetragon</span> <span class="lab-badge">소요 ~30–45m</span> <span class="lab-badge cluster">클러스터 필요 · RAM ~6–8GB</span> <span class="lab-badge">비용 $0 로컬</span>
+</div>
 
 > **선행:** M4(선택적 shell-kill을 *직접 만든다*). M8은 그 통제의 **한계를 측정**한다 — 과장도 과소도 없이.
 > **준비:** `scripts/up.ps1`(Tetragon 포함) + Git Bash/PowerShell. 클러스터 없으면 SKIP(FAIL 아님).

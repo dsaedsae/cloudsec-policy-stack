@@ -1,6 +1,8 @@
 # formal/ — cross-layer policy consistency (M7, formal stretch)
 
-[심화 / formal]{ .lab-progress } · [스택 z3 (SMT)]{ .lab-badge } · [소요 ~1–2h]{ .lab-badge } · [클러스터 불필요]{ .lab-badge .no-cluster } · [비용 $0 로컬]{ .lab-badge }
+<div class="lab-pills">
+<span class="lab-progress">심화 / formal</span> <span class="lab-badge">스택 z3 (SMT)</span> <span class="lab-badge">소요 ~1–2h</span> <span class="lab-badge no-cluster">클러스터 불필요</span> <span class="lab-badge">비용 $0 로컬</span>
+</div>
 
 > 🎯 **학습 성과:** 교차계층(Cilium L7 × Cedar PDP) shadow/dead-rule을 z3로 *형식 검증*하고, 반증가능성(`--ungate-transfer`로 ungated 검출)을 설명할 수 있다.
 

@@ -73,11 +73,11 @@ flowchart LR
 
     ---
 
-    [클러스터 불필요]{ .lab-badge .no-cluster }
+    <span class="lab-badge no-cluster">클러스터 불필요</span>
 
     빈 정책에서 owner·한도·역할·동결 인가를 작성. 졸업: **core 8 + ext 3 = 11/11**.
 
-    `python labs/m0/grade.py --ext`{ .lab-grade }
+    <code class="lab-grade">python labs/m0/grade.py --ext</code>
 
     [:octicons-arrow-right-24: M0 시작](m0/README.md)
 
@@ -85,11 +85,11 @@ flowchart LR
 
     ---
 
-    [클러스터 불필요]{ .lab-badge .no-cluster }
+    <span class="lab-badge no-cluster">클러스터 불필요</span>
 
     신입이 짠 워크로드의 **16개 결함을 사냥**해 수정. 졸업: **Failed checks 0**.
 
-    `python labs/m1/grade.py`{ .lab-grade }
+    <code class="lab-grade">python labs/m1/grade.py</code>
 
     [:octicons-arrow-right-24: M1 시작](m1/README.md)
 
@@ -97,11 +97,11 @@ flowchart LR
 
     ---
 
-    [클러스터 필요]{ .lab-badge .cluster }
+    <span class="lab-badge cluster">클러스터 필요</span>
 
     라벨↔SA 일관성 VAP(ValidatingAdmissionPolicy)의 CEL을 작성. 졸업: 위조 DENY / 정합 ADMIT **5/5**.
 
-    `bash labs/m2/grade.sh`{ .lab-grade }
+    <code class="lab-grade">bash labs/m2/grade.sh</code>
 
     [:octicons-arrow-right-24: M2 시작](m2/README.md)
 
@@ -109,11 +109,11 @@ flowchart LR
 
     ---
 
-    [클러스터 필요]{ .lab-badge .cluster }
+    <span class="lab-badge cluster">클러스터 필요</span>
 
     default-deny에서 최소권한 홉(L3/L7/egress)을 재구성. 졸업: **7/7**.
 
-    `bash labs/m3/grade.sh`{ .lab-grade }
+    <code class="lab-grade">bash labs/m3/grade.sh</code>
 
     [:octicons-arrow-right-24: M3 시작](m3/README.md)
 
@@ -121,11 +121,11 @@ flowchart LR
 
     ---
 
-    [클러스터 필요]{ .lab-badge .cluster }
+    <span class="lab-badge cluster">클러스터 필요</span>
 
     셸 exec만 골라 SIGKILL하는 TracingPolicy. 졸업: **id=0 + sh=137**.
 
-    `bash labs/m4/grade.sh`{ .lab-grade }
+    <code class="lab-grade">bash labs/m4/grade.sh</code>
 
     [:octicons-arrow-right-24: M4 시작](m4/README.md)
 
@@ -133,11 +133,11 @@ flowchart LR
 
     ---
 
-    [클러스터 필요]{ .lab-badge .cluster }
+    <span class="lab-badge cluster">클러스터 필요</span>
 
     WireGuard 캡처·etcd 암호화를 직접 돌리고 해석. 졸업: **ET1 채점 + 해석**.
 
-    `bash labs/m5/grade.sh`{ .lab-grade }
+    <code class="lab-grade">bash labs/m5/grade.sh</code>
 
     [:octicons-arrow-right-24: M5 시작](m5/README.md)
 
@@ -145,11 +145,11 @@ flowchart LR
 
     ---
 
-    [클러스터 불필요 · Part B Docker]{ .lab-badge .no-cluster }
+    <span class="lab-badge no-cluster">클러스터 불필요 · Part B Docker</span>
 
     AI 에이전트 위임을 ABAC 교집합 + ReBAC(관계기반) 그래프로. 졸업: **17/17 + 11/11**.
 
-    `python labs/m6/grade.py`{ .lab-grade }
+    <code class="lab-grade">python labs/m6/grade.py</code>
 
     [:octicons-arrow-right-24: M6 시작](m6/README.md)
 
@@ -157,11 +157,11 @@ flowchart LR
 
     ---
 
-    [클러스터 불필요]{ .lab-badge .no-cluster }
+    <span class="lab-badge no-cluster">클러스터 불필요</span>
 
     Cilium L7 × Cedar의 그림자/dead-rule을 z3로 탐지(ViewAuditLog shadow, 반증가능).
 
-    `python formal/cross_layer.py`{ .lab-grade }
+    <code class="lab-grade">python formal/cross_layer.py</code>
 
     [:octicons-arrow-right-24: M7 시작](../formal/README.md)
 
@@ -169,11 +169,11 @@ flowchart LR
 
     ---
 
-    [클러스터 필요]{ .lab-badge .cluster }
+    <span class="lab-badge cluster">클러스터 필요</span>
 
     Tetragon shell-kill의 정직한 경계: detection≠prevention, execve vs I/O, io_uring 클래스.
 
-    `powershell -File scripts\verify-runtime-scope.ps1`{ .lab-grade }
+    <code class="lab-grade">powershell -File scripts\verify-runtime-scope.ps1</code>
 
     [:octicons-arrow-right-24: M8 시작](m8/README.md)
 

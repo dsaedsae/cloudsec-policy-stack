@@ -1,6 +1,8 @@
 # M1 — 쉬프트레프트: 심어둔 결함을 사냥해 게이트를 green으로
 
-[모듈 2 / 7]{ .lab-progress } · [스택 checkov]{ .lab-badge } · [소요 ~1.5–3h]{ .lab-badge } · [클러스터 불필요]{ .lab-badge .no-cluster } · [비용 $0 로컬]{ .lab-badge }
+<div class="lab-pills">
+<span class="lab-progress">모듈 2 / 7</span> <span class="lab-badge">스택 checkov</span> <span class="lab-badge">소요 ~1.5–3h</span> <span class="lab-badge no-cluster">클러스터 불필요</span> <span class="lab-badge">비용 $0 로컬</span>
+</div>
 
 > **준비:** `.venv`(requirements-dev) 필요 — [SETUP](../SETUP.md). 미설치 시 채점기가 안내한다.
 
