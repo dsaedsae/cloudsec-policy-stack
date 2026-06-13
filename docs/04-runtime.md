@@ -1,52 +1,51 @@
-# Lab 3 — Runtime detection + prevention (Tetragon / eBPF)
+# Lab 3 — 런타임 탐지 + 차단 (Tetragon / eBPF)
 
 > 💡 **직접 해보기 (재구현 트랙):** TracingPolicy를 직접 작성하라 → **[M4 · Tetragon 런타임](../labs/m4/README.md)** (선택적 kill, 클러스터 필요).
 
-**Goal:** the layers so far act *before/at* the request. This one watches the
-workload *after* it's compromised — the gap network policy and authz can't cover.
+**목표:** 지금까지의 계층은 요청 *전/시점*에 작동한다. 이 계층은 워크로드가 *침해된 후*를 감시한다 —
+네트워크 정책과 인가가 덮지 못하는 빈틈이다.
 
-**Needs:** the cluster from [Lab 2](03-network-and-authz.md) (Tetragon installed by `up.sh`).
+**필요:** [Lab 2](03-network-and-authz.md)의 클러스터(`up.sh`가 Tetragon 설치).
 
-## Prevention: a shell in the db pod is killed in-kernel
+## 차단(Prevention): db 파드의 셸은 커널에서 죽는다
 
 ```bash
 DBPOD=$(kubectl -n shop get pod -l tier=data -o jsonpath='{.items[0].metadata.name}')
 kubectl -n shop exec "$DBPOD" -- sh -c "echo pwned"
 ```
 
-Expected:
+기대 결과:
 
 ```
 command terminated with exit code 137      # 137 = SIGKILL, by Tetragon
 ```
 
-But a **non-shell** exec still works (the policy is precise, the pod stays healthy):
+하지만 **비셸(non-shell)** exec는 여전히 동작한다(룰이 정밀하고, 파드는 건강하게 유지):
 
 ```bash
-kubectl -n shop exec "$DBPOD" -- id        # uid=101(nginx) ...  — runs fine
+kubectl -n shop exec "$DBPOD" -- id        # uid=101(nginx) ...  — 정상 실행
 ```
 
-The rule lives in `k8s/tracingpolicy.yaml`: a `TracingPolicy` that `Sigkill`s an
-`execve` of a shell (`/sh`, `/bash`, `/dash`, `/ash`, `/busybox`) in any
-`tier: data` pod. A database container never legitimately spawns a shell, so an
-attempt is treated as intrusion.
+룰은 `k8s/tracingpolicy.yaml`에 있다: `tier: data` 파드에서 셸(`/sh`, `/bash`, `/dash`, `/ash`,
+`/busybox`)의 `execve`를 `Sigkill`하는 `TracingPolicy`다. 데이터베이스 컨테이너는 정당하게 셸을 띄울
+일이 결코 없으므로, 그 시도는 침입으로 간주된다.
 
-## Detection: every process exec is observed
+## 탐지(Detection): 모든 프로세스 exec이 관측된다
 
 ```bash
-# trigger something, then read Tetragon's event stream:
+# 뭔가 실행시킨 뒤, Tetragon의 이벤트 스트림을 읽는다:
 kubectl -n shop exec "$DBPOD" -- id 2>/dev/null || true
 kubectl -n kube-system logs ds/tetragon -c export-stdout --tail=200 | grep process_exec
 ```
 
-You'll see the `binary`, `arguments`, `pod`, and process ancestry for each exec —
-the forensic trail of what ran where.
+각 exec의 `binary`·`arguments`·`pod`·프로세스 계보를 볼 수 있다 — 무엇이 어디서 실행됐는지의
+포렌식 추적이다.
 
-## Make it yours
+## 내 것으로 만들기
 
-Add `"/python"` (or `/nc`, `/curl`) to the `values:` list in
-`k8s/tracingpolicy.yaml`, `kubectl apply` it, and try to exec that binary in the
-db pod — it's now killed too. You just wrote a runtime-security rule.
+`k8s/tracingpolicy.yaml`의 `values:` 목록에 `"/python"`(또는 `/nc`, `/curl`)을 추가하고
+`kubectl apply` 한 뒤 db 파드에서 그 바이너리를 exec해 보라 — 이제 그것도 죽는다. 방금 런타임-보안
+룰을 직접 작성한 것이다.
 
 ## 정직한 한계 — syscall 표면의 회피 클래스 (io_uring)
 
@@ -71,6 +70,5 @@ VERIFIED 그대로이고 M8은 그 *의미를 날카롭게* 한다.
 
 ---
 
-That's the full stack: **provision (Terraform) → network L3/L7 + egress (Cilium)
-→ app authz (Cedar) → runtime (Tetragon)**, each enforced and verified. Back to
-the [learning path](README.md).
+이것으로 전체 스택이 완성된다: **프로비저닝(Terraform) → 네트워크 L3/L7 + egress(Cilium)
+→ 앱 인가(Cedar) → 런타임(Tetragon)**, 각각 시행되고 검증된다. [학습 경로](README.md)로 돌아가기.
