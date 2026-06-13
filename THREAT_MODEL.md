@@ -113,8 +113,9 @@ portfolios, and it is exactly where this stack now adds controls.
    apply the same pattern, and fully generic coverage is what a policy engine
    (Kyverno/Gatekeeper) generates from one rule — **provided here as an opt-in
    capstone** (`k8s/kyverno-sa-use.yaml` + `scripts/enable-kyverno.*`/`verify-kyverno.*`),
-   though it was **not stood up in the last session (RAM)**, so the cross-namespace claim
-   (coverage ID7) stays NOT_COVERED until proven live. Note the generalization carries the
+   and it is now **stood up and proven live** — the Kyverno SA-use ClusterPolicy denies a
+   tier-SA workload created in a *second* namespace (`scripts/verify-kyverno`), so the
+   cross-namespace claim (coverage ID7) is now **VERIFIED**. Note the generalization carries the
    **same scoping caveat**: like the VAP it gates the workload *controller*, not the
    controller-spawned Pod (a Pod's `userInfo` is its controller's SA). The trust
    is now **explicit and minimized** (named operators) rather than "anyone who can
@@ -162,7 +163,10 @@ portfolios, and it is exactly where this stack now adds controls.
   `@sha256` digest (B1 integrity); the `api` image is built locally and side-loaded
   via `kind load`, so it has no registry digest (a *scoped* checkov skip documents
   this — every other workload is still held to digest pinning). Build provenance
-  (cosign/SLSA) is not yet verified — see README roadmap.
+  (cosign) image SIGNING is now verified on a **local-key path** — a local OCI registry
+  (removing the cosign#3832 no-registry blocker) + keyful cosign + Kyverno verifyImages
+  proves signed→ADMIT / unsigned→DENY at admission (`scripts/verify-image-signing`,
+  coverage SL6). Keyless/Rekor + SLSA provenance attestation remain the ECR-path roadmap.
 - **Data protection vs. access control.** B1–B7 govern *who may reach/do what*.
   Separately, this stack protects the **data itself**: pod-to-pod traffic is
   WireGuard-encrypted (data-in-transit, verified live), and Secrets can be

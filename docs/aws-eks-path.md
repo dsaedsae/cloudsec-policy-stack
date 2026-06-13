@@ -40,28 +40,30 @@
 > Azure OpenAI **SSRF CVE-2025-53767**(CVSS 10). *doc-only 매핑*이며 이 repo의 라이브 검증은 in-cluster
 > egress-block(ZT2 `metadata 000`)에 한정된다.
 
-### 1-1. 빌드 프로비넌스: 이미지 서명(cosign) — *레지스트리 경로 전용*
+### 1-1. 빌드 프로비넌스: 이미지 서명(cosign) — 로컬 키풀 검증 + 프로덕션 keyless
 
-로컬 스택은 이미지 **취약점·시크릿 스캔 + SBOM**(`trivy`, [02-scan.md](02-scan.md))까지는
-실제로 수행한다. 하지만 이미지 **서명(cosign)** 은 로컬에서 *정직하게 불가능*하다 — 출시된
-cosign은 서명을 붙일 **레지스트리 다이제스트가 필요**하고(sigstore/cosign#3832; 무(無)레지스트리
-PR #4014 미병합), `cloudsec-api:local`은 kind에 로드된 레지스트리 없는 이미지다. 그래서 서명은
-**ECR 경로에서만** 성립하며, 아래는 그 *설계*다(로컬에서 실행하지 않음 — 가짜 `cosign verify`
-체크는 두지 않는다):
+로컬 스택은 이미지 **취약점·시크릿 스캔 + SBOM**(`trivy`, [02-scan.md](02-scan.md))에 더해 이제
+**서명 검증까지 라이브로 증명**한다. 원래 막힘은 출시된 cosign이 서명을 붙일 **레지스트리 다이제스트**를
+요구하는데(sigstore/cosign#3832) `cloudsec-api:local`이 kind에 로드된 *레지스트리 없는* 이미지였다는
+점이다. 이를 **로컬 OCI 레지스트리**(`registry:2`, kind 네트워크)로 우회한다 —
+`scripts/verify-image-signing.ps1`이 이미지를 로컬 레지스트리에 푸시 → **키풀 cosign** 서명 → **Kyverno
+`verifyImages` ClusterPolicy**(공개키 바인딩, [`k8s/kyverno-image-verify.yaml`](https://github.com/dsaedsae/cloudsec-policy-stack/blob/main/k8s/kyverno-image-verify.yaml))
+적용 → 서버 dry-run으로 **서명됨→ADMIT / 미서명→DENY**를 증명한다(coverage **SL6 VERIFIED**, 로컬-키 경로).
 
 ```bash
-# CI(OIDC keyless) 또는 keyful 로 ECR 다이제스트에 서명
-cosign sign  $ECR_REPO@sha256:<digest>                       # keyless: --yes, OIDC 신원
+# 로컬(이 repo): 로컬 OCI 레지스트리 + 키풀 cosign + Kyverno verifyImages
+cosign sign --key cosign.key localhost:5001/cloudsec-api@sha256:<digest>     # 로컬 레지스트리(http)
+# 프로덕션(ECR): keyless(OIDC) 또는 AWS Signer
+cosign sign  $ECR_REPO@sha256:<digest>                                       # keyless: --yes, OIDC 신원
 cosign verify $ECR_REPO@sha256:<digest> \
   --certificate-identity-regexp '.*' --certificate-oidc-issuer-regexp '.*'
-# SLSA 빌드 프로비넌스 어테스테이션 첨부/검증
-cosign attest --predicate provenance.json --type slsaprovenance $ECR_REPO@sha256:<digest>
+cosign attest --predicate provenance.json --type slsaprovenance $ECR_REPO@sha256:<digest>  # SLSA
 ```
 
-배포 게이트는 **ECR 다이제스트로 admission**(이 repo의 디지털 핀 원칙과 동일)하고, 서명 미검증
-이미지는 거부한다(Kyverno `verifyImages` 또는 sigstore policy-controller `ClusterImagePolicy`,
-혹은 EKS에선 **AWS Signer** + ECR). 즉 로컬은 *scan+SBOM까지 VERIFIED*, **서명/어테스테이션은
-ECR 경로의 CONFIGURED(설계)** — 로드맵의 열린 항목이다.
+배포 게이트는 서명 미검증 이미지를 거부한다(Kyverno `verifyImages` — 로컬에서 실증; EKS에선 **AWS Signer**
++ ECR). **정직한 경계:** 로컬은 *키풀(local-key) 서명 검증*까지 VERIFIED이고, **keyless(OIDC)·Rekor 투명성
+로그·SLSA 프로비넌스 어테스테이션**은 ECR 경로의 로드맵 항목이다(로컬 데모는 키풀+오프라인). 또한 이는
+*프로비넌스*(이 키 소유자가 서명했는가)를 증명할 뿐, 서플라이체인 무결성 전체나 특정 웜 차단을 주장하지 않는다.
 
 ---
 

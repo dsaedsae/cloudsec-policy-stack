@@ -1,0 +1,47 @@
+# Admission-time image SIGNATURE verification (SL6) — OPT-IN capstone.
+# Kyverno verifyImages: a Pod whose image matches kind-registry:5000/* is ADMITTED only
+# if the image is cosign-signed by the key below; an unsigned image is DENIED at admission.
+# This is the "image provenance" link the local stack otherwise could not prove (the
+# released cosign needs a registry digest — sigstore/cosign#3832 — so a LOCAL OCI registry
+# is stood up by scripts/verify-image-signing.ps1, which removes that blocker).
+#
+# HONEST SCOPE: this proves provenance (was this image signed by the holder of this key?),
+# NOT supply-chain integrity of the contents, and it is the LOCAL-KEY path (keyful cosign);
+# it does NOT claim keyless/SLSA or that it "stops" any specific worm. The publicKeys value
+# below is a DEMO public key — public keys are safe to commit; the matching PRIVATE key is
+# generated at run time into a temp dir and is NEVER committed. scripts/verify-image-signing.ps1
+# regenerates a fresh key pair and substitutes the public key here before applying.
+# rekor/ctlog are ignored: this is an offline local-key check, not a transparency-log flow.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signature
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: check-cosign-signature
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      verifyImages:
+        - imageReferences:
+            - "kind-registry:5000/*"
+          mutateDigest: false
+          verifyDigest: false
+          required: true
+          attestors:
+            - count: 1
+              entries:
+                - keys:
+                    publicKeys: |-
+                      -----BEGIN PUBLIC KEY-----
+                      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEpTpWmxaWEnLqf/HZgXSYSr7T3Y73
+                      b4heRZptzDuKxelJCR6rAahSlP0SbiCYmPB73CBA4BRbTmsXeP3pb2HAaw==
+                      -----END PUBLIC KEY-----
+                    rekor:
+                      ignoreTlog: true
+                    ctlog:
+                      ignoreSCT: true

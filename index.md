@@ -10,7 +10,7 @@ hide:
 전부 통과해야 데이터에 닿는다. 그리고 그 사실을 매번 라이브로 증명한다.**
 
 <div class="hero-badges" markdown>
-[라이브 검증 21/21](docs/evaluation-coverage.md){ .chip .chip--verified } [검증가능 커버리지 65%](docs/evaluation-coverage.md){ .chip .chip--configured } [적대적 검증 CRITICAL 1 발견·수정](THREAT_MODEL.md){ .chip .chip--notcovered } [무료 로컬 $0](docs/aws-eks-path.md){ .chip .chip--governance }
+[라이브 검증 21/21](docs/evaluation-coverage.md){ .chip .chip--verified } [검증가능 커버리지 72%](docs/evaluation-coverage.md){ .chip .chip--configured } [적대적 검증 CRITICAL 1 발견·수정](THREAT_MODEL.md){ .chip .chip--notcovered } [무료 로컬 $0](docs/aws-eks-path.md){ .chip .chip--governance }
 </div>
 
 <div class="hero-cta" markdown>
@@ -86,7 +86,7 @@ flowchart TB
 -   :material-check-decagram: **검증가능성 기준 + 커버리지 측정**
 
     "각 규제 요구는 시행을 증명하는 실행 테스트에 대응돼야 한다"를 기준으로 삼고, MLS 보상통제의
-    **65%가 코드로 검증가능**함을 *정량화*(갭 공개). [→ 평가](docs/evaluation-coverage.md)
+    **72%가 코드로 검증가능**함을 *정량화*(갭 공개). [→ 평가](docs/evaluation-coverage.md)
 
 -   :material-shield-bug: **정직한 적대적 검증**
 
@@ -107,7 +107,7 @@ flowchart TB
 
 | 항목 | 결과 |
 |------|------|
-| **검증가능성 커버리지 (정량 헤드라인)** | 워크로드 적용가능 MLS 보상통제 sub-requirement의 **65% (26/40)** 가 *코드로 검증* — 갭(CONFIGURED 8·NOT-COVERED 6·GOVERNANCE 2)을 정직하게 공개. [→ 평가](docs/evaluation-coverage.md) |
+| **검증가능성 커버리지 (정량 헤드라인)** | 워크로드 적용가능 MLS 보상통제 sub-requirement의 **72% (29/40)** 가 *코드로 검증* — 갭(CONFIGURED 7·NOT-COVERED 4·GOVERNANCE 2)을 정직하게 공개. [→ 평가](docs/evaluation-coverage.md) |
 | 라이브 방어심층 검증 (기능 회귀 스위트) | **21 / 21 PASS** — 차단/허용 enforcement 전부. WireGuard는 api/db를 **다른 노드로 강제**(podAntiAffinity)하고, **tcpdump 패킷캡처**로 선상의 WG 암호문(UDP/51871, 40pkt·캡처 상한) 존재 + 평문 0을 확인 — 결정적 증거는 WG패킷+노드분산, 평문부재는 보강(`scripts/capture-wg.sh`) |
 | Cedar 인가 단위테스트 | **8 / 8** (코어) · **17 / 17** AI-에이전트 위임(confused-deputy 차단 + ASI08 위임깊이 cap·홉별 클램프·출처 게이트; P2·P3·P5·P6·P7 mutation으로 반증가능) |
 | ReBAC 관계 테스트 (OpenFGA) | **11 / 11** `fga model test` + 라이브 `/check` 11/11 — 인가 모델의 ReBAC 갭을 실행으로 충족 |

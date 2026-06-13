@@ -162,10 +162,10 @@ scripts/verify-kyverno.sh     # proves DENY/ADMIT in a SECOND namespace (not sho
 by a controller carries the *controller's* SA in `userInfo`, so (exactly like the VAP)
 the gate matches the workload **controller**, not the controller-spawned Pod, and an
 authorized operator/cluster-admin stays trusted by design. (2) It is an **opt-in
-capstone** (4 extra controllers = real RAM on top of Cilium+Tetragon+SPIRE); it was
-**not stood up in the last session due to RAM**, so the cross-namespace coverage row
-(ID7 in the coverage analysis) **remains NOT_COVERED** until proven live — the design and
-scripts are provided, the live claim is not made. The modern equivalent is the new
+capstone** (extra controllers = real RAM on top of Cilium+Tetragon+SPIRE), enabled via
+`scripts/enable-kyverno`; it has now been **stood up and proven live** — `scripts/verify-kyverno`
+shows the SA-use ClusterPolicy denying a tier-SA workload in a *second* namespace, so the
+cross-namespace coverage row (ID7) is now **VERIFIED** (opt-in). The modern equivalent is the new
 Kyverno `ValidatingPolicy` / native VAP cluster-wide — this is one of three honest ways.
 
 ## Make it yours

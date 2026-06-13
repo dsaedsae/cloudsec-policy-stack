@@ -13,8 +13,8 @@ ID2,credential-forgery,requester<->SA binding (SA-use gate),A,VERIFIED,verify:CI
 ID3,credential-forgery,SA-use covers CronJob path,A,VERIFIED,verify:CronJob as api-sa DENY
 ID4,credential-forgery,SPIFFE SVID mutual-auth on edge,A,CONFIGURED,opt-in netpol-mutual; Lab4 manual; not in suite
 ID5,credential-forgery,tier SA has zero K8s API rights,A,VERIFIED,verify:api-sa no create-pods/secrets
-ID6,credential-forgery,SA token not mounted,A,CONFIGURED,automountServiceAccountToken:false; not asserted
-ID7,credential-forgery,SA-use other namespaces,A,NOT_COVERED,policy scoped to shop ns
+ID6,credential-forgery,SA token not mounted,A,VERIFIED,live: web/api token path ABSENT (kubectl exec) + 3 tiers automountServiceAccountToken=false / no kube-api-access volume
+ID7,credential-forgery,SA-use other namespaces,A,VERIFIED,verify-kyverno: Kyverno SA-use ClusterPolicy DENY in 2nd ns (kyv-demo) - cluster-wide proven (opt-in capstone)
 ID8,credential-forgery,requester Bearer-JWT signature+audience verification (RFC 8707),A,CONFIGURED,auth_test.py 13/13 verifier logic (fixture key/no cluster) rejects bad-aud/sig/expiry/forged/non-Bearer; live API not Bearer-mandatory (X-User fallback) so enforcement not live-asserted
 LP1,least-privilege,Cedar owner check,A,VERIFIED,verify:bob GET alice 403
 LP2,least-privilege,Cedar transfer limit,A,VERIFIED,verify:transfer 5000 403
@@ -36,7 +36,7 @@ SL2,shift-left,secret scan (gitleaks),B,CONFIGURED,CI step; not in verify suite
 SL3,shift-left,CI enforcement gate,B,VERIFIED,CI runs verify.sh on push
 SL4,shift-left,image vuln+secret scan (trivy),B,VERIFIED,scan gate:exit1 on CVE-2025-62727 / exit0 after starlette bump
 SL5,shift-left,SBOM generation (CycloneDX),B,VERIFIED,scan gate:trivy cyclonedx 103 components
-SL6,shift-left,image signing / provenance attestation (cosign/SLSA),B,NOT_COVERED,no local registry; documented on ECR path (aws-eks-path 1-1)
+SL6,shift-left,image signing / provenance attestation (cosign/SLSA),B,VERIFIED,verify-image-signing: Kyverno verifyImages signed->ADMIT / unsigned->DENY via cosign keyful + local OCI registry (local-key path; opt-in)
 GV1,governance,C/S/O data classification governance,G,GOVERNANCE,workload cannot test; NIS MLS process
 GV2,governance,CEO/board reporting + 시정요구 대응,G,GOVERNANCE,organizational; out of workload scope
 GV3,governance,DLP (data loss prevention),G,NOT_COVERED,enterprise control; absent here
