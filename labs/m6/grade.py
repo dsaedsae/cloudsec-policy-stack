@@ -35,8 +35,8 @@ def grade_agent() -> int:
 
 def grade_rebac() -> int:
     if shutil.which("docker") is None:
-        print("== Part B: ReBAC == SKIP: docker 미설치 (fga model test는 docker로 실행)")
-        return 0
+        print("== Part B: ReBAC == SKIP: docker 미설치 — Part B(11/11)는 채점되지 않았다.")
+        return 2  # sentinel: skipped (not passed) — graduation gate must see this
     print("== Part B: ReBAC (OpenFGA fga model test) ==")
     with tempfile.TemporaryDirectory() as td:
         base = Path(td)
@@ -55,14 +55,21 @@ def grade_rebac() -> int:
 
 if __name__ == "__main__":
     which = sys.argv[1] if len(sys.argv) > 1 else "all"
-    rc = 0
-    if which in ("agent", "all"):
-        rc |= grade_agent()
+    rc_agent = grade_agent() if which in ("agent", "all") else 0
+    rc_rebac = None
     if which in ("rebac", "all"):
         if which == "all":
             print()
-        rc |= grade_rebac()
-    if rc == 0 and which == "all":
-        print("\nM6 GRADUATED — 위임 인가를 ABAC 교집합(Cedar)과 관계 그래프(ReBAC) 양쪽으로 구현했다. "
-              "정답지 diff: cedar/agent/policies.cedar, rebac/model.fga")
-    raise SystemExit(rc)
+        rc_rebac = grade_rebac()
+
+    if which == "all":
+        if rc_agent == 0 and rc_rebac == 0:
+            print("\nM6 GRADUATED — 위임 인가를 ABAC 교집합(Cedar)과 관계 그래프(ReBAC) 양쪽으로 구현했다. "
+                  "정답지 diff: cedar/agent/policies.cedar, rebac/model.fga")
+        elif rc_agent == 0 and rc_rebac == 2:
+            # Part A passed but Part B was skipped — NOT graduated (only half graded).
+            print("\nM6 Part A 통과(12/12). Part B(ReBAC)는 SKIP — Docker Desktop 필요 (labs/SETUP.md). "
+                  "설치 후 재실행하면 11/11까지 채점되어 졸업.")
+    # Exit nonzero only on a real FAIL (a skip is not a failure but is not graduation).
+    fail = (rc_agent not in (0, None)) or (rc_rebac == 1)
+    raise SystemExit(1 if fail else 0)

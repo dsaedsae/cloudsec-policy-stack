@@ -144,3 +144,18 @@ flowchart LR
 - **편집은 `labs/<모듈>/` 안의 작업 파일만.** canonical을 건드리면 스택·채점기가 같이 망가진다.
 - **채점기가 유일한 판정자다.** "된 것 같다"는 없다 — 이 repo의 철학 그대로.
 - **클러스터 모듈(M2–M5)은 한 세션에 묶어서**: `scripts/up.ps1` → M2→M3→M4→M5 연속 → `scripts/down.ps1`.
+
+## 진도 체크리스트
+
+졸업할 때마다 체크 (각 줄이 곧 채점 명령·목표 점수):
+
+- [ ] **M0** — `python labs/m0/grade.py --ext` → **11/11**
+- [ ] **M1** — `python labs/m1/grade.py` → **Failed checks 0**
+- [ ] **M2** — `bash labs/m2/grade.sh` → **5/5** (클러스터)
+- [ ] **M3** — `bash labs/m3/grade.sh` → **7/7** (클러스터)
+- [ ] **M4** — `bash labs/m4/grade.sh` → **id=0 + sh=137** (클러스터)
+- [ ] **M5** — `bash labs/m5/grade.sh` → **ET1 PASS** + capture-wg/etcd 해석 (클러스터)
+- [ ] **M6** — `python labs/m6/grade.py` → **12/12 + 11/11**
+
+> 7개를 다 졸업하면 → [캡스톤 · 면접 노트](capstone.md)를 채워라. 무엇을 재구현했고, 각 통제가
+> *막는 것*과 *막지 못하는 것*을 정직하게 적으면 그대로 포트폴리오·면접 답변이 된다.

@@ -61,11 +61,26 @@ when { /* 조건식 */ };
 | **R4** | **동결(frozen) 계좌의 이체는 무조건 금지** — 다른 어떤 허용보다 우선 |
 
 ```powershell
-.venv\Scripts\python.exe labs\m0\grade.py      # 반복: 작성 → 채점 → 8/8까지
+.venv\Scripts\python.exe labs\m0\grade.py        # 반복: 작성 → 채점 → 8/8까지
+.venv\Scripts\python.exe labs\m0\grade.py --hint # 막히면: FAIL 행마다 어느 요건인지 넛지(정답 아님)
 ```
 
 채점기는 시나리오별 expect/actual을 보여준다. 틀리면 **왜 그 시나리오가 그 결과를 냈는지**
-정책을 다시 읽어라 — 그 인과 추적이 학습의 본체다.
+정책을 다시 읽어라 — 그 인과 추적이 학습의 본체다. (`--hint`는 *어느 요건*인지만 알려주지 답은 안 준다.)
+
+<details><summary>첫 한 줄이 막히면: R1 완성 예시 (R2~R4·E1은 직접)</summary>
+
+R1을 그대로 옮기면 이렇게 된다 — scope 3칸(principal, action ==, resource) + `when` 블록 + 끝에 `;`:
+
+```cedar
+permit ( principal, action == Action::"ViewAccount", resource )
+when { principal == resource.owner };
+```
+
+이걸 `policies.cedar`에 넣고 채점하면 `owner views own account`가 PASS로 바뀐다.
+**문법 함정 3가지:** ① 모든 문장은 `;`로 끝난다 ② action 앞에 반드시 `==` ③ 조건은 scope가 아니라 `when {}` 안에.
+(R2의 양수/한도, R3의 역할, R4의 forbid는 이 골격을 따라 직접.)
+</details>
 
 ## Step 3 — break-and-fix: 예측 → 파괴 → 확인 (30분)
 
