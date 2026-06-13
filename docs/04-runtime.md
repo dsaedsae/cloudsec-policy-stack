@@ -1,7 +1,6 @@
 # Lab 3 — Runtime detection + prevention (Tetragon / eBPF)
 
-!!! tip "직접 해보기 (재구현 트랙)"
-    TracingPolicy를 직접 작성하라 → **[M4 · Tetragon 런타임](../labs/m4/README.md)** (선택적 kill, 클러스터 필요).
+> 💡 **직접 해보기 (재구현 트랙):** TracingPolicy를 직접 작성하라 → **[M4 · Tetragon 런타임](../labs/m4/README.md)** (선택적 kill, 클러스터 필요).
 
 **Goal:** the layers so far act *before/at* the request. This one watches the
 workload *after* it's compromised — the gap network policy and authz can't cover.

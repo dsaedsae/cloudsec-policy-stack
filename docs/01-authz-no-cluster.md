@@ -1,7 +1,6 @@
 # Lab 0 — 인가 as-code (클러스터 불필요)
 
-!!! tip "직접 해보기 (재구현 트랙)"
-    읽었다면 빈 파일에서 재구현하라 → **[M0 · Cedar 인가](../labs/m0/README.md)** (자동 채점 11/11, 클러스터 불필요).
+> 💡 **직접 해보기 (재구현 트랙):** 읽었다면 빈 파일에서 재구현하라 → **[M0 · Cedar 인가](../labs/m0/README.md)** (자동 채점 11/11, 클러스터 불필요).
 
 **목표:** *authz-as-code* — 선언적 규칙을 단위테스트로 — 를 5분 만에, Python만으로 이해한다.
 이건 Amazon Verified Permissions와 같은 Cedar 정책 언어다.
@@ -32,10 +31,7 @@ customer reads audit log (no role)                Deny    Deny  PASS
 8/8 scenarios passed
 ```
 
-!!! warning "M0 재구현 트랙이라면 — 정답지 주의"
-    아래 **무엇을 읽나 / 망가뜨려 보기**는 정답지 `cedar/policies.cedar`를 직접 읽고 편집한다.
-    **M0 랩([labs/m0](../labs/m0/README.md))을 빈 파일에서 재구현할 계획이면 졸업 전에는 이 절을 건너뛰어라**
-    — `cedar/policies.cedar`는 그 트랙의 잠긴 정답지다(이 개념 페이지는 *개념 파악*용으로만 M0 Step 1에서 가리킨다).
+> ⚠️ **M0 재구현 트랙이라면 — 정답지 주의:** 아래 **무엇을 읽나 / 망가뜨려 보기**는 정답지 `cedar/policies.cedar`를 직접 읽고 편집한다. **M0 랩([labs/m0](../labs/m0/README.md))을 빈 파일에서 재구현할 계획이면 졸업 전에는 이 절을 건너뛰어라** — `cedar/policies.cedar`는 그 트랙의 잠긴 정답지다(이 개념 페이지는 *개념 파악*용으로만 M0 Step 1에서 가리킨다).
 
 ## 무엇을 읽나
 

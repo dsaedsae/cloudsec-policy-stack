@@ -4,13 +4,9 @@
 그 검증기를 **자동 채점기**로 뒤집는다: 통제 하나를 **빈 파일에서 직접 재구현**하면 채점기가
 PASS/FAIL로 판정한다. 따라치기가 아니라 — 스펙만 보고 쓰고, 틀리면 *왜* 틀렸는지 채점으로 배운다.
 
-!!! tip "처음이라면 — 먼저 환경 준비"
-    **[환경 준비 (SETUP)](SETUP.md)** 를 1분 보고(클론엔 `.venv`가 없다), 그다음 **[M0](m0/README.md)**.
-    클러스터 없이 Python만으로 5분이면 첫 채점을 본다. 무엇이 빠졌는지 한 번에 보려면
-    `powershell -File scripts\doctor.ps1`.
+> 💡 **처음이라면 — 먼저 환경 준비:** **[환경 준비 (SETUP)](SETUP.md)** 를 1분 보고(클론엔 `.venv`가 없다), 그다음 **[M0](m0/README.md)**. 클러스터 없이 Python만으로 5분이면 첫 채점을 본다. 무엇이 빠졌는지 한 번에 보려면 `powershell -File scripts\doctor.ps1`.
 
-!!! note "돌아온 학습자 / 면접 직전"
-    각 모듈의 **구두 문답**(접힌 답안)으로 복습하라. 어느 모듈이든 사이드바에서 1클릭으로 점프.
+> 📝 **돌아온 학습자 / 면접 직전:** 각 모듈의 **구두 문답**(접힌 답안)으로 복습하라. 어느 모듈이든 사이드바에서 1클릭으로 점프.
 
 ## 모듈 사다리
 
@@ -28,18 +24,20 @@ flowchart LR
     class M2,M3,M4,M5 cl;
 ```
 
-??? abstract "각 모듈의 학습 루프 (strip → rebuild → 채점 → 복원)"
-    ```mermaid
-    flowchart LR
-        K[스켈레톤<br/>strip된 통제] --> W["내가 작성<br/>labs/m·/ 만 편집"]
-        W --> G{{"채점기 = 유일한 판정자"}}
-        G -- FAIL --> W
-        G -- PASS --> R[canonical<br/>자동 복원]
-        classDef judge fill:#1a1a2e,stroke:#3f51b5,color:#a5d6a7;
-        class G judge;
-    ```
-    클러스터 채점기는 학습자 아티팩트를 적용해 검증한 뒤 **canonical 정책을 자동 복원**한다 —
-    스택은 항상 known-good 상태로 돌아온다.
+**각 모듈의 학습 루프 (strip → rebuild → 채점 → 복원):**
+
+```mermaid
+flowchart LR
+    K[스켈레톤<br/>strip된 통제] --> W["내가 작성<br/>labs/m·/ 만 편집"]
+    W --> G{{"채점기 = 유일한 판정자"}}
+    G -- FAIL --> W
+    G -- PASS --> R[canonical<br/>자동 복원]
+    classDef judge fill:#1a1a2e,stroke:#3f51b5,color:#a5d6a7;
+    class G judge;
+```
+
+클러스터 채점기는 학습자 아티팩트를 적용해 검증한 뒤 **canonical 정책을 자동 복원**한다 —
+스택은 항상 known-good 상태로 돌아온다.
 
 ## 한눈에 — 모듈별 스택 · 시간 · 비용
 
@@ -67,117 +65,17 @@ flowchart LR
 > M8은 별도 클러스터 세션. 무클러스터(M0·M1·M6·M7)는 아무 때나 독립 실행.
 > ℹ️ 아래 카드/체크리스트의 `python ...`은 **활성화된 .venv 기준**이다. 클론 직후엔 `.venv\Scripts\python.exe ...`로 실행하라([SETUP](SETUP.md)). `.sh` 채점기는 **Git Bash**, `.ps1`은 **PowerShell**.
 
-<div class="grid cards" markdown>
+## 모듈 카드 (요약)
 
--   0️⃣ **M0 · 인가 as-code (Cedar)**
-
-    ---
-
-    <span class="lab-badge no-cluster">클러스터 불필요</span>
-
-    빈 정책에서 owner·한도·역할·동결 인가를 작성. 졸업: **core 8 + ext 3 = 11/11**.
-
-    <code class="lab-grade">python labs/m0/grade.py --ext</code>
-
-    [→ M0 시작](m0/README.md)
-
--   1️⃣ **M1 · 쉬프트레프트 (checkov)**
-
-    ---
-
-    <span class="lab-badge no-cluster">클러스터 불필요</span>
-
-    신입이 짠 워크로드의 **16개 결함을 사냥**해 수정. 졸업: **Failed checks 0**.
-
-    <code class="lab-grade">python labs/m1/grade.py</code>
-
-    [→ M1 시작](m1/README.md)
-
--   2️⃣ **M2 · 신원 (admission CEL)**
-
-    ---
-
-    <span class="lab-badge cluster">클러스터 필요</span>
-
-    라벨↔SA 일관성 VAP(ValidatingAdmissionPolicy)의 CEL을 작성. 졸업: 위조 DENY / 정합 ADMIT **5/5**.
-
-    <code class="lab-grade">bash labs/m2/grade.sh</code>
-
-    [→ M2 시작](m2/README.md)
-
--   3️⃣ **M3 · 네트워크 (Cilium)**
-
-    ---
-
-    <span class="lab-badge cluster">클러스터 필요</span>
-
-    default-deny에서 최소권한 홉(L3/L7/egress)을 재구성. 졸업: **7/7**.
-
-    <code class="lab-grade">bash labs/m3/grade.sh</code>
-
-    [→ M3 시작](m3/README.md)
-
--   4️⃣ **M4 · 런타임 (Tetragon eBPF)**
-
-    ---
-
-    <span class="lab-badge cluster">클러스터 필요</span>
-
-    셸 exec만 골라 SIGKILL하는 TracingPolicy. 졸업: **id=0 + sh=137**.
-
-    <code class="lab-grade">bash labs/m4/grade.sh</code>
-
-    [→ M4 시작](m4/README.md)
-
--   5️⃣ **M5 · 암호화 (실행·해석)**
-
-    ---
-
-    <span class="lab-badge cluster">클러스터 필요</span>
-
-    WireGuard 캡처·etcd 암호화를 직접 돌리고 해석. 졸업: **ET1 채점 + 해석**.
-
-    <code class="lab-grade">bash labs/m5/grade.sh</code>
-
-    [→ M5 시작](m5/README.md)
-
--   6️⃣ **M6 · 프런티어 (agent-ABAC + ReBAC)**
-
-    ---
-
-    <span class="lab-badge no-cluster">클러스터 불필요 · Part B Docker</span>
-
-    AI 에이전트 위임을 ABAC 교집합 + ReBAC(관계기반) 그래프로. 졸업: **17/17 + 11/11**.
-
-    <code class="lab-grade">python labs/m6/grade.py</code>
-
-    [→ M6 시작](m6/README.md)
-
--   7️⃣ **M7 · 심화 (교차계층 일관성, formal)**
-
-    ---
-
-    <span class="lab-badge no-cluster">클러스터 불필요</span>
-
-    Cilium L7 × Cedar의 그림자/dead-rule을 z3로 탐지(ViewAuditLog shadow, 반증가능).
-
-    <code class="lab-grade">python formal/cross_layer.py</code>
-
-    [→ M7 시작](../formal/README.md)
-
--   8️⃣ **M8 · 심화 (런타임 kill 경계)**
-
-    ---
-
-    <span class="lab-badge cluster">클러스터 필요</span>
-
-    Tetragon shell-kill의 정직한 경계: detection≠prevention, execve vs I/O, io_uring 클래스.
-
-    <code class="lab-grade">powershell -File scripts\verify-runtime-scope.ps1</code>
-
-    [→ M8 시작](m8/README.md)
-
-</div>
+- 0️⃣ **[M0 · 인가 as-code (Cedar)](m0/README.md)** — 빈 정책에서 owner·한도·역할·동결 인가 작성. 졸업 **core 8 + ext 3 = 11/11**. 채점 `python labs/m0/grade.py --ext` · *클러스터 불필요*
+- 1️⃣ **[M1 · 쉬프트레프트 (checkov)](m1/README.md)** — 신입이 짠 워크로드의 **16개 결함을 사냥**해 수정. 졸업 **Failed checks 0**. 채점 `python labs/m1/grade.py` · *클러스터 불필요*
+- 2️⃣ **[M2 · 신원 (admission CEL)](m2/README.md)** — 라벨↔SA 일관성 VAP(ValidatingAdmissionPolicy)의 CEL 작성. 졸업 위조 DENY / 정합 ADMIT **5/5**. 채점 `bash labs/m2/grade.sh` · *클러스터 필요*
+- 3️⃣ **[M3 · 네트워크 (Cilium)](m3/README.md)** — default-deny에서 최소권한 홉(L3/L7/egress) 재구성. 졸업 **7/7**. 채점 `bash labs/m3/grade.sh` · *클러스터 필요*
+- 4️⃣ **[M4 · 런타임 (Tetragon eBPF)](m4/README.md)** — 셸 exec만 골라 SIGKILL하는 TracingPolicy. 졸업 **id=0 + sh=137**. 채점 `bash labs/m4/grade.sh` · *클러스터 필요*
+- 5️⃣ **[M5 · 암호화 (실행·해석)](m5/README.md)** — WireGuard 캡처·etcd 암호화를 직접 돌리고 해석. 졸업 **ET1 채점 + 해석**. 채점 `bash labs/m5/grade.sh` · *클러스터 필요*
+- 6️⃣ **[M6 · 프런티어 (agent-ABAC + ReBAC)](m6/README.md)** — AI 에이전트 위임을 ABAC 교집합 + ReBAC(관계기반) 그래프로. 졸업 **17/17 + 11/11**. 채점 `python labs/m6/grade.py` · *클러스터 불필요 (Part B Docker)*
+- 7️⃣ **[M7 · 심화 (교차계층 일관성, formal)](../formal/README.md)** — Cilium L7 × Cedar의 그림자/dead-rule을 z3로 탐지(ViewAuditLog shadow, 반증가능). 채점 `python formal/cross_layer.py` · *클러스터 불필요*
+- 8️⃣ **[M8 · 심화 (런타임 kill 경계)](m8/README.md)** — Tetragon shell-kill의 정직한 경계: detection≠prevention, execve vs I/O, io_uring 클래스. 채점 `powershell -File scripts\verify-runtime-scope.ps1` · *클러스터 필요*
 
 ## 형식 (모든 모듈 공통)
 

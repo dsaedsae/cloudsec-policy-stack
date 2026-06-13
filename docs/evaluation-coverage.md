@@ -31,10 +31,7 @@
 
 **헤드라인 메트릭:**
 
-!!! success "검증가능-as-code 커버리지"
-    **워크로드 적용가능 sub-requirement의 72% (29/40)** 가 코드로 검증된다.
-    (거버넌스 포함 전체로는 29/42 = 69%.) 범주 분포: **VERIFIED 29 · CONFIGURED 7 ·
-    GOVERNANCE 2 · NOT-COVERED 4.**
+> ✅ **검증가능-as-code 커버리지:** **워크로드 적용가능 sub-requirement의 72% (29/40)** 가 코드로 검증된다. (거버넌스 포함 전체로는 29/42 = 69%.) 범주 분포: **VERIFIED 29 · CONFIGURED 7 · GOVERNANCE 2 · NOT-COVERED 4.**
 
 ![MLS verifiability coverage per family](assets/coverage.png)
 

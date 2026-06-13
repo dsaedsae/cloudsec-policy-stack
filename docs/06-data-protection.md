@@ -1,7 +1,6 @@
 # Lab 5 — Data protection: the three states of data
 
-!!! tip "직접 해보기 (재구현 트랙)"
-    암호화 증거를 직접 실행·해석하라 → **[M5 · 암호화](../labs/m5/README.md)** (ET1 채점, 클러스터 필요).
+> 💡 **직접 해보기 (재구현 트랙):** 암호화 증거를 직접 실행·해석하라 → **[M5 · 암호화](../labs/m5/README.md)** (ET1 채점, 클러스터 필요).
 
 **Goal:** B1–B7 govern *who may reach or do what*. They say nothing about the data
 **itself**. A complete posture also protects data in its three states — **in
