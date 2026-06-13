@@ -29,7 +29,11 @@ if ($fail -eq 0) {
     Write-Host "PASS: kill is selective + scope-limited to execve-of-[/sh,/bash,/dash,/ash,/busybox]."
 } else { Write-Host "FAIL above." }
 Write-Host ""
-Write-Host "HONEST NOTES (documented, not asserted here - see labs/m8/README.md):"
+Write-Host "HONEST NOTES (documented, not asserted here - see labs/m8/README.md + THREAT_MODEL.md):"
+Write-Host "  SCOPE/bypass: the rule matches execve arg0 by shell-name postfix - NOT a robust shell-block."
+Write-Host "    Bypassable via renamed binary (cp /bin/busybox /tmp/x && /tmp/x sh -> arg0 unmatched),"
+Write-Host "    execveat (unhooked syscall), and fd-exec. ED1 = 'naive direct shell-named execve is killed',"
+Write-Host "    NOT 'a shell cannot run'. Robust: matchBinaries / sched_process_exec / LSM, or exec allowlist."
 Write-Host "  B (execve timing, DOCUMENTED not measured here): execve+Sigkill is pre-image-load"
 Write-Host "    ('before the shell initializes'), so the shell never runs its first command -> no"
 Write-Host "    measurable side-effect window for execve. (The pod HAS writable emptyDirs at /tmp,"

@@ -35,6 +35,11 @@ spec:
         apiVersions: ["v1"]
         operations: ["CREATE", "UPDATE"]
         resources: ["pods"]
+      # NOTE (intentional asymmetry): this gate covers MORE controller kinds than the shipped
+      # shop-deployer Role can currently create — those extra rules are inert under today's RBAC
+      # but are defense-in-depth: if the deployer Role is ever widened, the SA-use gate already
+      # covers the new kinds (no self-consistent-forgery hole opens). scripts/check-sa-consistency.py
+      # guards the tier-SA name set against drift across this and the other identity policies.
       - apiGroups: ["apps"]
         apiVersions: ["v1"]
         operations: ["CREATE", "UPDATE"]

@@ -44,7 +44,9 @@ spec:
     - fromEndpoints: [{ matchLabels: { app: api } }]
       toPorts: [{ ports: [{ port: "8080", protocol: TCP }] }]
 ---
-# web accepts ingress from in-cluster (entry tier) on 8080.
+# web accepts ingress from in-cluster on 8080. NOTE (blast radius): fromEntities:["cluster"]
+# trusts EVERY in-cluster endpoint/host/remote-node, broader than "the ingress controller" —
+# a tighter rule would scope to the ingress controller's labels. Kept broad for demo simplicity.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata: { name: allow-ingress-to-web, namespace: shop }
