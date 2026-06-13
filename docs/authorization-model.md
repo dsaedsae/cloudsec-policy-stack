@@ -101,21 +101,23 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
   *서브에이전트를 스폰*하면 human→agent→sub→… 체인이 생기고, 경계가 없으면 권한이 무한 스폰 트리로 **연쇄
   (cascade)**한다(OWASP Agentic Top 10 2025-12-09의 **ASI08 Cascading Failures** — 위임 연쇄 측면). **P5**:
   `delegation_depth`(휴먼 위 agent→agent 홉 수)>1 에이전트를 모든 action에서 거부(0=직접조작·1=허용된 한 홉·2+=거부).
-  **P6**: 서브에이전트가 기록한 `delegated_by`(스폰한 에이전트) 엣지를 따라 *중간 에이전트 천장*으로 클램프.
-  **P7(fail-closed)**: `delegated_by`는 optional이라 P6 혼자면 엣지를 *누락한* 서브에이전트가 클램프를 우회한다
-  (Cedar는 누락 optional 속성에 fail-**open**) — P7은 depth≥1인데 `delegated_by`가 없는 에이전트를 모든 action에서
-  거부해, 모든 서브에이전트가 부모를 선언하도록 강제한다.
-  > ✅ **이제 성립하는 것:** P5(depth≤1 → 중간 에이전트 최대 한 명) + P7(서브에이전트는 부모 엣지 필수, fail-closed)
-  > + P6(그 엣지로 클램프) 셋이 합쳐, 바운드 체인의 **실효 천장 = (루트 휴먼 등급) ∧ (스폰 에이전트 천장) ∧ (서브
-  > 천장)의 최소** — *어느 홉에서도 권한이 증폭되지 않는다*가 (단일 정수 depth만으론 불가능했고 P6만으론 fail-open이던
-  > 것을) 이제 실제로 성립한다.
-  > ⚠️ **여전한 한계(과장 금지):** P7은 `delegated_by`의 *존재*를 강제하지만 그 *값의 진실성*(실제 스폰 부모를
-  > 가리키는지)까지는 강제하지 못한다 — 이는 `on_behalf_of`·파드 라벨과 **동일한 TCB 가정**(신뢰된 control plane이
-  > 진실하게 설정; `THREAT_MODEL.md` "labels are a TCB")이지 에이전트의 자기신고가 아니다. depth>1 다중 중간 홉은
-  > P5가 막으므로 범위 밖. Cedar엔 속성 union이 없어 depth+`delegated_by`로 분리 추적(타입 건전).
+  **P6**: 스폰 시 control plane이 기록한 **스칼라 `delegated_by_max_classification`**(스폰 에이전트의 천장)으로
+  읽기를 클램프 — 서브 자신의 천장이 높아도 부모의 낮은 천장이 막는다. **P7(fail-closed)**: 그 스칼라는 optional이라,
+  depth≥1인데 스칼라가 없는 서브에이전트를 모든 action에서 거부해 부모 천장 기록을 강제한다.
+  > 🛠 **fail-closed by construction (실제 버그 수정):** 초기 버전은 `delegated_by`를 **Agent 엔티티**로 두고 천장을
+  > *역참조*했는데, 참조가 **dangling**(엔티티 부재)이면 정책이 **에러**나고 Cedar는 *에러난 forbid를 건너뛴다* →
+  > 클램프가 **fail-OPEN**되어 서브가 자기 천장까지 증폭했다(전문가 리뷰가 라이브 확인). 스칼라는 dangle할 수 없어
+  > fail-open이 불가능하다. 회귀 테스트: 스칼라 누락 depth-1 서브의 기밀 읽기 → Deny(`requests.json` P7 케이스).
+  > ✅ **성립하는 것(범위 명시):** P5(depth≤1→중간 에이전트 최대 한 명)+P7(스칼라 필수)+P6(스칼라 클램프)로 바운드
+  > 체인의 **실효 천장 = (루트 휴먼 등급)∧(스폰 에이전트 천장)∧(서브 천장)의 최소** — *단, control plane이
+  > `on_behalf_of`와 `delegated_by_max_classification`를 **진실하게** 기록한다는 TCB 가정 하에서만* 성립한다
+  > (라벨/JWT와 동일한 신뢰 경계). 정책은 입력의 진실성을 검증하지 않는다.
+  > ⚠️ **모델이 *안* 하는 것(과장 금지):** 자식의 `on_behalf_of`를 부모의 것과 *대조*하지 않는다 — guest(0)를 대행하는
+  > 부모가 bob(2)을 대행한다고 *선언한* 자식을 스폰하면 기밀을 읽을 수 있다(확인됨). 휴먼-등급 floor는 자식이 선언한
+  > on_behalf_of 기준이지 체인의 진짜 최저 휴먼이 아니며, 이 역시 위 TCB 가정에 포함된다. depth>1은 P5가 막는다.
 
   P5·P6·P7 모두 *반증가능*하다 — P5 삭제 시 depth-2가 공개데이터 읽기 Deny→Allow, P6 삭제 시 부모 천장 0 서브가
-  기밀 읽기 Deny→Allow, P7 삭제 시 부모 엣지를 누락한 depth-1 서브가 기밀로 증폭 Deny→Allow(셋 다 확인됨).
+  기밀 읽기 Deny→Allow, P7 삭제 시 스칼라 누락 depth-1 서브가 기밀로 증폭 Deny→Allow(셋 다 확인됨).
 - **OWASP Agentic Top 10 (2025-12-09) 매핑** — P1–P7이 어디에 대응하고, 무엇이 *아직 doc-only*인지 정직하게:
 
   | 정책/통제 | OWASP Agentic 항목 | 이 repo |

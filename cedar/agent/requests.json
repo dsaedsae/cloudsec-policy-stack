@@ -55,7 +55,7 @@
     "principal": "Agent::\"agent-deep\"", "action": "Action::\"ReadData\"",
     "resource": "DataRecord::\"rec-public\"", "context": {}, "expect": "Deny" },
 
-  { "name": "P6 IS LOAD-BEARING: sub-agent's OWN ceiling=2 allows classified, but its PARENT agent ceiling=0 clamps it -> Deny (per-hop intersection; delete P6 -> flips Allow)",
+  { "name": "P6 IS LOAD-BEARING: sub-agent's OWN ceiling=2 allows classified, but its recorded parent ceiling=0 (scalar) clamps it -> Deny (per-hop intersection; delete P6 -> flips Allow)",
     "principal": "Agent::\"agent-sub-clamped\"", "action": "Action::\"ReadData\"",
     "resource": "DataRecord::\"rec-classified\"", "context": {}, "expect": "Deny" },
 
@@ -63,7 +63,7 @@
     "principal": "Agent::\"agent-sub-clamped\"", "action": "Action::\"ReadData\"",
     "resource": "DataRecord::\"rec-public\"", "context": {}, "expect": "Allow" },
 
-  { "name": "P7 IS LOAD-BEARING (fail-closed): depth-1 sub-agent that OMITS delegated_by would amplify (own ceiling 2), but is refused outright -> Deny (delete P7 -> flips Allow)",
+  { "name": "P7 IS LOAD-BEARING (fail-closed): depth-1 sub-agent missing its recorded parent ceiling (the old dangling/fail-open case) would amplify (own ceiling 2), but is refused outright -> Deny (delete P7 -> flips Allow)",
     "principal": "Agent::\"agent-sub-orphan\"", "action": "Action::\"ReadData\"",
     "resource": "DataRecord::\"rec-classified\"", "context": {}, "expect": "Deny" }
 ]

@@ -88,37 +88,39 @@ forbid (
 )
 when { principal.delegation_depth > 1 };
 
-// 6) Per-hop ceiling clamp (closes the chain-traversal gap P5 leaves open). A sub-agent
-//    records the agent that spawned it via `delegated_by`. Authority must not AMPLIFY at the
-//    intermediate hop: even if the sub-agent's own ceiling and the root human's clearance
-//    both permit a read, the SPAWNING agent's lower ceiling clamps it. Combined with P5
-//    (depth <= 1 => at most one intermediate), this makes the effective ceiling the MINIMUM
-//    across the whole human->agent->sub chain — the honest "no amplification at any hop"
-//    property the single-integer depth alone could NOT enforce.
-//    LOAD-BEARING and falsifiable: delete it and the depth-1 sub-agent whose PARENT has a
-//    ceiling of 0 can read classified data (its own ceiling is 2) -> Deny flips to Allow.
+// 6) Per-hop ceiling clamp (closes the chain-traversal gap P5 leaves open). At spawn the
+//    control plane records the SPAWNING agent's ceiling on the sub-agent as the scalar
+//    `delegated_by_max_classification`. Authority must not AMPLIFY at the intermediate hop:
+//    even if the sub-agent's own ceiling and the root human's clearance both permit a read,
+//    the spawning agent's lower ceiling clamps it. With P5 (depth <= 1 => at most one
+//    intermediate), the effective ceiling is the MINIMUM across the recorded chain.
+//    FAIL-CLOSED BY CONSTRUCTION (this is the fix for a real bug): an earlier version stored
+//    delegated_by as an Agent ENTITY and dereferenced its ceiling; a DANGLING reference (the
+//    entity not present) made the policy ERROR, and Cedar SKIPS an errored forbid -> the
+//    clamp failed OPEN and the sub-agent amplified to its own ceiling. A scalar cannot dangle,
+//    so the clamp cannot fail open. (Value truthfulness is the same TCB as on_behalf_of / pod
+//    labels — set by the trusted control plane, not self-attested.)
+//    LOAD-BEARING/falsifiable: delete it and the depth-1 sub-agent whose recorded parent
+//    ceiling is 0 reads classified (own ceiling 2) -> Deny flips to Allow.
 forbid (
     principal,
     action == Action::"ReadData",
     resource
 )
 when {
-    principal has delegated_by
-    && resource.classification > principal.delegated_by.max_classification
+    principal has delegated_by_max_classification
+    && resource.classification > principal.delegated_by_max_classification
 };
 
-// 7) Sub-agent provenance gate (FAIL-CLOSED) — makes P6's clamp non-bypassable.
-//    P6 clamps via the OPTIONAL `delegated_by` edge, so on its own a depth>=1 sub-agent
-//    that simply OMITS the edge escapes the clamp (Cedar fails OPEN on a missing optional
-//    attr) and could amplify up to its own ceiling. P7 forbids — for ANY action — any
-//    sub-agent (delegation_depth >= 1) that does NOT declare the agent that spawned it.
-//    So every sub-agent in the chain is forced to carry a `delegated_by` for P6 to clamp
-//    against. This closes the fail-open hole and is what makes the "no amplification across
-//    the bounded chain" claim actually hold. PRESENCE is enforced here (fail-closed); the
-//    VALUE's truthfulness is the same TCB assumption as on_behalf_of / pod labels — set by
-//    the trusted control plane (THREAT_MODEL.md "labels are a TCB"), not self-attested by
-//    the agent. LOAD-BEARING/falsifiable: delete it and the depth-1 orphan agent (no
-//    delegated_by) reading classified flips Deny -> Allow (amplifies to its own ceiling).
+// 7) Sub-agent provenance gate (FAIL-CLOSED) — makes P6's clamp non-bypassable. The scalar
+//    is OPTIONAL, so a depth>=1 sub-agent that simply OMITS it would escape the clamp (Cedar
+//    fails OPEN on a missing optional attr). P7 forbids — for ANY action — any sub-agent
+//    (delegation_depth >= 1) that does NOT carry delegated_by_max_classification, forcing
+//    every sub-agent to record its parent ceiling for P6 to clamp against. PRESENCE is
+//    enforced here; the VALUE's truthfulness is the same TCB as on_behalf_of / pod labels —
+//    set by the trusted control plane (THREAT_MODEL.md "labels are a TCB"), not self-attested.
+//    LOAD-BEARING/falsifiable: delete it and the depth-1 agent missing the clamp input reads
+//    classified -> Deny flips to Allow (amplifies to its own ceiling).
 forbid (
     principal,
     action,
@@ -126,5 +128,5 @@ forbid (
 )
 when {
     principal.delegation_depth >= 1
-    && !(principal has delegated_by)
+    && !(principal has delegated_by_max_classification)
 };

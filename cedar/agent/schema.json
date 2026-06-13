@@ -17,7 +17,7 @@
             "max_classification": { "type": "Long" },
             "on_behalf_of": { "type": "Entity", "name": "User" },
             "delegation_depth": { "type": "Long" },
-            "delegated_by": { "type": "Entity", "name": "Agent", "required": false }
+            "delegated_by_max_classification": { "type": "Long", "required": false }
           }
         }
       },
