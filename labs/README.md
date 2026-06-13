@@ -69,7 +69,7 @@ flowchart LR
 
 <div class="grid cards" markdown>
 
--   :material-numeric-0-circle:{ .lg .middle } **M0 · 인가 as-code (Cedar)**
+-   0️⃣ **M0 · 인가 as-code (Cedar)**
 
     ---
 
@@ -79,9 +79,9 @@ flowchart LR
 
     <code class="lab-grade">python labs/m0/grade.py --ext</code>
 
-    [:octicons-arrow-right-24: M0 시작](m0/README.md)
+    [→ M0 시작](m0/README.md)
 
--   :material-numeric-1-circle:{ .lg .middle } **M1 · 쉬프트레프트 (checkov)**
+-   1️⃣ **M1 · 쉬프트레프트 (checkov)**
 
     ---
 
@@ -91,9 +91,9 @@ flowchart LR
 
     <code class="lab-grade">python labs/m1/grade.py</code>
 
-    [:octicons-arrow-right-24: M1 시작](m1/README.md)
+    [→ M1 시작](m1/README.md)
 
--   :material-numeric-2-circle:{ .lg .middle } **M2 · 신원 (admission CEL)**
+-   2️⃣ **M2 · 신원 (admission CEL)**
 
     ---
 
@@ -103,9 +103,9 @@ flowchart LR
 
     <code class="lab-grade">bash labs/m2/grade.sh</code>
 
-    [:octicons-arrow-right-24: M2 시작](m2/README.md)
+    [→ M2 시작](m2/README.md)
 
--   :material-numeric-3-circle:{ .lg .middle } **M3 · 네트워크 (Cilium)**
+-   3️⃣ **M3 · 네트워크 (Cilium)**
 
     ---
 
@@ -115,9 +115,9 @@ flowchart LR
 
     <code class="lab-grade">bash labs/m3/grade.sh</code>
 
-    [:octicons-arrow-right-24: M3 시작](m3/README.md)
+    [→ M3 시작](m3/README.md)
 
--   :material-numeric-4-circle:{ .lg .middle } **M4 · 런타임 (Tetragon eBPF)**
+-   4️⃣ **M4 · 런타임 (Tetragon eBPF)**
 
     ---
 
@@ -127,9 +127,9 @@ flowchart LR
 
     <code class="lab-grade">bash labs/m4/grade.sh</code>
 
-    [:octicons-arrow-right-24: M4 시작](m4/README.md)
+    [→ M4 시작](m4/README.md)
 
--   :material-numeric-5-circle:{ .lg .middle } **M5 · 암호화 (실행·해석)**
+-   5️⃣ **M5 · 암호화 (실행·해석)**
 
     ---
 
@@ -139,9 +139,9 @@ flowchart LR
 
     <code class="lab-grade">bash labs/m5/grade.sh</code>
 
-    [:octicons-arrow-right-24: M5 시작](m5/README.md)
+    [→ M5 시작](m5/README.md)
 
--   :material-numeric-6-circle:{ .lg .middle } **M6 · 프런티어 (agent-ABAC + ReBAC)**
+-   6️⃣ **M6 · 프런티어 (agent-ABAC + ReBAC)**
 
     ---
 
@@ -151,9 +151,9 @@ flowchart LR
 
     <code class="lab-grade">python labs/m6/grade.py</code>
 
-    [:octicons-arrow-right-24: M6 시작](m6/README.md)
+    [→ M6 시작](m6/README.md)
 
--   :material-numeric-7-circle:{ .lg .middle } **M7 · 심화 (교차계층 일관성, formal)**
+-   7️⃣ **M7 · 심화 (교차계층 일관성, formal)**
 
     ---
 
@@ -163,9 +163,9 @@ flowchart LR
 
     <code class="lab-grade">python formal/cross_layer.py</code>
 
-    [:octicons-arrow-right-24: M7 시작](../formal/README.md)
+    [→ M7 시작](../formal/README.md)
 
--   :material-numeric-8-circle:{ .lg .middle } **M8 · 심화 (런타임 kill 경계)**
+-   8️⃣ **M8 · 심화 (런타임 kill 경계)**
 
     ---
 
@@ -175,7 +175,7 @@ flowchart LR
 
     <code class="lab-grade">powershell -File scripts\verify-runtime-scope.ps1</code>
 
-    [:octicons-arrow-right-24: M8 시작](m8/README.md)
+    [→ M8 시작](m8/README.md)
 
 </div>
 

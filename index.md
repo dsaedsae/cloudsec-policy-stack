@@ -14,7 +14,7 @@ hide:
 </div>
 
 <div class="hero-cta" markdown>
-[:material-flag-checkered: 여기서 시작 — M0 재구현 (클러스터 불필요·Python만)](labs/m0/README.md){ .md-button .md-button--primary }
+[🏁 여기서 시작 — M0 재구현 (클러스터 불필요·Python만)](labs/m0/README.md){ .md-button .md-button--primary }
 [트랙 전체 보기](labs/README.md){ .md-button }
 </div>
 
@@ -85,22 +85,22 @@ flowchart TB
 
 <div class="grid cards" markdown>
 
--   :material-map-marker-path: **규제 → 통제 매핑**
+-   🗺️ **규제 → 통제 매핑**
 
     FSC 망분리 완화/MLS 보상통제 6종을 NIST SP 800-207·ISMS-P·**검증 항목**에 1:1 매핑.
     [→ MLS 매핑](docs/financial-mls-mapping.md)
 
--   :material-check-decagram: **검증가능성 기준 + 커버리지 측정**
+-   ✅ **검증가능성 기준 + 커버리지 측정**
 
     "각 규제 요구는 시행을 증명하는 실행 테스트에 대응돼야 한다"를 기준으로 삼고, MLS 보상통제의
     **72%가 코드로 검증가능**함을 *정량화*(갭 공개). [→ 평가](docs/evaluation-coverage.md)
 
--   :material-shield-bug: **정직한 적대적 검증**
+-   🛡️ **정직한 적대적 검증**
 
     LLM 멀티에이전트 재검토가 **우리 SA-use 정책의 실제 우회(CRITICAL)** 를 발견 → 수정 →
     라이브 재검증. 과대주장 대신 잔여위험 명시.
 
--   :material-scale-balance: **현재 인가 흐름에 정렬 + 프런티어**
+-   ⚖️ **현재 인가 흐름에 정렬 + 프런티어**
 
     RBAC+ABAC 하이브리드 · policy-as-code · 지속평가. **AI-에이전트 위임(Cedar)·ReBAC(OpenFGA)**
     을 실행 데모로 충족(NHI 생애주기 프레이밍 포함).
