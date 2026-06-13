@@ -1,20 +1,17 @@
 name: docs
 
-# Build the MkDocs site and publish it to GitHub Pages on every push to the
-# default branch. (Enable Pages in repo Settings -> Pages -> Source: GitHub Actions.)
+# Build the MkDocs site as a check (catches broken nav/links/build) on every push.
+# Deploy is intentionally NOT here: the repo is private and GitHub Pages on the free
+# plan only serves public repos. To publish later: make the repo public, then add a
+# deploy job (upload-pages-artifact + deploy-pages) and enable Pages (Source: Actions).
 on:
   push:
     branches: [main, master]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
 
 jobs:
   build:
@@ -24,16 +21,4 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install -r requirements-docs.txt
-      - run: python -m mkdocs build
-      - uses: actions/upload-pages-artifact@v3
-        with: { path: site }
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - run: python -m mkdocs build --strict
