@@ -11,6 +11,8 @@
 **편집 파일:** `labs/m6/agent-policies.cedar` (Part A), `labs/m6/model.fga` (Part B).
 
 > 선행: **M0**(Cedar 문법)을 먼저 졸업하라 — Part A는 M0의 연장이다.
+> 배경(읽기): [authorization-model §4–§5](../../docs/authorization-model.md) + [nhi.md](../../docs/nhi.md)
+> — 에이전트/NHI 위임을 ABAC 교집합·ReBAC 그래프로.
 
 ---
 

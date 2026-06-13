@@ -1,5 +1,8 @@
 # Lab 4 — Identity: who gets to *be* `web` or `api` (B7)
 
+!!! tip "직접 해보기 (재구현 트랙)"
+    라벨↔SA admission CEL을 직접 작성하라 → **[M2 · 신원 admission](../labs/m2/README.md)** (5/5, 클러스터 필요).
+
 **Goal:** every layer so far trusts the pod's `app` label — Cilium derives network
 identity from it. So the whole stack silently depends on one question: *who can
 create a pod that claims `app: api`?* This lab makes that dependency explicit and

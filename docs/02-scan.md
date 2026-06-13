@@ -1,5 +1,8 @@
 # Lab 1 — Shift-left scanning (no cluster)
 
+!!! tip "직접 해보기 (재구현 트랙)"
+    읽었다면 심어둔 결함을 직접 사냥하라 → **[M1 · 쉬프트레프트](../labs/m1/README.md)** (Failed checks 0, 클러스터 불필요).
+
 **Goal:** run the same IaC/K8s security gate CI runs, and learn *honest triage* —
 why "0 findings" is a red flag, not a goal.
 

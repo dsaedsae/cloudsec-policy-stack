@@ -1,5 +1,9 @@
 # Lab 2 — Network + app authz on a real cluster
 
+!!! tip "직접 해보기 (재구현 트랙)"
+    네트워크 부분을 직접 재구성하라 → **[M3 · Cilium 네트워크](../labs/m3/README.md)** (7/7, 클러스터 필요).
+    (이 페이지의 인가/신원 부분은 M0·M2와 짝.)
+
 **Goal:** see one request pass through three layers (Cilium L3 → L7 → Cedar) on
 the same asset, then break each layer and watch it react.
 

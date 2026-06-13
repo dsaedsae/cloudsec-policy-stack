@@ -1,5 +1,8 @@
 # Lab 0 — Authorization as code (no cluster)
 
+!!! tip "직접 해보기 (재구현 트랙)"
+    읽었다면 빈 파일에서 재구현하라 → **[M0 · Cedar 인가](../labs/m0/README.md)** (자동 채점 11/11, 클러스터 불필요).
+
 **Goal:** understand *authz-as-code* — declarative rules, unit-tested — in 5
 minutes, with nothing but Python. This is the same Cedar policy language as
 Amazon Verified Permissions.

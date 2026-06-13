@@ -123,7 +123,7 @@ flowchart TB
 <div class="grid cards" markdown>
 
 -   **직접 익히려면** → [재구현 트랙 M0](labs/m0/README.md) — 빈 파일에서 작성하면 자동채점이 판정 (클러스터 불필요)
--   **개념부터 읽으려면** → [읽으며 따라가기 랩 0–5](docs/README.md) (Lab 0은 Python만, 5분)
+-   **개념부터 읽으려면** → [읽으며 따라가기: 개념 페이지 6편](docs/README.md) (각 페이지가 재구현 모듈과 짝)
 -   **왜 중요한지** → [금융 망분리 완화 매핑](docs/financial-mls-mapping.md) · [위협 모델](THREAT_MODEL.md)
 -   **운영·클라우드·발표** → [런북](runbooks/README.md) · [AWS 경로](docs/aws-eks-path.md) · [토크 아웃라인](presentation/talk-outline.md)
 
