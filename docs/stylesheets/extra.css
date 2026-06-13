@@ -1,0 +1,95 @@
+/* cloudsec-policy-stack — site polish.
+ * Design thesis: "verifiable by default". One semantic accent (teal = a test proved this),
+ * status chips that mirror the coverage ledger, and a grade-command treatment that reads
+ * like the autograder's verdict. No marketing gloss, no decorative colors beyond the 3
+ * semantic tokens below. ~140 lines, zero JS. */
+
+/* ── Semantic tokens (the ONLY palette beyond Material's indigo primary) ── */
+:root, [data-md-color-scheme="default"] {
+  --ci-verify: #1f8a70;   /* green  — VERIFIED / proven by a test */
+  --ci-data:   #c2410c;   /* orange — data / at-rest (aligns with the mermaid data nodes) */
+  --ci-ink:    #1a237e;   /* indigo — headline ink */
+  --md-accent-fg-color: #1f8a70;
+}
+[data-md-color-scheme="slate"] {
+  --ci-verify: #34d399;
+  --ci-data:   #fb923c;
+  --ci-ink:    #c5cae9;
+  --md-accent-fg-color: #34d399;
+}
+
+/* ── Status chips: one system, reused for hero badges + the coverage ledger ──
+ * The label text is ALWAYS present (color-blind safe; the claim IS the label). */
+.chip {
+  display: inline-block; padding: .08em .6em; border-radius: 1em;
+  font-size: .72em; font-weight: 600; line-height: 1.7; white-space: nowrap;
+  border: 1px solid transparent;
+}
+.chip--verified   { color: #1b5e20; background: #e6f4ea; }
+.chip--configured { color: #8d6e00; background: #fff8e1; }
+.chip--governance { color: #37474f; background: #eceff1; }
+.chip--notcovered { color: #b71c1c; background: #fdecea; }
+[data-md-color-scheme="slate"] .chip--verified   { color: #a5d6a7; background: #1b3a25; }
+[data-md-color-scheme="slate"] .chip--configured { color: #ffe082; background: #3a3320; }
+[data-md-color-scheme="slate"] .chip--governance { color: #cfd8dc; background: #2b3034; }
+[data-md-color-scheme="slate"] .chip--notcovered { color: #ef9a9a; background: #3a2222; }
+/* a chip used as a link keeps the chip look, drops underline */
+a.chip { text-decoration: none; }
+a.chip:hover { border-color: currentColor; }
+
+/* ── Hero ── */
+.hero-badges { text-align: center; margin: 1em 0 1.2em; line-height: 2.3; }
+.hero-badges .chip { margin: 0 .22em; }
+.hero-cta { text-align: center; margin: 0 0 1.6em; }
+.hero-cta .md-button { margin: .25em .3em; }
+.md-content__inner > h1:first-of-type {
+  color: var(--ci-ink); border-bottom: 2px solid var(--ci-verify);
+  display: inline-block; padding-bottom: .35rem;
+}
+
+/* ── Grid cards (used by index contributions + the lab module ladder) ── */
+.md-typeset .grid.cards > ul > li,
+.md-typeset .grid > .card {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-left: 3px solid var(--md-primary-fg-color);
+  border-radius: .5rem;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.md-typeset .grid.cards > ul > li:hover,
+.md-typeset .grid > .card:hover {
+  border-color: var(--ci-ink); transform: translateY(-2px); box-shadow: none;
+}
+.md-typeset .grid.cards :is(.twemoji, svg) { color: var(--ci-ink); }
+
+/* ── Lab affordances ── */
+.lab-progress {
+  display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .02em;
+  padding: .1rem .5rem; border-radius: .3rem; background: var(--md-primary-fg-color); color: #fff;
+}
+.lab-badge {
+  display: inline-block; font-size: .7rem; font-weight: 600;
+  padding: .12rem .55rem; border-radius: 1rem; line-height: 1.7;
+}
+.lab-badge.no-cluster { background: #e8eaf6; color: #1a237e; }   /* ctrl palette — start now */
+.lab-badge.cluster    { background: #fff3e0; color: #bf360c; }   /* data palette — needs RAM */
+[data-md-color-scheme="slate"] .lab-badge.no-cluster { background: #2a2f4a; color: #c5cae9; }
+[data-md-color-scheme="slate"] .lab-badge.cluster    { background: #3a2c1c; color: #ffcc80; }
+
+/* The grade command = the judge. Terminal look, lime-on-dark to rhyme with the
+ * autograder verdict (id rc=0 / sh rc=137 etc.). */
+.md-typeset code.lab-grade, .lab-grade > code {
+  display: block; background: #1a1a2e; color: #a5d6a7;
+  border-left: 3px solid var(--md-primary-fg-color);
+  padding: .55rem .75rem; border-radius: .25rem; font-size: .82rem; margin: .5rem 0;
+}
+
+/* ── Tables: the results + coverage tables read as evidence (aligned numerals) ── */
+.md-typeset table:not([class]) th { background: var(--md-default-fg-color--lightest); font-weight: 700; }
+.md-typeset table:not([class]) td { font-variant-numeric: tabular-nums; }
+
+/* ── Admonitions / details: quiet, engineering tone (no heavy shadow) ── */
+.md-typeset .admonition, .md-typeset details { box-shadow: none; }
+.md-typeset .admonition.abstract > .admonition-title { border-left-color: var(--ci-ink); }
+
+/* ── Tabs: clear active state for direction ── */
+.md-tabs__link--active { font-weight: 700; }

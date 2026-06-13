@@ -13,8 +13,16 @@ plugins:
   - same-dir
 docs_dir: .
 site_dir: site
+
+# NOTE: do NOT add docs/stylesheets or docs/assets to exclude_docs — that would drop
+# the logo/CSS from the build.
+extra_css:
+  - docs/stylesheets/extra.css
+
+copyright: 이 사이트는 워크로드 보상통제 학습 레퍼런스입니다 — 인증·제품·법률자문이 아닙니다. · dsaedsae
+
 exclude_docs: |
-  README.md
+  /README.md
   .venv/
   .git/
   .github/
@@ -37,21 +45,30 @@ exclude_docs: |
 theme:
   name: material
   language: ko
+  logo: docs/assets/logo.svg        # outline shield+check (verifiability motif)
+  favicon: docs/assets/favicon.svg
+  font:
+    text: Noto Sans KR              # Korean readability (no tofu), English control names
+    code: JetBrains Mono            # 0/O distinction for commands/policies
   palette:
     - scheme: default
       primary: indigo
-      accent: indigo
+      accent: teal                  # the one semantic accent = "a test proved this"
       toggle: { icon: material/weather-night, name: 다크 모드로 }
     - scheme: slate
       primary: indigo
-      accent: indigo
+      accent: teal
       toggle: { icon: material/weather-sunny, name: 라이트 모드로 }
   features:
-    - navigation.sections
+    - navigation.tabs               # top-level tabs (learner-first IA)
+    - navigation.tabs.sticky
     - navigation.top
+    - navigation.path               # breadcrumbs
     - navigation.indexes
     - navigation.tracking
+    - navigation.footer             # auto prev/next (M0→M6 sequence)
     - content.code.copy
+    - content.code.annotate         # inline code teaching in labs
     - search.highlight
     - search.suggest
     - toc.follow
@@ -82,24 +99,12 @@ validation:
   nav: { omitted_files: ignore }
   links: { not_found: warn, absolute_links: ignore, unrecognized_links: ignore }
 
+# 5 learner-intent tabs (navigation.tabs). Each section's first bare entry is its
+# clickable landing page (navigation.indexes).
 nav:
-  - 홈: index.md
-  - 위협 모델 (B1–B7): THREAT_MODEL.md
-  - 인가 모델 (RBAC+ABAC/PaC/ReBAC): docs/authorization-model.md
-  - NHI 생애주기 (워크로드 신원): docs/nhi.md
-  - 금융 망분리 완화 (MLS): docs/financial-mls-mapping.md
-  - 평가 — 검증가능성 커버리지: docs/evaluation-coverage.md
-  - 감사증거 패키지 (예시): docs/audit-evidence.md
-  - 실습 랩:
-    - 개요: docs/README.md
-    - 0 · 인가 as-code: docs/01-authz-no-cluster.md
-    - 1 · 시프트레프트 스캔: docs/02-scan.md
-    - 2 · 네트워크 + 인가: docs/03-network-and-authz.md
-    - 3 · 런타임 (eBPF): docs/04-runtime.md
-    - 4 · 신원 (B7): docs/05-identity.md
-    - 5 · 데이터 보호: docs/06-data-protection.md
-  - 재구현 트랙 (자가채점):
-    - 트랙 개요: labs/README.md
+  - 시작하기: index.md
+  - 재구현 트랙:
+    - labs/README.md
     - M0 · Cedar 인가 재구현: labs/m0/README.md
     - M1 · 쉬프트레프트 결함 사냥: labs/m1/README.md
     - M2 · 신원 admission CEL: labs/m2/README.md
@@ -107,13 +112,29 @@ nav:
     - M4 · Tetragon 런타임: labs/m4/README.md
     - M5 · 암호화 실행·해석: labs/m5/README.md
     - M6 · 에이전트 위임 (ABAC+ReBAC): labs/m6/README.md
-  - 클라우드 + 비용 (무료부터): docs/aws-eks-path.md
+  - 레퍼런스:
+    - 위협 모델 (B1–B7): THREAT_MODEL.md
+    - 인가 모델 (RBAC+ABAC/PaC/ReBAC): docs/authorization-model.md
+    - NHI 생애주기 (워크로드 신원): docs/nhi.md
+    - 금융 망분리 완화 (MLS): docs/financial-mls-mapping.md
+    - 읽으며 따라가기 (개념 랩):
+      - docs/README.md
+      - 0 · 인가 as-code: docs/01-authz-no-cluster.md
+      - 1 · 시프트레프트 스캔: docs/02-scan.md
+      - 2 · 네트워크 + 인가: docs/03-network-and-authz.md
+      - 3 · 런타임 (eBPF): docs/04-runtime.md
+      - 4 · 신원 (B7): docs/05-identity.md
+      - 5 · 데이터 보호: docs/06-data-protection.md
   - 운영 런북:
-    - 개요: runbooks/README.md
+    - runbooks/README.md
     - 01 · 사고대응: runbooks/01-incident-response.md
     - 02 · 키 회전: runbooks/02-key-rotation.md
     - 03 · 브레이크글래스: runbooks/03-break-glass.md
     - 04 · 티어 온보딩: runbooks/04-tier-onboarding.md
     - 05 · 배포·롤백: runbooks/05-deploy-rollback.md
     - 06 · AWS teardown: runbooks/06-aws-teardown.md
-  - 발표 아웃라인: presentation/talk-outline.md
+  - 평가·발표:
+    - 검증가능성 커버리지: docs/evaluation-coverage.md
+    - 감사증거 패키지 (예시): docs/audit-evidence.md
+    - 클라우드 + 비용 (무료부터): docs/aws-eks-path.md
+    - 발표 아웃라인: presentation/talk-outline.md
