@@ -1,7 +1,7 @@
 # M3 — 네트워크: Cilium 제로트러스트 (L3/L7 + egress)
 
 <div class="lab-pills">
-<span class="lab-progress">모듈 4 / 7</span> <span class="lab-badge">스택 Cilium L3/L7</span> <span class="lab-badge">소요 ~30–45m</span> <span class="lab-badge cluster">클러스터 필요 · RAM ~6–8GB</span> <span class="lab-badge">비용 $0 로컬</span>
+<span class="lab-progress">모듈 4 / 7</span> · <span class="lab-badge">스택 Cilium L3/L7</span> · <span class="lab-badge">소요 ~30–45m</span> · <span class="lab-badge cluster">클러스터 필요 · RAM ~6–8GB</span> · <span class="lab-badge">비용 $0 로컬</span>
 </div>
 
 **미션:** default-deny에서 시작해 **최소권한 홉**(외부→web→api→db)만 여는 CiliumNetworkPolicy를

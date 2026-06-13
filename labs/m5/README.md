@@ -1,7 +1,7 @@
 # M5 — 데이터 보호: 암호화 실행·해석 (전송 + 저장)
 
 <div class="lab-pills">
-<span class="lab-progress">모듈 6 / 7</span> <span class="lab-badge">스택 WireGuard+etcd</span> <span class="lab-badge">소요 ~30–45m</span> <span class="lab-badge cluster">클러스터 필요 · RAM ~6–8GB</span> <span class="lab-badge">비용 $0 로컬</span>
+<span class="lab-progress">모듈 6 / 7</span> · <span class="lab-badge">스택 WireGuard+etcd</span> · <span class="lab-badge">소요 ~30–45m</span> · <span class="lab-badge cluster">클러스터 필요 · RAM ~6–8GB</span> · <span class="lab-badge">비용 $0 로컬</span>
 </div>
 
 **미션:** 데이터의 세 상태 중 **전송 중(in-transit)**과 **저장(at-rest)** 암호화를 *직접 실행*하고

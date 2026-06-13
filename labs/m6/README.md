@@ -1,7 +1,7 @@
 # M6 — 프런티어: AI 에이전트 위임 인가 (ABAC 교집합 + ReBAC)
 
 <div class="lab-pills">
-<span class="lab-progress">모듈 7 / 7</span> <span class="lab-badge">스택 Cedar+OpenFGA</span> <span class="lab-badge">소요 ~2–4h</span> <span class="lab-badge no-cluster">클러스터 불필요 · Part B Docker</span> <span class="lab-badge">비용 $0 로컬</span>
+<span class="lab-progress">모듈 7 / 7</span> · <span class="lab-badge">스택 Cedar+OpenFGA</span> · <span class="lab-badge">소요 ~2–4h</span> · <span class="lab-badge no-cluster">클러스터 불필요 · Part B Docker</span> · <span class="lab-badge">비용 $0 로컬</span>
 </div>
 
 > **준비:** `.venv`(requirements-dev) — [SETUP](../SETUP.md). **Part B(ReBAC)는 Docker Desktop 필요**

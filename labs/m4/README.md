@@ -1,7 +1,7 @@
 # M4 — 런타임: Tetragon eBPF로 셸 실행 차단
 
 <div class="lab-pills">
-<span class="lab-progress">모듈 5 / 7</span> <span class="lab-badge">스택 Tetragon eBPF</span> <span class="lab-badge">소요 ~20–35m</span> <span class="lab-badge cluster">클러스터 필요 · RAM ~6–8GB</span> <span class="lab-badge">비용 $0 로컬</span>
+<span class="lab-progress">모듈 5 / 7</span> · <span class="lab-badge">스택 Tetragon eBPF</span> · <span class="lab-badge">소요 ~20–35m</span> · <span class="lab-badge cluster">클러스터 필요 · RAM ~6–8GB</span> · <span class="lab-badge">비용 $0 로컬</span>
 </div>
 
 **미션:** data tier 파드에서 셸(`/bin/sh` 류) 실행을 커널에서 즉시 SIGKILL하되, 정상 바이너리는

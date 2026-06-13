@@ -1,7 +1,7 @@
 # M0 — 인가 as-code: Cedar 정책을 빈 파일에서 재구현
 
 <div class="lab-pills">
-<span class="lab-progress">모듈 1 / 7</span> <span class="lab-badge">스택 Cedar</span> <span class="lab-badge">소요 ~3–6h</span> <span class="lab-badge no-cluster">클러스터 불필요</span> <span class="lab-badge">비용 $0 로컬</span>
+<span class="lab-progress">모듈 1 / 7</span> · <span class="lab-badge">스택 Cedar</span> · <span class="lab-badge">소요 ~3–6h</span> · <span class="lab-badge no-cluster">클러스터 불필요</span> · <span class="lab-badge">비용 $0 로컬</span>
 </div>
 
 > **준비(한 번만):** 클론엔 `.venv`가 없다 → `python -m venv .venv` 후
