@@ -11,7 +11,13 @@ CANON="$ROOT/k8s/admission-policy.yaml"
 CURL="curlimages/curl:8.11.1@sha256:c1fe1679c34d9784c1b0d1e5f62ac0a79fca01fb6377cdd33e90473c6f9f9a69"
 fail=0
 
-k get ns shop >/dev/null 2>&1 || { echo "SKIP: 클러스터 미기동(scripts\\up.ps1 먼저). shop ns 없음."; exit 0; }
+if ! kubectl config get-contexts -o name 2>/dev/null | grep -qx "$CTX"; then
+  echo "SKIP (채점 안 함 — PASS/FAIL 아님): '$CTX' 컨텍스트가 없다."
+  echo "  -> PowerShell에서 'scripts/up.ps1' 로 클러스터를 먼저 띄워라."
+  echo "  -> 띄웠는데도면: 'kubectl config get-contexts' 로 활성 컨텍스트 확인 (다른 kind 클러스터와 충돌)."
+  exit 0
+fi
+k get ns shop >/dev/null 2>&1 || { echo "SKIP (채점 안 함 — PASS/FAIL 아님): shop ns 없음 — 'scripts/up.ps1' 로 띄워라."; exit 0; }
 
 echo "== 학습자 VAP 적용 =="
 if ! k apply -f "$LAB" >/tmp/m2apply.txt 2>&1; then

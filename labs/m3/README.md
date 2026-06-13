@@ -13,10 +13,14 @@
 
 ## Step 0 — 베이스라인
 
-```powershell
-# (M2에서 이미 up 했다면 생략) scripts\up.ps1
-bash labs\m3\grade.sh        # 시작: web->db는 차단되지만(베이스라인 default-deny), 허용 홉들이 비어서
-                              #        web->api 200·api->db 200 이 FAIL (과차단)
+> 클러스터가 떠 있다고 가정한다(M2~M5 한 세션). 안 떴으면 PowerShell에서 `scripts\up.ps1` 먼저.
+> 채점기는 **Git Bash**에서 (forward slash). [SETUP](../SETUP.md).
+
+```bash
+# Git Bash 창에서:
+kubectl cluster-info --context kind-cloudsec   # 떴는지 확인 (에러면 → PowerShell: scripts\up.ps1)
+bash labs/m3/grade.sh        # 시작: web->db는 차단되지만(베이스라인 default-deny), 허용 홉들이 비어서
+                             #        web->api 200·api->db 200 이 FAIL (과차단)
 ```
 
 > 두 베이스라인(default-deny-ingress, DNS egress)은 완성돼 있어 **차단은 처음부터 된다**. 문제는
@@ -54,7 +58,7 @@ ingress:
 | `egress-api-to-db` | app:db 로 8080 |
 
 ```powershell
-bash labs\m3\grade.sh        # 7/7 PASS → M3 GRADUATED. 채점 후 canonical 자동 복원.
+bash labs/m3/grade.sh        # 7/7 PASS → M3 GRADUATED. 채점 후 canonical 자동 복원.
 ```
 
 > db에 egress 규칙을 *안* 주는 게 의도다 — DNS 베이스라인만 적용돼 db는 DNS 외 아무 데도 못 나간다

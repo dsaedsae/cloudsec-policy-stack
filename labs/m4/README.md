@@ -19,8 +19,13 @@
 
 ## Step 0 — 베이스라인
 
-```powershell
-bash labs\m4\grade.sh        # 시작: selectors가 비어서 아무것도 안 죽인다 → 셸이 살아서(rc=0) FAIL
+> 클러스터가 떠 있다고 가정한다(M2~M5 한 세션). 안 떴으면 PowerShell에서 `scripts\up.ps1` 먼저.
+> 채점기는 **Git Bash**에서 (forward slash). [SETUP](../SETUP.md).
+
+```bash
+# Git Bash 창에서:
+kubectl cluster-info --context kind-cloudsec   # 떴는지 확인 (에러면 → PowerShell: scripts\up.ps1)
+bash labs/m4/grade.sh        # 시작: selectors가 비어서 아무것도 안 죽인다 → 셸이 살아서(rc=0) FAIL
 ```
 
 > 빈 selectors는 "매칭 없음 → 액션 없음" → 셸이 안 죽는다. 즉 통제가 *없다*. `id`는 당연히 산다.
@@ -46,7 +51,7 @@ selectors:
 - `action: Sigkill` = 커널에서 즉시 종료(rc=137).
 
 ```powershell
-bash labs\m4\grade.sh        # id=0 PASS + sh=137 PASS → M4 GRADUATED. 채점 후 canonical 복원.
+bash labs/m4/grade.sh        # id=0 PASS + sh=137 PASS → M4 GRADUATED. 채점 후 canonical 복원.
 ```
 
 ## Step 2 — break-and-fix (예측 → 확인)

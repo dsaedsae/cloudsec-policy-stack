@@ -9,7 +9,13 @@ CTX="kind-$(terraform -chdir="$ROOT/terraform" output -raw cluster_name 2>/dev/n
 k() { kubectl --context "$CTX" "$@"; }
 fail=0
 
-k get ns shop >/dev/null 2>&1 || { echo "SKIP: 클러스터 미기동(scripts\\up.ps1 먼저)."; exit 0; }
+if ! kubectl config get-contexts -o name 2>/dev/null | grep -qx "$CTX"; then
+  echo "SKIP (채점 안 함 — PASS/FAIL 아님): '$CTX' 컨텍스트가 없다."
+  echo "  -> PowerShell에서 'scripts/up.ps1' 로 클러스터를 먼저 띄워라."
+  echo "  -> 띄웠는데도면: 'kubectl config get-contexts' 로 활성 컨텍스트 확인 (다른 kind 클러스터와 충돌)."
+  exit 0
+fi
+k get ns shop >/dev/null 2>&1 || { echo "SKIP (채점 안 함 — PASS/FAIL 아님): shop ns 없음 — 'scripts/up.ps1' 로 띄워라."; exit 0; }
 
 echo "== ET1: 크로스노드 WireGuard 암호화 채점 =="
 ENC=$(k exec -n kube-system ds/cilium -c cilium-agent -- cilium-dbg encrypt status 2>/dev/null || true)

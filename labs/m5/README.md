@@ -14,8 +14,13 @@
 
 ## Step 0 — ET1 라이브 채점
 
-```powershell
-bash labs\m5\grade.sh        # WireGuard 활성 + api/db 다른 노드 → 크로스노드 암호화 PASS
+> 클러스터가 떠 있다고 가정한다(M2~M5 한 세션). 안 떴으면 PowerShell에서 `scripts\up.ps1` 먼저.
+> 채점기는 **Git Bash**에서 (forward slash). [SETUP](../SETUP.md).
+
+```bash
+# Git Bash 창에서:
+kubectl cluster-info --context kind-cloudsec   # 떴는지 확인 (에러면 → PowerShell: scripts\up.ps1)
+bash labs/m5/grade.sh        # WireGuard 활성 + api/db 다른 노드 → 크로스노드 암호화 PASS
 ```
 
 > `db`는 `podAntiAffinity`로 `api`와 다른 노드에 강제 배치된다. 그래서 api→db 홉이 *노드 경계를
