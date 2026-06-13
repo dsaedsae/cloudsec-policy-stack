@@ -37,7 +37,7 @@
 | M5 | 암호화: WireGuard + etcd 저장 암호화 | 필요 |
 | M6 | 에이전트 위임 + ReBAC 그래프 | 불필요 |
 
-[환경 준비 (SETUP)](labs/SETUP.md)부터 보고 [M0](labs/m0/README.md)으로 시작하세요 — 빈 Cedar 정책에서 통과까지 약 5분, 클러스터 불필요. 개념부터 읽고 싶다면 [개념 랩](docs/)이 같은 통제를 먼저 설명합니다.
+[환경 준비 (SETUP)](labs/SETUP.md)부터 보고 [M0](labs/m0/README.md)으로 시작하세요 — 빈 Cedar 정책에서 **첫 채점까지 약 5분**, 졸업(11/11)까지는 **~3–6h**, 클러스터 불필요. 개념부터 읽고 싶다면 [개념 랩](docs/)이 같은 통제를 먼저 설명합니다.
 
 ## 스택 구성
 
@@ -45,7 +45,7 @@
 - **제로트러스트 네트워크 (Cilium / eBPF)** — ingress·egress 기본 차단, 최소권한 홉만 허용. `web→api`는 L7(Envoy)이라 계정 API만 도달하고, egress는 다음 홉 + DNS로 잠겨 침해된 파드가 인터넷·클라우드 메타데이터·API 서버에 닿지 못합니다.
 - **인가 as-code (Cedar)** — `api`는 매 요청마다 Cedar를 호출하는 PDP입니다: 소유자 확인, 이체 한도, 동결 계좌 거부(forbid), 역할 계층. Amazon Verified Permissions로 이식 가능.
 - **런타임 (Tetragon / eBPF)** — db 티어의 셸 실행을 커널에서 SIGKILL하는 `TracingPolicy`(정상 프로세스는 건드리지 않음).
-- **신원** — 티어별 ServiceAccount, `app` 라벨을 SA에 묶는 `ValidatingAdmissionPolicy`, 그리고 SPIFFE 상호인증(상시 스위트가 아니라 수동으로 검증되는 configured 상태).
+- **신원** — 티어별 ServiceAccount, `app` 라벨을 SA에 묶는 `ValidatingAdmissionPolicy`, 그리고 워크로드 신원 표준인 SPIFFE 상호인증(상시 스위트가 아니라 수동으로 검증되는 configured 상태).
 - **데이터** — 전송 중 WireGuard 파드 간 암호화 + etcd 내 Secret 저장 암호화.
 - **CI 게이트** — GitHub Actions가 Cedar 테스트·checkov·`terraform validate`·gitleaks를 돌리고, kind 잡이 스택을 띄워 라이브 검증을 재실행합니다.
 
@@ -91,3 +91,5 @@ scripts/     up / verify / scan / down (.ps1+.sh) .github/    CI 워크플로 + 
 ## 참고
 
 로컬 `kind` 클러스터라 클라우드 비용이 없습니다. Cedar 정책은 Amazon Verified Permissions로, Cilium 정책은 임의의 Cilium 클러스터(EKS / GKE / AKS)로 이식됩니다. `X-User` 신원은 미인증 데모 입력(인젝션 방지용 charset 검증)이며, 실제 시스템은 검증된 JWT `sub`에서 principal을 도출합니다. 엔티티는 이미지에 구운 정적 픽스처입니다. 라이선스: [MIT](LICENSE).
+
+상표 고지: Cilium·Hubble·Tetragon(Isovalent/CNCF), Cedar·Amazon Verified Permissions·AWS(Amazon), Kyverno·OpenFGA·SPIFFE(CNCF), WireGuard(Jason A. Donenfeld) 등 본 문서의 제3자 제품·상표는 각 소유자의 자산입니다. 본 프로젝트는 학습용 포트폴리오로 이들과 무관하며 어떤 보증·후원 관계도 없습니다.

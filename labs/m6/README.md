@@ -8,6 +8,8 @@
 **미션:** 같은 "위임" 문제를 두 모델로 구현한다 — **(A) Cedar ABAC 교집합**으로 confused-deputy를
 막고, **(B) OpenFGA ReBAC** 관계 그래프로 같은 위임을 표현한다. 클러스터 불필요(python + docker).
 
+> 🎯 **학습 성과 (면접에서 말할 수 있는 것):** AI 에이전트 위임을 ABAC 교집합(+ASI08 위임깊이 cap·홉별 클램프·출처 게이트)과 ReBAC 그래프로 구현해 confused-deputy를 막고, 이것이 라이브 에이전트 런타임이 아니라 위임 *인가 정책*의 단위테스트임을 정직히 말할 수 있다. → [캡스톤 M6](../capstone.md)
+
 **편집 파일:** `labs/m6/agent-policies.cedar` (Part A), `labs/m6/model.fga` (Part B).
 
 > 선행: **M0**(Cedar 문법)을 먼저 졸업하라 — Part A는 M0의 연장이다.

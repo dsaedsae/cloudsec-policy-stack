@@ -26,7 +26,7 @@
   border: 1px solid transparent;
 }
 .chip--verified   { color: #1b5e20; background: #e6f4ea; }
-.chip--configured { color: #8d6e00; background: #fff8e1; }
+.chip--configured { color: #7a5d00; background: #fff8e1; }
 .chip--governance { color: #37474f; background: #eceff1; }
 .chip--notcovered { color: #b71c1c; background: #fdecea; }
 [data-md-color-scheme="slate"] .chip--verified   { color: #a5d6a7; background: #1b3a25; }
@@ -69,6 +69,7 @@ a.chip:hover { border-color: currentColor; }
 .lab-badge {
   display: inline-block; font-size: .7rem; font-weight: 600;
   padding: .12rem .55rem; border-radius: 1rem; line-height: 1.7;
+  background: var(--md-default-fg-color--lightest); color: var(--md-default-fg-color--light);
 }
 .lab-badge.no-cluster { background: #e8eaf6; color: #1a237e; }   /* ctrl palette — start now */
 .lab-badge.cluster    { background: #fff3e0; color: #bf360c; }   /* data palette — needs RAM */

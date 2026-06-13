@@ -1,14 +1,17 @@
 # M5 — 데이터 보호: 암호화 실행·해석 (전송 + 저장)
 
-[모듈 6 / 7]{ .lab-progress } · [스택 WireGuard+etcd]{ .lab-badge } · [소요 ~30–45m]{ .lab-badge } · [클러스터 필요 · RAM~6–8GB]{ .lab-badge .cluster } · [비용 $0 로컬]{ .lab-badge }
+[모듈 6 / 7]{ .lab-progress } · [스택 WireGuard+etcd]{ .lab-badge } · [소요 ~30–45m]{ .lab-badge } · [클러스터 필요 · RAM ~6–8GB]{ .lab-badge .cluster } · [비용 $0 로컬]{ .lab-badge }
 
 **미션:** 데이터의 세 상태 중 **전송 중(in-transit)**과 **저장(at-rest)** 암호화를 *직접 실행*하고
 그 증거를 *해석*한다. 이 모듈은 정책을 새로 짜는 게 아니라(암호화는 설정 플래그) — **무엇이 어떻게
 증명되는지**를 손으로 확인하는 것이 핵심이다.
 
+> 🎯 **학습 성과 (면접에서 말할 수 있는 것):** 전송(WireGuard)·저장(etcd) 암호화를 직접 실행하고 증거를 해석하며, *평문0은 보강 증거지 결정적 증명이 아니다*(결정적 증거는 WG패킷+노드분산)를 설명할 수 있다. → [캡스톤 M5](../capstone.md)
+
 **클러스터 필요.** 편집 파일 없음 — 실행·관찰·해석.
 
 > 선행: M2–M4 권장(같은 세션). 배경: [`docs/06-data-protection.md`](../../docs/06-data-protection.md).
+> 평가 ID: **ET**=Encryption in-Transit(전송 중), **ER**=Encryption at-Rest(저장). 전체 목록은 [`docs/mls-coverage.csv`](../../docs/mls-coverage.csv). **ET1**만 라이브 채점 게이트이고, ET2(패킷 캡처)·ER1(etcd)은 직접 실행·해석 항목이다.
 
 ---
 

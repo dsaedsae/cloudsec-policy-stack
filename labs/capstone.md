@@ -30,7 +30,7 @@
 
 ## M4 · 런타임 (Tetragon eBPF)
 - **재구현:** _data tier 셸 exec만 골라 SIGKILL, id=0 + sh=137._
-- **막는 것:** _침해 후(post-exploit) 데이터 tier에서 셸 실행._
+- **막는 것:** _침해 후(post-exploit) 데이터 티어에서 셸 실행._
 - **못 막는 것(정직):** _앵커 — 셸 없는 nc/python, 다른 tier, 노드 루트는 범위 밖(ED2/ED3=CONFIGURED/NOT_COVERED)._
 
 ## M5 · 암호화 (전송 + 저장)

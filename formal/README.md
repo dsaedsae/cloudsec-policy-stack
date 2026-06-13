@@ -2,6 +2,8 @@
 
 [심화 / formal]{ .lab-progress } · [스택 z3 (SMT)]{ .lab-badge } · [소요 ~1–2h]{ .lab-badge } · [클러스터 불필요]{ .lab-badge .no-cluster } · [비용 $0 로컬]{ .lab-badge }
 
+> 🎯 **학습 성과:** 교차계층(Cilium L7 × Cedar PDP) shadow/dead-rule을 z3로 *형식 검증*하고, 반증가능성(`--ungate-transfer`로 ungated 검출)을 설명할 수 있다.
+
 ## 왜 (the gap nobody tests)
 
 이 스택은 한 자산(api)을 **여섯 정책 엔진**으로 직렬 방어한다(admission → Cilium L3/L7 →

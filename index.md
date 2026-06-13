@@ -10,7 +10,7 @@ hide:
 전부 통과해야 데이터에 닿는다. 그리고 그 사실을 매번 라이브로 증명한다.**
 
 <div class="hero-badges" markdown>
-[라이브 검증 21/21](docs/evaluation-coverage.md){ .chip .chip--verified } [검증가능 커버리지 72%](docs/evaluation-coverage.md){ .chip .chip--configured } [적대적 검증 CRITICAL 1 발견·수정](THREAT_MODEL.md){ .chip .chip--notcovered } [무료 로컬 $0](docs/aws-eks-path.md){ .chip .chip--governance }
+[라이브 검증 21/21](docs/evaluation-coverage.md){ .chip .chip--verified } [검증가능 커버리지 72%](docs/evaluation-coverage.md){ .chip .chip--verified } [적대적 검증 CRITICAL 1 발견·수정](THREAT_MODEL.md){ .chip .chip--verified } [무료 로컬 $0](docs/aws-eks-path.md){ .chip }
 </div>
 
 <div class="hero-cta" markdown>
@@ -18,9 +18,11 @@ hide:
 [트랙 전체 보기](labs/README.md){ .md-button }
 </div>
 
+> ⚖️ 교육·포트폴리오 목적의 보상통제 설계 레퍼런스입니다 — **법률/금융 자문도, 공식 FSC 컴플라이언스 매핑도 아닙니다.** 규제 세부(고시·조문·시행일)는 1차 출처 대조가 필요하다.
+
 !!! abstract "한 문단 요약"
-    한국 금융권은 10년간 **물리/논리 망분리**로 보안을 유지했다. FSC 「금융분야 망분리 개선
-    로드맵」(2024-08-13)이 이를 위험기반 **다층보안(MLS)** 으로 전환하면서, "네트워크 위치로
+    한국 금융권은 10년간 **물리/논리 망분리**로 보안을 유지했다. FSC(금융위원회) 「금융분야 망분리 개선
+    [로드맵](docs/financial-mls-mapping.md)」(2024-08-13)이 이를 위험기반 **다층보안(MLS)** 으로 전환하면서, "네트워크 위치로
     신뢰"가 사라진 자리를 **보상통제(compensating controls)** 로 메워야 한다. 이 프로젝트는
     그 보상통제를 **하나의 워크로드 위에 코드로 구현하고, 21개 통제를 라이브로 검증**한
     재현 가능한 레퍼런스다. 적대적(LLM) 재검토가 우리 자신의 인가 정책에서 **실제 우회 취약점**
@@ -53,6 +55,11 @@ hide:
 
 ```mermaid
 flowchart TB
+    accTitle: 한 요청이 통과하는 통제 계층
+    accDescr {
+      요청은 ① 신원(admission 라벨↔SA·SA-use·SPIFFE)을 지나 web으로, ② Cilium L3/L7 default-deny를 지나 api로, ③ Cedar PDP(owner·한도·역할·동결)를 지나 db에 닿는다.
+      db에서 ⑤⑥ 암호화(WireGuard 전송·etcd 저장)와 ⑦ Tetragon 런타임 셸 SIGKILL로 분기하고, web에서 ④ egress default-deny가 인터넷·메타데이터·API서버를 막는다.
+    }
     R(["요청 / 공격 시도"]) --> ADM
     ADM["① 신원: admission 라벨↔SA · SA-use gate · SPIFFE"] --> WEB
     WEB["web · 공개 O"] --> L7["② Cilium L3/L4 + L7 (default-deny)"]

@@ -1,9 +1,11 @@
 # M4 — 런타임: Tetragon eBPF로 셸 실행 차단
 
-[모듈 5 / 7]{ .lab-progress } · [스택 Tetragon eBPF]{ .lab-badge } · [소요 ~20–35m]{ .lab-badge } · [클러스터 필요 · RAM~6–8GB]{ .lab-badge .cluster } · [비용 $0 로컬]{ .lab-badge }
+[모듈 5 / 7]{ .lab-progress } · [스택 Tetragon eBPF]{ .lab-badge } · [소요 ~20–35m]{ .lab-badge } · [클러스터 필요 · RAM ~6–8GB]{ .lab-badge .cluster } · [비용 $0 로컬]{ .lab-badge }
 
 **미션:** data tier 파드에서 셸(`/bin/sh` 류) 실행을 커널에서 즉시 SIGKILL하되, 정상 바이너리는
 건드리지 않는 **선택적** TracingPolicy를 작성한다. DB 컨테이너가 셸을 띄울 일은 없다 — 그건 침입이다.
+
+> 🎯 **학습 성과 (면접에서 말할 수 있는 것):** 셸 exec만 *선택적으로* SIGKILL하는 TracingPolicy를 작성하고, 이 룰이 *못* 막는 것(나이브 직접 execve만 잡음 — renamed/execveat 우회, M8에서 측정)을 정직히 말할 수 있다. → [캡스톤 M4](../capstone.md)
 
 **클러스터 필요.** **편집 파일:** `labs/m4/tracingpolicy.yaml` (selectors).
 
@@ -16,6 +18,11 @@
 네트워크 정책·Cedar·admission은 *요청 전/시점*에 막는다. 하지만 워크로드가 *이미 털린 후*엔
 아무것도 안 본다. Tetragon(eBPF)은 런타임을 *지속* 감시한다 — data tier에서 셸 exec이 보이면
 침입으로 간주하고 커널에서 죽인다.
+
+> **정직한 범위(과장 금지):** 이 룰은 *셸 **이름**의 직접 execve*만 죽인다(arg0 Postfix 매칭). 셸을
+> **다른 이름으로** 띄우면 우회된다(renamed-binary/execveat/fd-exec — Q4). 즉 "셸을 못 띄운다"가
+> 아니라 "나이브 직접 셸-명 execve를 죽인다"가 정확한 주장. 그 경계를 *라이브로 측정*하는 게
+> **[M8](../m8/README.md)**(심화)이고, 강건한 답은 matchBinaries/LSM이다([THREAT_MODEL](../../THREAT_MODEL.md) 잔여위험).
 
 ## Step 0 — 베이스라인
 
@@ -67,8 +74,8 @@ bash labs/m4/grade.sh        # id=0 PASS + sh=137 PASS → M4 GRADUATED. 채점 
 
 1. <details><summary>왜 "셸이 죽었다"만으로는 부족하고 "id는 살았다"도 같이 봐야 하나?</summary>전부 죽이는 정책(또는 파드가 그냥 안 떠서 모든 exec 실패)도 "셸 죽음"을 만족한다. id가 rc=0으로 살아야 "셸만 골라 죽인다 + 파드는 건강하다"가 증명된다 — false-pass 방지(이 repo의 적대적 검증이 실제로 이 클래스의 false-pass를 잡았다).</details>
 2. <details><summary>eBPF 런타임 통제가 admission/netpol과 다른 점은?</summary>admission/netpol은 생성/연결 시점의 *사전* 통제. Tetragon은 실행 중 syscall을 *지속* 관찰하는 사후 탐지·차단. 침해 후(post-exploit) 단계를 본다.</details>
-3. <details><summary>Sigkill을 커널에서 하는 것과 사용자공간 에이전트가 죽이는 것의 차이는?</summary>eBPF는 커널에서 syscall 시점에 즉시 — 우회·레이스가 어렵다. 사용자공간 에이전트는 폴링/지연이 있어 빠른 공격이 빠져나갈 수 있다.</details>
-4. <details><summary>이 통제의 한계(THREAT_MODEL 기준)는?</summary>data tier에만, 셸 exec만 본다. nc/python/curl로 셸 없이 하는 짓, 다른 tier, 노드 루트 권한 공격은 범위 밖(평가에서 ED2/ED3는 CONFIGURED/NOT_COVERED로 정직하게 분류).</details>
+3. <details><summary>Sigkill을 커널에서 하는 것과 사용자공간 에이전트가 죽이는 것의 차이는?</summary>eBPF는 커널에서 syscall 시점에 즉시 죽여 *타이밍 레이스*엔 강하다. 단 "어느 syscall/이름을 후킹하느냐"는 별개 문제다 — arg0-Postfix는 renamed-binary로 쉽게 우회된다(Q4). 사용자공간 에이전트는 폴링/지연이 있어 빠른 공격이 빠져나갈 수 있다.</details>
+4. <details><summary>이 통제의 한계(THREAT_MODEL 기준)는?</summary>data tier에만, **셸 *이름*의 직접 execve**만 본다(arg0 Postfix). 그래서 셸을 *다른 이름으로* 띄우면 우회된다: 쓰기가능 /tmp + busybox로 `cp /bin/busybox /tmp/x && /tmp/x sh`, execveat(별도 syscall, 미후킹), fd-exec(arg0=/proc/self/fd/N). 즉 ED1은 "*나이브* 직접 셸-명 execve를 죽인다"이지 "셸을 못 띄운다"가 아니다 — 강건한 답은 matchBinaries/sched_process_exec/LSM. 그밖에 nc/python로 셸 없이 하는 짓, 다른 tier, 노드 루트도 범위 밖(평가에서 ED2/ED3는 CONFIGURED/NOT_COVERED). 측정: [M8](../m8/README.md).</details>
 
 ## 졸업 기준
 
@@ -76,6 +83,7 @@ bash labs/m4/grade.sh        # id=0 PASS + sh=137 PASS → M4 GRADUATED. 채점 
 - [ ] "둘 다 요구"가 왜 false-pass를 막는지 설명할 수 있다
 - [ ] Postfix vs Equal, 과잉 kill이 왜 결함인지 안다
 - [ ] 구두 문답 4개 답안 없이
+- [ ] 이 룰이 *못* 죽이는 것(renamed-shell `/tmp/x sh`·execveat·fd-exec)을 말할 수 있다 → 강건한 답은 matchBinaries/LSM, 경계는 [M8](../m8/README.md)에서 측정
 - [ ] `k8s/tracingpolicy.yaml`과 비교
 
 다음: **M5 — 데이터 암호화 (run & interpret)** (같은 세션에서).

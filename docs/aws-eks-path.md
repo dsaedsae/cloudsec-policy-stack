@@ -37,7 +37,7 @@
 > `169.254.169.254`로 default-deny한다. 클라우드에선 같은 위협(앱 **SSRF**로 인스턴스 메타데이터의 임시
 > 자격증명 탈취)을 **IMDSv2**(요청에 세션 토큰 필수 → 단순 SSRF GET 무력화)와 **hop-limit=1**(프록시/컨테이너
 > 한 홉 너머의 메타데이터 도달 차단)로 막고, Azure는 **Metadata Security Protocol**로 대응한다. 최근 사례:
-> Azure OpenAI **SSRF CVE-2025-53767**(CVSS 10). *doc-only 매핑*이며 이 repo의 라이브 검증은 in-cluster
+> Azure OpenAI **SSRF CVE-2025-53767**(보도 기준 CVSS 高 — 정확한 점수는 NVD/MSRC 대조 필요). *doc-only 매핑*이며 이 repo의 라이브 검증은 in-cluster
 > egress-block(ZT2 `metadata 000`)에 한정된다.
 
 ### 1-1. 빌드 프로비넌스: 이미지 서명(cosign) — 로컬 키풀 검증 + 프로덕션 keyless

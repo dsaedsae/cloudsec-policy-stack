@@ -47,6 +47,7 @@ $daemon = $false
 if (Has docker) { docker info *> $null; $daemon = ($LASTEXITCODE -eq 0) }
 Write-Host (("{0}docker 데몬 실행중 (Docker Desktop 켜기)" -f $(if ($daemon) {$ok} else {$no})))
 if ($missing.Count -gt 0) {
+    Write-Host "   choco 미설치면 먼저(관리자 PowerShell): Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
     Write-Host "   고치기(choco/winget): choco install kind kubernetes-cli kubernetes-helm cilium-cli ; winget install Hashicorp.Terraform Git.Git Docker.DockerDesktop"
 }
 

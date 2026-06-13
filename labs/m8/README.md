@@ -1,14 +1,16 @@
-# M8 — Beat the eBPF cop: 런타임 kill의 정직한 경계 (detection ≠ prevention)
+# M8 — eBPF kill의 정직한 경계: detection ≠ prevention
 
-[심화 / 측정]{ .lab-progress } · [스택 Tetragon]{ .lab-badge } · [소요 ~30–45m]{ .lab-badge } · [클러스터 필요 · RAM~6–8GB]{ .lab-badge .cluster } · [비용 $0 로컬]{ .lab-badge }
+[심화 / 측정]{ .lab-progress } · [스택 Tetragon]{ .lab-badge } · [소요 ~30–45m]{ .lab-badge } · [클러스터 필요 · RAM ~6–8GB]{ .lab-badge .cluster } · [비용 $0 로컬]{ .lab-badge }
 
-> **선행:** M4(셀렉티브 shell-kill을 *직접 만든다*). M8은 그 통제의 **한계를 측정**한다 — 과장도 과소도 없이.
+> **선행:** M4(선택적 shell-kill을 *직접 만든다*). M8은 그 통제의 **한계를 측정**한다 — 과장도 과소도 없이.
 > **준비:** `scripts/up.ps1`(Tetragon 포함) + Git Bash/PowerShell. 클러스터 없으면 SKIP(FAIL 아님).
 
 **미션:** M4의 `block-shell-in-data-tier`(execve kprobe → Sigkill, `tier: data`)는 셸 실행을 **실제로 막는다**.
 M8은 묻는다 — *어디까지* 막나? 언제 막나? 못 막는 건 뭔가? 그걸 **라이브로 측정**해 통제를 정확히 라벨한다.
 **메트릭은 변하지 않는다(72% 그대로):** M8은 통제를 더하거나 빼는 게 아니라 *기존 통제의 가장자리를 측정*한다 —
 그걸 명시하는 것 자체가 정직한 결과다. ED1("runtime shell-exec kill")은 **VERIFIED 그대로**.
+
+> 🎯 **학습 성과:** 런타임 kill의 정직한 경계를 *라이브로 측정*해 설명할 수 있다 — detection≠prevention, execve(pre-image-load) vs I/O(write window), 그리고 io_uring에 blind한 건 *기본 syscall 정책*이고 LSM/KRSI가 해법이라는 것.
 
 빠른 실행: `.venv` 불필요, 클러스터만.
 ```powershell

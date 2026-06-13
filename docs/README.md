@@ -6,7 +6,7 @@ payoff *before* asking you to install more. Defensive/infra only.
 > **Why this matters (금융 망분리 완화):** 이 스택이 *어떤 규제 맥락에서 왜 중요한지*는
 > **[금융 망분리 완화(MLS) ↔ 통제 매핑](financial-mls-mapping.md)** 참고 — FSC 「금융분야
 > 망분리 개선 로드맵」(2024-08-13)의 다층보안(MLS) 보상통제에 각 통제를 1:1 매핑하고
-> NIST 800-207·검증 항목까지 연결한다.
+> NIST 800-207·검증 항목까지 연결한다. *(교육·포트폴리오 목적 — 법률/금융 자문도, 공식 FSC 컴플라이언스 매핑도 아니다. 규제 세부는 1차 출처 대조 필요.)*
 >
 > **정량 평가:** **[검증가능성 커버리지 분석](evaluation-coverage.md)**(MLS 보상통제의 72%가 코드로
 > 검증가능 — 갭 공개) · **감사 적용:** **[감사증거 패키지 예시](audit-evidence.md)**(1통제를 기준·산출물·
@@ -20,7 +20,7 @@ payoff *before* asking you to install more. Defensive/infra only.
 > — 각 통제의 AWS 등가물(Cedar→Verified Permissions, etcd암호화→KMS 등) + **무료(로컬)부터**
 > Tier 0~3 비용 사다리와 teardown 체크리스트. 발표용 자료: [`presentation/`](../presentation/talk-outline.md).
 
-| Lab | You'll learn | Needs | Time |
+| Lab | You'll learn | Needs | Read time |
 |-----|--------------|-------|------|
 | [0 — Authorization as code](01-authz-no-cluster.md) | Cedar policies + how `forbid`/limits/roles work, unit-tested | Python only | 5 min |
 | [1 — Shift-left scanning](02-scan.md) | checkov on IaC + K8s, and *honest* suppression triage | Python only | 5 min |
@@ -28,6 +28,8 @@ payoff *before* asking you to install more. Defensive/infra only.
 | [3 — Runtime (eBPF)](04-runtime.md) | Tetragon detects + SIGKILLs a shell in a popped container | Docker+kind | 10 min |
 | [4 — Identity (B7)](05-identity.md) | who gets to *be* `web`/`api`: least-priv SAs, label↔SA admission, mutual auth — and the honest residual | Docker+kind | 15 min |
 | [5 — Data protection](06-data-protection.md) | the data itself: WireGuard in-transit, Secret encryption at-rest, PDP minimization in-use | Docker+kind | 15 min |
+
+> ⏱ **Read time** = reading the concept page. *Rebuilding* the control from an empty file is much longer — see the [reimplementation track](../labs/README.md) (e.g. M0 ~3–6h, M2 ~30–45m).
 
 ## The idea in one picture
 

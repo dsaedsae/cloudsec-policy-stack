@@ -33,6 +33,11 @@ customer reads audit log (no role)                Deny    Deny  PASS
 8/8 scenarios passed
 ```
 
+!!! warning "M0 재구현 트랙이라면 — 정답지 주의"
+    아래 **What to read / Break it**은 정답지 `cedar/policies.cedar`를 직접 읽고 편집한다.
+    **M0 랩([labs/m0](../labs/m0/README.md))을 빈 파일에서 재구현할 계획이면 졸업 전에는 이 절을 건너뛰어라**
+    — `cedar/policies.cedar`는 그 트랙의 잠긴 정답지다(이 개념 페이지는 *개념 파악*용으로만 M0 Step 1에서 가리킨다).
+
 ## What to read
 
 - `cedar/policies.cedar` — the rules. Note `forbid` (frozen account) overrides

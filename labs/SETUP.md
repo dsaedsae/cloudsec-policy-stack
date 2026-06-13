@@ -11,10 +11,17 @@
 
 ## Track A — Python 랩 (M0/M1/M6) · 5분
 
+먼저 저장소를 클론하고 그 안으로 들어간다 — **이하 모든 명령은 repo 루트(`cloudsec-policy-stack/`)에서** 실행한다(`.venv\Scripts\python.exe` 경로가 그 기준이다):
+
+```powershell
+git clone https://github.com/dsaedsae/cloudsec-policy-stack
+cd cloudsec-policy-stack
+```
+
 `.venv/`는 `.gitignore`라 클론엔 없다. **한 번만** 만든다 (PowerShell):
 
 ```powershell
-# 1) Python 3.12 가상환경 생성 (Python 3.12 설치 필요: winget install Python.Python.3.12)
+# 1) Python 3.12 가상환경 생성 (winget install Python.Python.3.12; python이 MS Store를 열면 설치 후 py -3.12 -m venv .venv)
 python -m venv .venv
 
 # 2) 의존성 설치 (cedarpy, checkov 등)
@@ -36,6 +43,11 @@ python -m venv .venv
 ## Track B — 클러스터 랩 (M2–M5)
 
 ### 설치할 것
+
+> **먼저 Chocolatey가 필요하다** — 아래 표의 `choco install ...`은 Chocolatey 패키지 매니저를 쓴다.
+> winget은 Windows 11 내장이지만 `kind`·`cilium-cli`는 winget에 없어 choco로 받는다. choco는 기본
+> 탑재가 아니므로 **관리자 PowerShell에서 한 번** 설치하라(<https://chocolatey.org/install>):
+> `Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))`
 
 | 도구 | 용도 | Windows 설치 |
 |---|---|---|
@@ -63,7 +75,7 @@ python -m venv .venv
 M2–M5는 클러스터를 **한 번 띄워** 연속으로 한 뒤 내린다:
 
 ```powershell
-scripts\up.ps1                       # PowerShell — kind+Cilium+... (5~10분)
+scripts\up.ps1                       # PowerShell — kind+Cilium+... (~5–10분)
 kubectl cluster-info --context kind-cloudsec   # 떴는지 확인 (에러면 다시 up.ps1)
 ```
 ```bash
