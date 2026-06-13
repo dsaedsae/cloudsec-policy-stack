@@ -1,4 +1,4 @@
-"""M6 채점기 — agent-ABAC (Cedar 14/14) + ReBAC (OpenFGA fga model test 11/11).
+"""M6 채점기 — agent-ABAC (Cedar 17/17) + ReBAC (OpenFGA fga model test 11/11).
 
     python labs/m6/grade.py            # 둘 다 채점 (졸업 = 둘 다 통과)
     python labs/m6/grade.py agent      # Part A 만
@@ -80,7 +80,7 @@ if __name__ == "__main__":
                   "정답지 diff: cedar/agent/policies.cedar, rebac/model.fga")
         elif rc_agent == 0 and rc_rebac == 2:
             # Part A passed but Part B was skipped — NOT graduated (only half graded).
-            print("\nM6 Part A 통과(14/14). Part B(ReBAC)는 SKIP — Docker Desktop 필요 (labs/SETUP.md). "
+            print("\nM6 Part A 통과(17/17). Part B(ReBAC)는 SKIP — Docker Desktop 필요 (labs/SETUP.md). "
                   "설치 후 재실행하면 11/11까지 채점되어 졸업.")
     # Exit nonzero only on a real FAIL (a skip is not a failure but is not graduation).
     fail = (rc_agent not in (0, None)) or (rc_rebac == 1)

@@ -53,5 +53,17 @@
 
   { "name": "ASI08 P5 IS LOAD-BEARING: depth-2 sub-sub-agent reads even PUBLIC data -> Deny (delegation-depth cap; delete P5 -> flips Allow)",
     "principal": "Agent::\"agent-deep\"", "action": "Action::\"ReadData\"",
-    "resource": "DataRecord::\"rec-public\"", "context": {}, "expect": "Deny" }
+    "resource": "DataRecord::\"rec-public\"", "context": {}, "expect": "Deny" },
+
+  { "name": "P6 IS LOAD-BEARING: sub-agent's OWN ceiling=2 allows classified, but its PARENT agent ceiling=0 clamps it -> Deny (per-hop intersection; delete P6 -> flips Allow)",
+    "principal": "Agent::\"agent-sub-clamped\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-classified\"", "context": {}, "expect": "Deny" },
+
+  { "name": "chain clamp still allows the floor: same clamped sub-agent reads PUBLIC data -> Allow",
+    "principal": "Agent::\"agent-sub-clamped\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-public\"", "context": {}, "expect": "Allow" },
+
+  { "name": "P7 IS LOAD-BEARING (fail-closed): depth-1 sub-agent that OMITS delegated_by would amplify (own ceiling 2), but is refused outright -> Deny (delete P7 -> flips Allow)",
+    "principal": "Agent::\"agent-sub-orphan\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-classified\"", "context": {}, "expect": "Deny" }
 ]

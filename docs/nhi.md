@@ -37,7 +37,7 @@ principal, 그리고 확장 스레드인 AI 에이전트(`cedar/agent/`). 그래
 | | SPIFFE SVID 상호인증(엣지) | ID4 | ⚙️ CONFIGURED (opt-in·Lab4 수동) |
 | **AUTHORIZE** (권한 행사) | tier SA의 K8s API 권한 0 | ID5 | ✅ VERIFIED |
 | | 네트워크 도달 L3/L7(Cilium) | NS3·NS4 | ✅ VERIFIED |
-| | 요청별 Cedar ABAC + 에이전트 위임 | LP1–LP6 · `cedar/agent/` 14/14 | ✅ VERIFIED |
+| | 요청별 Cedar ABAC + 에이전트 위임 | LP1–LP6 · `cedar/agent/` 17/17 | ✅ VERIFIED |
 | **ROTATE** (자격증명 위생) | SPIRE 단명 SVID 자동회전(~1h) | ID4 | ⚙️ CONFIGURED |
 | | etcd Secret 키 회전 절차(2-key) | ER2 | ⚙️ CONFIGURED (런북·미자동) |
 | | SA 토큰 미마운트(정적 시크릿 회피) | ID6 | ⚙️ CONFIGURED (미assert) |
@@ -67,7 +67,7 @@ AI 에이전트도 NHI다. 자세한 모델은 [`authorization-model.md` §4·§
 - **위임은 본질적으로 관계다.** "에이전트 A가 사용자 U를 *대행*"은 [`rebac/`](../rebac/)의 관계
   그래프(`delegate from owner`)로, 또는 [`cedar/agent/`](../cedar/agent/)의 **ABAC 교집합**
   (에이전트 천장 ∧ 대행 사용자 등급, *비소유* 데이터 한정 — 소유 데이터는 owner override로 천장까지)로
-  표현된다 — 후자는 confused-deputy 차단 + ASI08 위임깊이 cap을 14/14로 단위테스트하며 P2·P3·P5 mutation으로 반증가능하다.
+  표현된다 — 후자는 confused-deputy 차단 + ASI08 위임깊이 cap·홉별 클램프·출처 게이트를 17/17로 단위테스트하며 P2·P3·P5·P6·P7 mutation으로 반증가능하다.
 - **`api` PDP = AI/Agent Gateway가 호스팅할 PEP의 축소판.** 단, 이 repo는 에이전트 런타임·위임
   체인·게이트웨이를 **구현하지 않는다** — 그것이 명시된 확장 경로이지 주장이 아니다.
 

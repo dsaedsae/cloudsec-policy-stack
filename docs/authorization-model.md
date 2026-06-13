@@ -89,7 +89,7 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
   *워크로드 NHI* 통제의 레퍼런스다.
 - **AI 에이전트 인가 (실행 데모 — [`cedar/agent/`](../cedar/agent/)):** 에이전트도 NHI다. 에이전트를
   principal로, 도구호출/데이터읽기를 action으로, 데이터를 resource(등급 C/S/O)로 둔 Cedar 번들을
-  `python cedar/agent_authz.py`로 단위테스트한다(**14/14**). 핵심은 **위임 교집합**(delegation
+  `python cedar/agent_authz.py`로 단위테스트한다(**17/17**). 핵심은 **위임 교집합**(delegation
   intersection)으로 **confused-deputy 차단**이다 — *비소유* 데이터 인가 = (에이전트 자신의 천장
   `max_classification`) **∧** (대행하는 사용자의 등급 `on_behalf_of.clearance`). 과잉권한 에이전트라도
   저등급 사용자를 대행하면 그 사용자가 닿지 못하는 *비소유* 데이터엔 닿을 수 없다. **단, 대행 사용자가
@@ -97,28 +97,32 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
   P3) — 즉 교집합은 비소유 데이터에 적용되고, 소유 데이터는 에이전트 천장으로만 제한된다. 테스트는
   *반증가능*하게 설계됐다: P2를 지우면 "P2 IS LOAD-BEARING" 케이스가 Allow→Deny로 뒤집히고, P3를 지우면
   "P3 IS LOAD-BEARING" 케이스가 뒤집힌다(mutation으로 확인). 관계로 표현한 같은 위임이 §4의 ReBAC다.
-- **위임 체인 깊이 cap (ASI08 — `policies.cedar` P5, 신규):** 에이전트가 *서브에이전트를 스폰*하면
-  human→agent→sub→… 체인이 생기고, 경계가 없으면 권한이 무한 스폰 트리로 **연쇄(cascade)**한다(OWASP
-  Agentic Top 10 2025-12-09의 **ASI08 Cascading Failures** — 여기서는 그중 *위임 연쇄(cascading/runaway
-  delegation)* 측면). P5는 `delegation_depth`(휴먼 위의 agent→agent 홉 수)가 1을 넘는 에이전트를 **모든
-  action에서 거부**한다(0=휴먼 직접조작, 1=허용된 한 홉 서브에이전트, 2+=거부). `on_behalf_of`는 항상
-  **루트 휴먼**으로 해석되므로 P2의 교집합 floor(루트 휴먼의 등급)가 체인 끝까지 적용되고, 서브에이전트
-  자신의 천장(`max_classification`)이 상한이 된다.
-  > ⚠️ **모델이 강제하는 범위(과장 금지):** `delegation_depth`는 **단일 정수일 뿐 실제 체인을 순회하지
-  > 않는다.** 따라서 *중간* 에이전트의 더 낮은 천장은 이 모델에 표현되지 않는다 — 정확한 주장은 "P5가
-  > *체인 길이*를 묶고, **루트 휴먼 등급이 floor·서브에이전트 천장이 상한**으로 등급을 캡한다"이지,
-  > "어느 홉에서도 증폭 불가"라는 일반 주장이 아니다(스폰 시 `sub.max_classification`을 부모 천장 이하로
-  > 설정하는 것은 미구현 에이전트 런타임의 책임 — `nhi.md`의 확장 경로). Cedar엔 속성 union 타입이 없어
-  > `on_behalf_of`를 Agent로 체이닝하면 `.clearance`가 깨지므로, depth를 별도 추적하는 편이 타입 건전하다.
+- **위임 체인 깊이 cap + 홉별 클램프 + 출처 게이트 (ASI08 — `policies.cedar` P5·P6·P7, 신규):** 에이전트가
+  *서브에이전트를 스폰*하면 human→agent→sub→… 체인이 생기고, 경계가 없으면 권한이 무한 스폰 트리로 **연쇄
+  (cascade)**한다(OWASP Agentic Top 10 2025-12-09의 **ASI08 Cascading Failures** — 위임 연쇄 측면). **P5**:
+  `delegation_depth`(휴먼 위 agent→agent 홉 수)>1 에이전트를 모든 action에서 거부(0=직접조작·1=허용된 한 홉·2+=거부).
+  **P6**: 서브에이전트가 기록한 `delegated_by`(스폰한 에이전트) 엣지를 따라 *중간 에이전트 천장*으로 클램프.
+  **P7(fail-closed)**: `delegated_by`는 optional이라 P6 혼자면 엣지를 *누락한* 서브에이전트가 클램프를 우회한다
+  (Cedar는 누락 optional 속성에 fail-**open**) — P7은 depth≥1인데 `delegated_by`가 없는 에이전트를 모든 action에서
+  거부해, 모든 서브에이전트가 부모를 선언하도록 강제한다.
+  > ✅ **이제 성립하는 것:** P5(depth≤1 → 중간 에이전트 최대 한 명) + P7(서브에이전트는 부모 엣지 필수, fail-closed)
+  > + P6(그 엣지로 클램프) 셋이 합쳐, 바운드 체인의 **실효 천장 = (루트 휴먼 등급) ∧ (스폰 에이전트 천장) ∧ (서브
+  > 천장)의 최소** — *어느 홉에서도 권한이 증폭되지 않는다*가 (단일 정수 depth만으론 불가능했고 P6만으론 fail-open이던
+  > 것을) 이제 실제로 성립한다.
+  > ⚠️ **여전한 한계(과장 금지):** P7은 `delegated_by`의 *존재*를 강제하지만 그 *값의 진실성*(실제 스폰 부모를
+  > 가리키는지)까지는 강제하지 못한다 — 이는 `on_behalf_of`·파드 라벨과 **동일한 TCB 가정**(신뢰된 control plane이
+  > 진실하게 설정; `THREAT_MODEL.md` "labels are a TCB")이지 에이전트의 자기신고가 아니다. depth>1 다중 중간 홉은
+  > P5가 막으므로 범위 밖. Cedar엔 속성 union이 없어 depth+`delegated_by`로 분리 추적(타입 건전).
 
-  P5도 *반증가능*하다 — 지우면 depth-2 에이전트가 *공개 데이터*를 읽는 케이스가 Deny→Allow로 뒤집힌다(확인됨).
-- **OWASP Agentic Top 10 (2025-12-09) 매핑** — P1–P5가 어디에 대응하고, 무엇이 *아직 doc-only*인지 정직하게:
+  P5·P6·P7 모두 *반증가능*하다 — P5 삭제 시 depth-2가 공개데이터 읽기 Deny→Allow, P6 삭제 시 부모 천장 0 서브가
+  기밀 읽기 Deny→Allow, P7 삭제 시 부모 엣지를 누락한 depth-1 서브가 기밀로 증폭 Deny→Allow(셋 다 확인됨).
+- **OWASP Agentic Top 10 (2025-12-09) 매핑** — P1–P7이 어디에 대응하고, 무엇이 *아직 doc-only*인지 정직하게:
 
   | 정책/통제 | OWASP Agentic 항목 | 이 repo |
   |---|---|---|
-  | P1 도구 allowlist | ASI02 Tool Misuse (도구 오남용) | VERIFIED (agent 14/14) |
+  | P1 도구 allowlist | ASI02 Tool Misuse (도구 오남용) | VERIFIED (agent 17/17) |
   | P2 위임 교집합 / P3 owner override | **ASI03 Identity & Privilege Abuse** (권한 오남용/confused-deputy) | VERIFIED (mutation 반증) |
-  | P5 위임깊이 cap | **ASI08 Cascading Failures** (위임 연쇄 측면) | VERIFIED (mutation 반증) |
+  | P5 깊이 cap / P6 홉별 클램프 / P7 출처 게이트(fail-closed) | **ASI08 Cascading Failures** (위임 연쇄·증폭 방지) | VERIFIED (P5·P6·P7 각각 mutation 반증) |
   | (PDP 엣지) Bearer-JWT audience 검증 | **ASI03 Identity & Privilege Abuse** (신원 위조/token replay) | 검증기 단위테스트 `auth_test.py` 13/13; **라이브 강제 아님 → coverage ID8 = CONFIGURED** |
   | 메모리/RAG 오염 | ASI06 Memory & Context Poisoning | **NOT_COVERED — doc-only** (이 스택은 인가 계층; 메모리 무결성은 범위 밖) |
   | 에이전트 간 통신 신뢰 | ASI07 Insecure Inter-Agent Communication | **doc-only** — SPIFFE 상호인증(ID4, CONFIGURED)이 *부분* 토대이나 에이전트 프로토콜 수준 미구현 |

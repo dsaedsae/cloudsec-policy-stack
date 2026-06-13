@@ -1,9 +1,9 @@
 // M6 Part A 작업 파일 — AI 에이전트 위임 인가 (Cedar). 여기에만 작성한다.
 //
 // 스키마(열람 OK): cedar/agent/schema.json — Agent{allowed_tools, max_classification,
-//   on_behalf_of, delegation_depth}, User{clearance}, Tool{name}, DataRecord{classification, owner};
+//   on_behalf_of, delegation_depth, delegated_by?}, User{clearance}, Tool{name}, DataRecord{classification, owner};
 //   액션 InvokeTool(Agent→Tool), ReadData(Agent→DataRecord). 등급 0=공개·1=민감·2=기밀.
-// 채점: .venv\Scripts\python.exe labs\m6\grade.py agent   (목표 14/14)
+// 채점: .venv\Scripts\python.exe labs\m6\grade.py agent   (목표 17/17)
 // 정답지 cedar/agent/policies.cedar 는 졸업 전 열람 금지.
 //
 // 핵심 개념: 에이전트는 사용자를 *대행*하는 NHI다. confused-deputy를 막으려면 인가가
@@ -29,4 +29,16 @@
 //     에이전트가 서브에이전트를 스폰하면 human->agent->sub->... 체인이 생긴다. delegation_depth
 //     (휴먼 위의 agent->agent 홉 수: 0=직접조작, 1=허용된 한 홉, 2+=금지)가 1을 넘는 에이전트는
 //     *모든 action*에서 거부하라. 힌트: action 제약 없는 forbid + `principal.delegation_depth > 1`.
+// TODO
+
+// P6) 홉별 천장 클램프 (체인 순회 — P5가 depth<=1로 묶으니 중간 에이전트는 최대 한 명):
+//     서브에이전트는 자신을 스폰한 에이전트를 optional `delegated_by`로 기록한다. 서브 자신의 천장이
+//     높아도 *스폰한 에이전트의 더 낮은 천장*이 읽기를 막아야 한다(중간 홉에서 권한 증폭 금지).
+//     힌트: ReadData forbid + `principal has delegated_by && resource.classification > principal.delegated_by.max_classification`.
+// TODO
+
+// P7) 출처 게이트 (fail-closed — P6을 우회불가로): `delegated_by`는 optional이라 P6만으론 그것을
+//     *누락한* depth>=1 서브에이전트가 클램프를 우회한다(Cedar는 누락 optional에 fail-OPEN). depth>=1인데
+//     `delegated_by`가 없는 에이전트를 *모든 action*에서 거부해, 모든 서브에이전트가 부모를 선언하게 강제하라.
+//     힌트: action 제약 없는 forbid + `principal.delegation_depth >= 1 && !(principal has delegated_by)`.
 // TODO
