@@ -45,5 +45,13 @@
 
   { "name": "P3 IS LOAD-BEARING: agent reads the delegating user's OWN record above the user's clearance -> Allow",
     "principal": "Agent::\"agent-x\"", "action": "Action::\"ReadData\"",
-    "resource": "DataRecord::\"rec-xowned\"", "context": {}, "expect": "Allow" }
+    "resource": "DataRecord::\"rec-xowned\"", "context": {}, "expect": "Allow" },
+
+  { "name": "ASI08 one permitted hop: depth-1 sub-agent (ceiling 1, for root human bob) reads at the floor -> Allow",
+    "principal": "Agent::\"agent-sub-bob\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-sensitive\"", "context": {}, "expect": "Allow" },
+
+  { "name": "ASI08 P5 IS LOAD-BEARING: depth-2 sub-sub-agent reads even PUBLIC data -> Deny (delegation-depth cap; delete P5 -> flips Allow)",
+    "principal": "Agent::\"agent-deep\"", "action": "Action::\"ReadData\"",
+    "resource": "DataRecord::\"rec-public\"", "context": {}, "expect": "Deny" }
 ]

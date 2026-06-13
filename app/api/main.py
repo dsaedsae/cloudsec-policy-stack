@@ -5,7 +5,10 @@ and the HTTP method+path (L7), THIS service asks Cedar "may this principal do
 this action on this resource?" before doing any work, returning 403 on Deny.
 So a single request traverses all three policy layers on the same asset.
 
-Principal comes from the X-User header (a JWT `sub` in the real world).
+The principal is resolved by app/api/auth.py: a verified Bearer JWT (signature +
+audience, RFC 8707) wins; otherwise an unauthenticated X-User header is the labeled
+demo fallback. Either way the result is a Cedar `User::"..."` UID — the audience
+check is what makes a token minted for another service unusable here.
 Policies/schema/entities are the same artifacts unit-tested in cedar/authz.py
 and portable to Amazon Verified Permissions.
 """
@@ -13,15 +16,11 @@ and portable to Amazon Verified Permissions.
 from __future__ import annotations
 
 import pathlib
-import re
 
 import cedarpy
 from fastapi import FastAPI, Header, HTTPException, Request
 
-# The principal id is attacker-controlled (X-User header). Constrain its charset
-# BEFORE interpolating it into a Cedar entity UID, so a crafted header can't break
-# out of `User::"..."` (injection / parse-error 500 / log injection).
-_USER_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+from auth import principal_for
 
 CEDAR = pathlib.Path(__file__).parent / "cedar"
 POLICIES = (CEDAR / "policies.cedar").read_text(encoding="utf-8")
@@ -31,11 +30,19 @@ ENTITIES = (CEDAR / "entities.json").read_text(encoding="utf-8")
 app = FastAPI(title="cedar-pdp-api")
 
 
-def principal_uid(x_user: str) -> str:
-    """Validate the header-supplied user id, then build its Cedar entity UID."""
-    if not _USER_RE.match(x_user or ""):
+def resolve_principal(authorization: str | None, x_user: str) -> str:
+    """Resolve the Cedar principal UID, mapping auth failures to HTTP status.
+    A present-but-invalid Bearer token is 401 (authentication failed); a bad
+    X-User fallback is 400 (malformed input). Fail closed either way."""
+    try:
+        return principal_for(authorization, x_user)
+    except ValueError:
+        # A PRESENT (non-empty) Authorization header that failed is an authentication
+        # failure (401) — bad signature/audience/expiry OR an unsupported scheme.
+        # Only a bad X-User with NO Authorization header is malformed input (400).
+        if authorization is not None and authorization.strip():
+            raise HTTPException(status_code=401, detail="invalid or unsupported Authorization")
         raise HTTPException(status_code=400, detail="invalid X-User")
-    return f'User::"{x_user}"'
 
 
 def authorize(principal: str, action: str, resource: str, context: dict | None = None) -> None:
@@ -58,13 +65,22 @@ def healthz() -> dict:
 
 
 @app.get("/accounts/{acct}")
-def view_account(acct: str, x_user: str = Header(default="anonymous")) -> dict:
-    authorize(principal_uid(x_user),'Action::"ViewAccount"', f'Account::"{acct}"')
+def view_account(
+    acct: str,
+    x_user: str = Header(default="anonymous"),
+    authorization: str | None = Header(default=None),
+) -> dict:
+    authorize(resolve_principal(authorization, x_user), 'Action::"ViewAccount"', f'Account::"{acct}"')
     return {"account": acct, "viewer": x_user, "decision": "Allow"}
 
 
 @app.post("/accounts/{acct}/transfer")
-async def transfer(acct: str, request: Request, x_user: str = Header(default="anonymous")) -> dict:
+async def transfer(
+    acct: str,
+    request: Request,
+    x_user: str = Header(default="anonymous"),
+    authorization: str | None = Header(default=None),
+) -> dict:
     try:
         body = await request.json()
     except Exception:
@@ -74,11 +90,15 @@ async def transfer(acct: str, request: Request, x_user: str = Header(default="an
         amount = int(body.get("amount", 10**9))
     except (TypeError, ValueError):
         amount = 10**9
-    authorize(principal_uid(x_user),'Action::"Transfer"', f'Account::"{acct}"', {"amount": amount})
+    authorize(resolve_principal(authorization, x_user), 'Action::"Transfer"', f'Account::"{acct}"', {"amount": amount})
     return {"account": acct, "by": x_user, "amount": amount, "decision": "Allow"}
 
 
 @app.get("/auditlogs/{log}")
-def view_audit_log(log: str, x_user: str = Header(default="anonymous")) -> dict:
-    authorize(principal_uid(x_user),'Action::"ViewAuditLog"', f'AuditLog::"{log}"')
+def view_audit_log(
+    log: str,
+    x_user: str = Header(default="anonymous"),
+    authorization: str | None = Header(default=None),
+) -> dict:
+    authorize(resolve_principal(authorization, x_user), 'Action::"ViewAuditLog"', f'AuditLog::"{log}"')
     return {"auditlog": log, "viewer": x_user, "decision": "Allow"}

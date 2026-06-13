@@ -15,6 +15,7 @@ ID4,credential-forgery,SPIFFE SVID mutual-auth on edge,A,CONFIGURED,opt-in netpo
 ID5,credential-forgery,tier SA has zero K8s API rights,A,VERIFIED,verify:api-sa no create-pods/secrets
 ID6,credential-forgery,SA token not mounted,A,CONFIGURED,automountServiceAccountToken:false; not asserted
 ID7,credential-forgery,SA-use other namespaces,A,NOT_COVERED,policy scoped to shop ns
+ID8,credential-forgery,requester Bearer-JWT signature+audience verification (RFC 8707),A,CONFIGURED,auth_test.py 13/13 verifier logic (fixture key/no cluster) rejects bad-aud/sig/expiry/forged/non-Bearer; live API not Bearer-mandatory (X-User fallback) so enforcement not live-asserted
 LP1,least-privilege,Cedar owner check,A,VERIFIED,verify:bob GET alice 403
 LP2,least-privilege,Cedar transfer limit,A,VERIFIED,verify:transfer 5000 403
 LP3,least-privilege,Cedar frozen-account forbid,A,VERIFIED,verify:frozen 403

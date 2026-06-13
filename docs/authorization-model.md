@@ -89,7 +89,7 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
   *워크로드 NHI* 통제의 레퍼런스다.
 - **AI 에이전트 인가 (실행 데모 — [`cedar/agent/`](../cedar/agent/)):** 에이전트도 NHI다. 에이전트를
   principal로, 도구호출/데이터읽기를 action으로, 데이터를 resource(등급 C/S/O)로 둔 Cedar 번들을
-  `python cedar/agent_authz.py`로 단위테스트한다(**12/12**). 핵심은 **위임 교집합**(delegation
+  `python cedar/agent_authz.py`로 단위테스트한다(**14/14**). 핵심은 **위임 교집합**(delegation
   intersection)으로 **confused-deputy 차단**이다 — *비소유* 데이터 인가 = (에이전트 자신의 천장
   `max_classification`) **∧** (대행하는 사용자의 등급 `on_behalf_of.clearance`). 과잉권한 에이전트라도
   저등급 사용자를 대행하면 그 사용자가 닿지 못하는 *비소유* 데이터엔 닿을 수 없다. **단, 대행 사용자가
@@ -97,6 +97,42 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
   P3) — 즉 교집합은 비소유 데이터에 적용되고, 소유 데이터는 에이전트 천장으로만 제한된다. 테스트는
   *반증가능*하게 설계됐다: P2를 지우면 "P2 IS LOAD-BEARING" 케이스가 Allow→Deny로 뒤집히고, P3를 지우면
   "P3 IS LOAD-BEARING" 케이스가 뒤집힌다(mutation으로 확인). 관계로 표현한 같은 위임이 §4의 ReBAC다.
+- **위임 체인 깊이 cap (ASI08 — `policies.cedar` P5, 신규):** 에이전트가 *서브에이전트를 스폰*하면
+  human→agent→sub→… 체인이 생기고, 경계가 없으면 권한이 무한 스폰 트리로 **연쇄(cascade)**한다(OWASP
+  Agentic Top 10 2025-12-09의 **ASI08 Cascading Failures** — 여기서는 그중 *위임 연쇄(cascading/runaway
+  delegation)* 측면). P5는 `delegation_depth`(휴먼 위의 agent→agent 홉 수)가 1을 넘는 에이전트를 **모든
+  action에서 거부**한다(0=휴먼 직접조작, 1=허용된 한 홉 서브에이전트, 2+=거부). `on_behalf_of`는 항상
+  **루트 휴먼**으로 해석되므로 P2의 교집합 floor(루트 휴먼의 등급)가 체인 끝까지 적용되고, 서브에이전트
+  자신의 천장(`max_classification`)이 상한이 된다.
+  > ⚠️ **모델이 강제하는 범위(과장 금지):** `delegation_depth`는 **단일 정수일 뿐 실제 체인을 순회하지
+  > 않는다.** 따라서 *중간* 에이전트의 더 낮은 천장은 이 모델에 표현되지 않는다 — 정확한 주장은 "P5가
+  > *체인 길이*를 묶고, **루트 휴먼 등급이 floor·서브에이전트 천장이 상한**으로 등급을 캡한다"이지,
+  > "어느 홉에서도 증폭 불가"라는 일반 주장이 아니다(스폰 시 `sub.max_classification`을 부모 천장 이하로
+  > 설정하는 것은 미구현 에이전트 런타임의 책임 — `nhi.md`의 확장 경로). Cedar엔 속성 union 타입이 없어
+  > `on_behalf_of`를 Agent로 체이닝하면 `.clearance`가 깨지므로, depth를 별도 추적하는 편이 타입 건전하다.
+
+  P5도 *반증가능*하다 — 지우면 depth-2 에이전트가 *공개 데이터*를 읽는 케이스가 Deny→Allow로 뒤집힌다(확인됨).
+- **OWASP Agentic Top 10 (2025-12-09) 매핑** — P1–P5가 어디에 대응하고, 무엇이 *아직 doc-only*인지 정직하게:
+
+  | 정책/통제 | OWASP Agentic 항목 | 이 repo |
+  |---|---|---|
+  | P1 도구 allowlist | ASI02 Tool Misuse (도구 오남용) | VERIFIED (agent 14/14) |
+  | P2 위임 교집합 / P3 owner override | **ASI03 Identity & Privilege Abuse** (권한 오남용/confused-deputy) | VERIFIED (mutation 반증) |
+  | P5 위임깊이 cap | **ASI08 Cascading Failures** (위임 연쇄 측면) | VERIFIED (mutation 반증) |
+  | (PDP 엣지) Bearer-JWT audience 검증 | **ASI03 Identity & Privilege Abuse** (신원 위조/token replay) | 검증기 단위테스트 `auth_test.py` 13/13; **라이브 강제 아님 → coverage ID8 = CONFIGURED** |
+  | 메모리/RAG 오염 | ASI06 Memory & Context Poisoning | **NOT_COVERED — doc-only** (이 스택은 인가 계층; 메모리 무결성은 범위 밖) |
+  | 에이전트 간 통신 신뢰 | ASI07 Insecure Inter-Agent Communication | **doc-only** — SPIFFE 상호인증(ID4, CONFIGURED)이 *부분* 토대이나 에이전트 프로토콜 수준 미구현 |
+
+  > 과대주장 금지: 이 데모는 **인가 결정**(누가 무엇을)을 다룬다. ASI06(메모리 오염)·ASI07(에이전트 간
+  > 프로토콜)은 별도 계층이라 여기서 **충족했다고 주장하지 않는다** — 경계만 표시한다.
+- **요청자 인증 / OAuth 2.1 (PDP 엣지, [`app/api/auth.py`](../app/api/auth.py)):** PDP는 `Authorization:
+  Bearer` 토큰이 제시되면 **서명 + audience**(이 리소스용으로 발급됐는지, **RFC 8707** resource indicator)
+  를 검증한 뒤에야 그 `sub`를 principal로 삼고, 검증 실패·미지원 스킴은 **fail-closed(401)** 한다 — 다른
+  서비스용 토큰의 재생(replay)을 막는다(`auth_test.py` 13/13). **단 인증은 강제가 아니다:** Authorization이
+  없으면 미인증 **X-User 데모 폴백**으로 내려가므로, 이 통제는 coverage에서 **VERIFIED가 아니라
+  ID8 = CONFIGURED**다(검증기 로직은 단위테스트됐으나 라이브 강제는 미배선). **데모 한계:** 서명키는
+  로컬 HS256 픽스처이고(프로덕션은 IdP **JWKS** 비대칭 검증). **프로덕션 매핑(doc-only):** OAuth 2.1
+  **Resource Server**, **RFC 8693** 토큰 교환 OBO, MCP Authorization 스펙. full OAuth(DCR/discovery/실 OBO)는 미구현.
 - **AI Gateway:** API Gateway가 PEP이듯, AI/Agent Gateway는 에이전트 행동의 PEP다. 여기서 위
   인가 모델이 시행된다. 이 repo의 PDP가 그 자리에 들어갈 수 있다. NHI 생애주기 관점은
   [`nhi.md`](nhi.md) 참조.
@@ -108,6 +144,9 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
 - Google *Zanzibar: Google's Consistent, Global Authorization System* (ReBAC 기원, 2019) — <https://research.google/pubs/pub48190/>
 - OpenFGA (CNCF, Zanzibar 계열) — <https://openfga.dev/> · SpiceDB — <https://authzed.com/spicedb>
 - Cedar / Amazon Verified Permissions (정책+속성 인가) — <https://www.cedarpolicy.com/> · <https://aws.amazon.com/verified-permissions/>
+- OWASP *Top 10 for Agentic Applications* (2025-12-09; ASI02 Tool Misuse·ASI03 Identity & Privilege Abuse·ASI06 Memory & Context Poisoning·ASI07 Insecure Inter-Agent Communication·ASI08 Cascading Failures) — <https://genai.owasp.org/>
+- MCP *Authorization* 스펙 (OAuth 2.1 Resource Server) — <https://modelcontextprotocol.io/specification/draft/basic/authorization>
+- RFC 8707 *Resource Indicators for OAuth 2.0* (audience binding) · RFC 8693 *OAuth 2.0 Token Exchange* (OBO) — <https://www.rfc-editor.org/rfc/rfc8707> · <https://www.rfc-editor.org/rfc/rfc8693>
 
 > 정직 메모: 이 문서는 *포지셔닝*이다. ReBAC와 에이전트 위임은 §4·§5의 **실행 데모**로 충족했으나,
 > 라이브 `api` PDP에 in-request로 배선하지는 않았다(설계·오라클 수준). 이 경계를 분명히 하는 것이

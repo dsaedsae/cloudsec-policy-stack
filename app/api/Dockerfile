@@ -9,7 +9,7 @@ WORKDIR /app
 COPY app/api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app/api/main.py /app/main.py
+COPY app/api/main.py app/api/auth.py /app/
 # Same Cedar artifacts unit-tested in cedar/authz.py — single source of truth.
 COPY cedar/policies.cedar cedar/schema.json cedar/entities.json /app/cedar/
 

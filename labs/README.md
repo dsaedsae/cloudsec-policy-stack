@@ -121,7 +121,7 @@ flowchart LR
 
     [클러스터 불필요]{ .lab-badge .no-cluster }
 
-    AI 에이전트 위임을 ABAC 교집합 + ReBAC 그래프로. 졸업: **12/12 + 11/11**.
+    AI 에이전트 위임을 ABAC 교집합 + ReBAC 그래프로. 졸업: **14/14 + 11/11**.
 
     `python labs/m6/grade.py`{ .lab-grade }
 
@@ -156,7 +156,7 @@ flowchart LR
 - [ ] **M3** — `bash labs/m3/grade.sh` → **7/7** (클러스터)
 - [ ] **M4** — `bash labs/m4/grade.sh` → **id=0 + sh=137** (클러스터)
 - [ ] **M5** — `bash labs/m5/grade.sh` → **ET1 PASS** + capture-wg/etcd 해석 (클러스터)
-- [ ] **M6** — `python labs/m6/grade.py` → **12/12 + 11/11**
+- [ ] **M6** — `python labs/m6/grade.py` → **14/14 + 11/11**
 
 > 7개를 다 졸업하면 → [캡스톤 · 면접 노트](capstone.md)를 채워라. 무엇을 재구현했고, 각 통제가
 > *막는 것*과 *막지 못하는 것*을 정직하게 적으면 그대로 포트폴리오·면접 답변이 된다.

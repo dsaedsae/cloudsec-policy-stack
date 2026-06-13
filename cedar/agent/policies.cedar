@@ -59,3 +59,34 @@ when {
     resource.classification >= 2
     && principal.max_classification < 2
 };
+
+// 5) Delegation-depth cap — OWASP Agentic Top 10 (2025-12-09) ASI08
+//    "Cascading / runaway delegation." Agents now spawn sub-agents; without a bound,
+//    a human->agent->sub-agent->... chain lets authority cascade through an unbounded
+//    spawn tree (each hop a fresh confused-deputy surface). We cap the chain: an agent
+//    more than ONE hop removed from its human principal is refused outright, for ANY
+//    action (forbid always wins in Cedar).
+//
+//    delegation_depth = number of agent->agent hops above the human:
+//      0 = the agent a human operates directly      (human -> agent)        ALLOWED
+//      1 = a sub-agent that agent spawned           (human -> agent -> sub) ALLOWED (the one permitted hop)
+//      2+ = sub-sub-agent and deeper                                        FORBIDDEN by this rule
+//
+//    DESIGN NOTE (scope, no over-claim): on_behalf_of always resolves to the ROOT HUMAN
+//    (not an upstream agent), so P2's intersection floor (resource.classification <=
+//    on_behalf_of.clearance) keeps applying down the chain, and the sub-agent's OWN
+//    max_classification caps it from above. What this model does NOT do: delegation_depth
+//    is a single integer, not a traversal, so an *intermediate* agent's lower ceiling is
+//    NOT represented here (setting sub.max_classification <= parent ceiling at spawn time
+//    is the unimplemented agent-runtime's job). So the honest claim is "P5 bounds the chain
+//    LENGTH; root-human clearance is the floor and the sub-agent's own ceiling is the cap"
+//    — NOT a general "authority can never amplify at any hop." Cedar has no attribute union
+//    type, so chaining on_behalf_of to an Agent would break `.clearance`; tracking depth
+//    separately is type-sound. This rule is LOAD-BEARING and falsifiable: delete it and the
+//    depth-2 agent in requests.json (reading public data) flips Deny -> Allow.
+forbid (
+    principal,
+    action,
+    resource
+)
+when { principal.delegation_depth > 1 };

@@ -15,7 +15,8 @@
           "attributes": {
             "allowed_tools": { "type": "Set", "element": { "type": "String" } },
             "max_classification": { "type": "Long" },
-            "on_behalf_of": { "type": "Entity", "name": "User" }
+            "on_behalf_of": { "type": "Entity", "name": "User" },
+            "delegation_depth": { "type": "Long" }
           }
         }
       },

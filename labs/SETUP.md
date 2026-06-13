@@ -27,7 +27,7 @@ python -m venv .venv
 이제 [M0](m0/README.md)을 시작한다: `.venv\Scripts\python.exe labs\m0\grade.py` (처음엔 5/8).
 
 - **M1**은 위 `.venv`면 충분(checkov 포함). 이미지 스캔까지 해보려면 `trivy`(선택): `winget install AquaSecurity.Trivy`.
-- **M6 Part B(ReBAC)** 는 **Docker Desktop**이 필요하다(OpenFGA를 docker로 실행). Docker가 없으면 Part A(Cedar 12/12)만 채점되고 졸업 표시가 안 뜬다.
+- **M6 Part B(ReBAC)** 는 **Docker Desktop**이 필요하다(OpenFGA를 docker로 실행). Docker가 없으면 Part A(Cedar 14/14)만 채점되고 졸업 표시가 안 뜬다.
 
 > Linux/CI 형식(`./.venv/bin/python ...`)은 저장소 루트 `README.md`의 Quickstart 절을 참고.
 

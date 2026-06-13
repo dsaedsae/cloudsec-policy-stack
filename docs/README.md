@@ -8,7 +8,7 @@ payoff *before* asking you to install more. Defensive/infra only.
 > 망분리 개선 로드맵」(2024-08-13)의 다층보안(MLS) 보상통제에 각 통제를 1:1 매핑하고
 > NIST 800-207·검증 항목까지 연결한다.
 >
-> **정량 평가:** **[검증가능성 커버리지 분석](evaluation-coverage.md)**(MLS 보상통제의 67%가 코드로
+> **정량 평가:** **[검증가능성 커버리지 분석](evaluation-coverage.md)**(MLS 보상통제의 65%가 코드로
 > 검증가능 — 갭 공개) · **감사 적용:** **[감사증거 패키지 예시](audit-evidence.md)**(1통제를 기준·산출물·
 > 증거·재현명령까지).
 >
