@@ -1,0 +1,26 @@
+// Zero-install browser env (GitHub Codespaces) for the NO-CLUSTER track:
+//   M0 (Cedar authz) · M1 (checkov) · M6 (agent-ABAC + ReBAC) · M7 (formal/z3).
+// Docker-in-Docker is included so M6 Part B (OpenFGA) and the ReBAC live /check work.
+// The cluster track (M2-M5, M8) needs kind + ~6-8GB RAM and is best run locally or
+// on a larger machine — see labs/SETUP.md.
+{
+  "name": "cloudsec-policy-stack — no-cluster labs",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+
+  "postCreateCommand": "pip install --no-cache-dir -r requirements-dev.txt",
+  "postAttachCommand": "echo 'Ready. No-cluster labs run with bare python here (no .venv). Start:  python labs/m0/grade.py --ext   |   Track: labs/README.md   |   Progress: python scripts/progress.py'",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "redhat.vscode-yaml",
+        "bierner.markdown-mermaid"
+      ]
+    }
+  }
+}

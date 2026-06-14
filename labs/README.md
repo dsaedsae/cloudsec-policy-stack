@@ -4,7 +4,7 @@
 그 검증기를 **자동 채점기**로 뒤집는다: 통제 하나를 **빈 파일에서 직접 재구현**하면 채점기가
 PASS/FAIL로 판정한다. 따라치기가 아니라 — 스펙만 보고 쓰고, 틀리면 *왜* 틀렸는지 채점으로 배운다.
 
-> 💡 **처음이라면 — 먼저 환경 준비:** **[환경 준비 (SETUP)](SETUP.md)** 를 1분 보고(클론엔 `.venv`가 없다), 그다음 **[M0](m0/README.md)**. 클러스터 없이 Python만으로 5분이면 첫 채점을 본다. 무엇이 빠졌는지 한 번에 보려면 `powershell -File scripts\doctor.ps1`.
+> 💡 **처음이라면 — 먼저 환경 준비:** **[환경 준비 (SETUP)](SETUP.md)** 를 1분 보고(클론엔 `.venv`가 없다), 그다음 **[M0](m0/README.md)**. 클러스터 없이 Python만으로 5분이면 첫 채점을 본다. 무엇이 빠졌는지 한 번에 보려면 `powershell -File scripts\doctor.ps1`. **무설치로**: GitHub Codespaces(Code ▸ Codespaces)면 무클러스터 랩이 브라우저에서 바로 돈다 — 진도는 `python scripts/progress.py`.
 
 > 📝 **돌아온 학습자 / 면접 직전:** 각 모듈의 **구두 문답**(접힌 답안)으로 복습하라. 어느 모듈이든 사이드바에서 1클릭으로 점프.
 

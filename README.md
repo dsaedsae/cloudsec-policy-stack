@@ -2,6 +2,7 @@
 
 [![ci](https://github.com/dsaedsae/cloudsec-policy-stack/actions/workflows/ci.yml/badge.svg)](https://github.com/dsaedsae/cloudsec-policy-stack/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dsaedsae/cloudsec-policy-stack)
 
 무료 로컬 `kind` 클러스터 위에서 도는 방어심층(defense-in-depth) 쿠버네티스 보안 스택과, 각 통제를 직접 다시 구현해 보는 자가채점 학습 트랙입니다. 프로덕션 배포물이 아니라 학습·포트폴리오 산출물입니다.
 
@@ -51,7 +52,9 @@
 
 ## 빠른 시작
 
-사전 준비: Python 3.12. 클러스터 경로엔 추가로 Docker, `kind`, `kubectl`, `helm`, `cilium-cli`, `terraform`, 그리고 Git for Windows(.sh 스크립트·채점기는 PowerShell이 아니라 Git Bash에서 실행)가 필요합니다.
+**무설치 (브라우저):** GitHub **Code ▸ Codespaces ▸ Create** — 무클러스터 랩(M0/M1/M6/M7)이 0설치로 즉시 채점됩니다(`make progress`로 진도 표). 사내교육 활용은 [교육용 가이드](docs/using-for-training.md).
+
+사전 준비(로컬): Python 3.12. 클러스터 경로엔 추가로 Docker, `kind`, `kubectl`, `helm`, `cilium-cli`, `terraform`, 그리고 Git for Windows(.sh 스크립트·채점기는 PowerShell이 아니라 Git Bash에서 실행)가 필요합니다.
 
 ```powershell
 # Windows (PowerShell)
@@ -69,6 +72,8 @@ python -m venv .venv && ./.venv/bin/python -m pip install -r requirements-dev.tx
 ./.venv/bin/python cedar/authz.py
 bash scripts/up.sh && bash scripts/verify.sh && bash scripts/down.sh
 ```
+
+> Linux/macOS/Codespaces엔 `make` 단축키도 있습니다: `make setup` · `make progress` · `make m0` · `make test` · `make up`/`make verify`/`make down` (전체: `make help`).
 
 ## 상태
 
