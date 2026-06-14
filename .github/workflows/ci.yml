@@ -32,7 +32,7 @@ jobs:
       - name: Cross-layer policy consistency (Cilium L7 x Cedar; z3 finite-domain check)
         run: python formal/cross_layer.py
 
-      - name: Identity tier-SA consistency (no drift: rbac <-> 3 admission policies)
+      - name: "Identity tier-SA consistency (no drift: rbac <-> 3 admission policies)"
         run: python scripts/check-sa-consistency.py
 
       - name: ReBAC model test (OpenFGA — relationship-derived allow/deny)
