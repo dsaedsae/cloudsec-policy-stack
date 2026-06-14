@@ -18,6 +18,7 @@
     <text x="540" y="468" fill="#8b9099">라이브 &#183; 전 계층</text>
   </g>
   <text x="72" y="528" fill="#6b748f" font-family="'JetBrains Mono',Consolas,monospace" font-size="18">cedar 8/8&#183;17/17 &#160; rebac 11/11 &#160; checkov 452/0 &#160; +1 CVE</text>
-  <text x="72" y="582" fill="#8b9099" font-family="'JetBrains Mono',Consolas,monospace" font-size="20">identity <tspan fill="#3a4150">&#8594;</tspan> segmentation <tspan fill="#3a4150">&#8594;</tspan> authz <tspan fill="#3a4150">&#8594;</tspan> encrypt <tspan fill="#3a4150">&#8594;</tspan> runtime</text>
-  <text x="1208" y="600" fill="#4b515b" text-anchor="end" font-family="'JetBrains Mono',Consolas,monospace" font-size="18" font-weight="700">cloudsec-policy-stack</text>
+  <text x="72" y="574" fill="#8b9099" font-family="'JetBrains Mono',Consolas,monospace" font-size="20">identity <tspan fill="#3a4150">&#8594;</tspan> segmentation <tspan fill="#3a4150">&#8594;</tspan> authz <tspan fill="#3a4150">&#8594;</tspan> encrypt <tspan fill="#3a4150">&#8594;</tspan> runtime</text>
+  <text x="72" y="606" fill="#6b748f" font-family="'Noto Sans KR','Malgun Gothic',sans-serif" font-size="14">교육&#183;포트폴리오 &#8212; 법률/금융 자문&#183;공식 FSC 매핑 아님</text>
+  <text x="1208" y="606" fill="#4b515b" text-anchor="end" font-family="'JetBrains Mono',Consolas,monospace" font-size="18" font-weight="700">cloudsec-policy-stack</text>
 </svg>

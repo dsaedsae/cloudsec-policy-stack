@@ -6,7 +6,7 @@
 
 > 🏢 **의사결정자·도입 검토용 (md 말고):** [원페이저 PDF](presentation/cloudsec-onepager.pdf) — GitHub에서 바로 열립니다 · [HTML](presentation/cloudsec-onepager.html)(다운로드→브라우저, 이메일·인쇄용). 아래는 개발자/학습자용.
 
-무료 로컬 `kind` 클러스터 위에서 도는 방어심층(defense-in-depth) 쿠버네티스 보안 스택과, 각 통제를 직접 다시 구현해 보는 자가채점 학습 트랙입니다. 프로덕션 배포물이 아니라 학습·포트폴리오 산출물입니다.
+무료 로컬 `kind` 클러스터 위에서 도는 방어심층(defense-in-depth) 쿠버네티스 보안 스택과, 각 통제를 직접 다시 구현해 보는 자가채점 학습 트랙입니다. 프로덕션 배포물이 아니라 **교육·포트폴리오 레퍼런스**이며, 법률/금융 자문도 공식 FSC 컴플라이언스 매핑도 아닙니다.
 
 한 요청이 네트워크 → HTTP → 애플리케이션 인가 → 런타임의 독립된 정책 계층을 차례로 통과하고, 각 계층은 직접 돌리는 스크립트로 시행·검증됩니다.
 
@@ -84,7 +84,7 @@ bash scripts/up.sh && bash scripts/verify.sh && bash scripts/down.sh
 - **shadowed(dead) 규칙** — Cedar는 허용하지만 L7이 그 경로를 막아 `web→api`로는 도달 불가한 permit (의도된 out-of-band인가, 사고인가? — 검토 대상)
 - **ungated 경로** — L7으로 도달 가능한데 Cedar 게이트가 없는 실제 갭 → **exit 1**
 
-입력은 실제 산출물이다: Cedar는 `cedar/`(cedarpy), L7 도달성은 `k8s/netpol.yaml`, 라우트별 게이트는 `app/api/main.py`에서 AST로 도출.
+입력: Cedar 판정은 `cedar/`(cedarpy, 라이브), 라우트별 게이트는 `app/api/main.py` AST(라이브). L7 도달성은 `k8s/netpol.yaml`의 HTTP 블록을 **손으로 옮긴** 규칙이다 — 파일 자체를 파싱하진 않는다(정직한 범위: hand-translation, 라이브 데이터플레인 아님).
 
 ```bash
 make report                                    # -> outputs/cross-layer/report.{html,json,sarif}
