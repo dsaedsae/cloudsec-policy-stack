@@ -151,7 +151,7 @@ footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--faint)}
     <dt>policy-as-code</dt><dd>요청 단위 PDP · ABAC · ReBAC를 직접 작성(Cedar, OpenFGA).</dd>
     <dt>어드미션·신원</dt><dd>라벨↔ServiceAccount 바인딩으로 신원 위조 차단(VAP+CEL, SPIFFE).</dd>
     <dt>런타임 eBPF</dt><dd>커널에서 SIGKILL — 그리고 <b>탐지와 차단의 경계</b>를 직접 체감(Tetragon).</dd>
-    <dt>공급망</dt><dd>SBOM · 이미지 서명 · CVE 게이트 · 시프트레프트 triage(checkov, trivy, cosign, gitleaks).</dd>
+    <dt>공급망</dt><dd>시프트레프트 triage를 <b>직접</b>(M1·checkov) + 이미지 스캔·SBOM·CVE 게이트·시크릿 스캔이 CI에서 막는 방식(trivy·gitleaks). <span style="color:var(--faint)">이미지 서명은 클러스터/ECR opt-in 경로(직접 모듈 아님).</span></dd>
     <dt>형식검증</dt><dd>유한도메인으로 계층 간 정합성 확인(z3).</dd>
     <dt>AI-에이전트 인가</dt><dd>위임 깊이 · confused-deputy · OWASP Agentic 위협(Cedar agent).</dd>
   </dl>
