@@ -3,143 +3,127 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>cloudsec-policy-stack — 검증 가능한 MLS 보상통제</title>
-<!-- Self-contained, zero JS. Numbers are VERBATIM from index.md (핵심 결과). Links are
-     absolute (works when this file is hosted standalone / dragged to Netlify). -->
+<title>cloudsec — verified by code</title>
+<!-- numbers VERBATIM from index.md 핵심 결과. self-contained, zero JS. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
-:root{--teal:#1f8a70;--ink:#1a237e;--orange:#c2410c;--bg:#fbfcfe;--card:#fff;--line:#e6e9f0;
-  --fg:#222838;--muted:#5b6478;--faint:#9aa3b5;
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+:root{
+  --bg:#0b0d10; --panel:#0e1014; --fg:#e7e9ee; --mut:#8b9099; --faint:#4b515b; --line:#1b1f25;
+  --acc:#34d399;                /* the single accent — used only on what a test proved */
   --mono:"JetBrains Mono","Cascadia Code",Consolas,monospace;
-  --sans:"Noto Sans KR",-apple-system,"Segoe UI","Malgun Gothic",sans-serif}
+  --sans:"Noto Sans KR",-apple-system,"Segoe UI",sans-serif;
+}
 *{box-sizing:border-box}
 html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.55;font-size:15px;-webkit-font-smoothing:antialiased}
-.wrap{max-width:940px;margin:0 auto;padding:48px 32px 56px}
-a{color:var(--teal);text-decoration:none}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;letter-spacing:.1px}
+.wrap{max-width:760px;margin:0 auto;padding:64px 32px 72px}
+a{color:var(--acc);text-decoration:none}
 
-.kicker{font:600 12px/1 var(--mono);letter-spacing:.14em;color:var(--teal);text-transform:uppercase}
-h1{font:900 40px/1.14 var(--sans);color:var(--ink);margin:.4em 0 .25em;letter-spacing:-.015em}
-.lead{font-size:18px;color:var(--muted);max-width:30em;margin:0}
-.chips{display:flex;flex-wrap:wrap;gap:9px;margin:22px 0 0}
-.chip{font:700 13px/1 var(--mono);padding:9px 14px;border-radius:999px}
-.chip.v{background:#e6f4ea;color:#1b5e20}.chip.i{background:#e8eaf6;color:var(--ink)}
+/* wordmark */
+.mark{font:500 13px/1 var(--mono);color:var(--mut);display:flex;gap:10px;align-items:center}
+.mark .dot{width:9px;height:9px;border-radius:2px;background:var(--acc)}
+.mark b{color:var(--fg);font-weight:700}
+.mark .sep{color:var(--faint)}
 
-h2{font:800 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:46px 0 16px}
+h1{font:900 clamp(34px,6vw,52px)/1.1 var(--sans);letter-spacing:-.02em;margin:40px 0 0}
+.deck{font-size:17px;color:var(--mut);max-width:33em;margin:18px 0 0}
+.deck b{color:var(--fg);font-weight:500}
 
-/* pipeline */
-.pipe{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
-.st{flex:1 1 0;min-width:104px;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--ink);border-radius:10px;padding:11px 12px}
-.st .n{font:700 10.5px/1 var(--mono);color:var(--teal)}
-.st .t{font-weight:700;color:var(--ink);font-size:14px;margin-top:4px}
-.st.d{border-top-color:var(--orange)}.st.d .t{color:var(--orange)}
-.arw{color:var(--faint);font-weight:700}
-.guards{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;font-size:12.5px;color:#7c3a14}
-.guards span{flex:1 1 180px;background:#fff7f2;border:1px solid #f3d9c9;border-left:3px solid var(--orange);border-radius:8px;padding:8px 11px}
-.guards b{color:var(--orange)}
-.one{font-size:14px;color:var(--muted);margin:14px 0 0}.one b{color:var(--ink)}
+hr{border:0;border-top:1px solid var(--line);margin:44px 0}
 
-/* metrics */
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
-.m{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px}
-.m .big{font:700 30px/1 var(--mono);color:var(--ink)}.m .big .u{font-size:15px;color:var(--faint)}
-.m .l{font-weight:700;font-size:13.5px;margin-top:9px}
-.m.h{border-color:#bfe3d4;background:#f3fbf7}.m.h .big{color:var(--teal)}
-.cav{font-size:12.5px;color:var(--muted);margin:14px 2px 0;padding-left:12px;border-left:3px solid var(--line)}
+/* the ledger — the technical signature: aligned mono data, accent only on numbers, hairline bars */
+.ledger{display:grid;grid-template-columns:96px 168px 82px 1fr;gap:14px 16px;align-items:center;
+  font-family:var(--mono);font-size:14px}
+.ledger .k{color:var(--mut);font-weight:500}
+.ledger .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.ledger .bar i{display:block;height:100%;background:var(--acc);border-radius:3px}
+.ledger .v{color:var(--acc);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.ledger .d{color:var(--mut);font-size:13px;font-family:var(--sans)}
+.note{color:var(--faint);font-size:12.5px;font-family:var(--mono);margin:16px 0 0}
 
-/* credibility — three tight lines */
-.why{display:grid;gap:9px}
-.why .row{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 16px}
-.why .k{flex:0 0 116px;font-weight:800;color:var(--teal);font-size:13.5px}
-.why .t{font-size:14px;color:var(--fg)}.why .t b{color:var(--ink)}
+/* flow — one mono line, not boxes */
+.flow{font-family:var(--mono);font-size:15px;color:var(--fg);line-height:2.1}
+.flow .a{color:var(--faint);padding:0 6px}
+.flow .acc{color:var(--acc)}
+.proof{font-family:var(--mono);font-size:14px;color:var(--mut);margin:14px 0 0}
+.proof .ok{color:var(--acc)}.proof .no{color:#f06f6f}
 
-/* terminal */
-.term{background:#16182a;border-radius:12px;padding:16px 18px;overflow:auto}
-.term pre{margin:0;font:500 13px/1.75 var(--mono);color:#c8d3e6;white-space:pre}
-.term .ok{color:#7ee0a8}.term .no{color:#ff8a8a}.term .cy{color:#8fd0ff}.term .dim{color:#7681a3}
+/* why — sparse, no boxes, just type + a leading rule */
+.why{margin:0}
+.why .lead{font-size:16px;color:var(--fg);font-weight:500;margin:0 0 18px}
+.why dl{margin:0;display:grid;grid-template-columns:max-content 1fr;gap:12px 20px}
+.why dt{font-family:var(--mono);font-size:13px;color:var(--acc);font-weight:500;white-space:nowrap}
+.why dd{margin:0;color:var(--mut);font-size:14.5px}
+.why dd b{color:var(--fg);font-weight:500}
 
-/* cta */
-.cta{display:flex;flex-wrap:wrap;gap:11px;align-items:center;margin-top:6px}
-.btn{font-weight:700;font-size:14px;padding:12px 20px;border-radius:10px;border:1.5px solid var(--ink);color:var(--ink);background:#fff}
-.btn.p{background:var(--ink);color:#fff}
-.cta .x{font-size:12.5px;color:var(--faint)}
-footer{margin-top:34px;border-top:1px solid var(--line);padding-top:14px;font-size:11.5px;color:var(--faint)}
-footer b{color:var(--muted)}
+/* cta — restrained mono buttons */
+.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:6px 0 0}
+.btn{font:500 13px/1 var(--mono);padding:13px 20px;border:1px solid var(--line);border-radius:8px;color:var(--fg);
+  transition:border-color .15s,color .15s}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.p{border-color:var(--acc);color:var(--acc)}
+.cta .x{font-family:var(--mono);font-size:12px;color:var(--faint)}
 
-@media(max-width:620px){.grid{grid-template-columns:1fr 1fr}h1{font-size:31px}}
-@media print{@page{size:A4;margin:13mm}body{background:#fff;font-size:10.5px;line-height:1.4}
-  .wrap{max-width:none;padding:0}h1{font-size:26px}.lead{font-size:12px}.m .big{font-size:21px}
-  h2{margin:18px 0 9px}.m,.st,.why .row,.term{break-inside:avoid}a{color:var(--ink)}}
+footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--faint)}
+
+@media print{
+  @page{size:A4;margin:15mm}
+  :root{--bg:#fff;--panel:#fff;--fg:#15171c;--mut:#555b66;--faint:#9aa0ab;--line:#e2e5ea;--acc:#0f9e74}
+  body{font-size:11px;line-height:1.45}.wrap{max-width:none;padding:0}
+  h1{font-size:27px}.deck{font-size:12px}hr{margin:18px 0}
+  .ledger,.why dl,.flow,.proof{break-inside:avoid}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <div class="kicker">Korea FSC · 망분리 완화 → 위험기반 MLS</div>
+  <div class="mark"><span class="dot"></span><b>cloudsec</b><span class="sep">/</span>verified&nbsp;by&nbsp;code<span class="sep">·</span>Korea&nbsp;FSC&nbsp;MLS</div>
+
   <h1>망분리를 풀면,<br>신뢰를 무엇으로 대체하는가</h1>
-  <p class="lead">MLS 보상통제를 <b>코드로</b> — 그리고 막는다는 사실을 <b>매번 라이브로 재현</b>.</p>
-  <div class="chips">
-    <span class="chip v">검증가능 72% (29/40)</span>
-    <span class="chip v">라이브 21/21</span>
-    <span class="chip i">무료 로컬 · MIT</span>
-  </div>
+  <p class="deck">MLS 보상통제를 <b>코드로</b>. 한 요청이 신원·세분화·인가·암호화·탐지를 통과해야 데이터에 닿고,
+    막는다는 사실을 <b>매번 라이브로 재현</b>한다.</p>
 
-  <h2>문제</h2>
-  <p style="margin:0;font-size:16px">FSC 로드맵(2024-08-13)이 <b>위치 기반 분리 → 위험 기반 MLS</b>로 전환한다.
-    "내부망 = 신뢰"가 사라진 자리를 보상통제로 메워야 하는데 — <b>실제로 막는지를 무엇으로 증명하나?</b></p>
+  <hr>
 
-  <h2>한 요청이 통과하는 6개 통제 계층</h2>
-  <div class="pipe">
-    <div class="st"><div class="n">요청 / 공격</div><div class="t">진입</div></div>
-    <span class="arw">→</span>
-    <div class="st"><div class="n">① 신원</div><div class="t">admission</div></div>
-    <span class="arw">→</span>
-    <div class="st"><div class="n">② 세분화</div><div class="t">Cilium L3/L7</div></div>
-    <span class="arw">→</span>
-    <div class="st"><div class="n">③ 인가</div><div class="t">Cedar PDP</div></div>
-    <span class="arw">→</span>
-    <div class="st d"><div class="n">기밀 C</div><div class="t">db</div></div>
+  <div class="ledger">
+    <span class="k">coverage</span><span class="bar"><i style="width:72%"></i></span><span class="v">72%</span><span class="d">29/40 — 검증가능-as-code</span>
+    <span class="k">verify</span><span class="bar"><i style="width:100%"></i></span><span class="v">21/21</span><span class="d">라이브, 전 계층 enforcement</span>
+    <span class="k">cedar</span><span class="bar"><i style="width:100%"></i></span><span class="v">8/8·17/17</span><span class="d">인가 + 에이전트 위임 (반증가능)</span>
+    <span class="k">rebac</span><span class="bar"><i style="width:100%"></i></span><span class="v">11/11</span><span class="d">OpenFGA 관계 테스트</span>
+    <span class="k">checkov</span><span class="bar"><i style="width:100%"></i></span><span class="v">452/0</span><span class="d">shift-left · 실 CVE 1건 포착→수정</span>
   </div>
-  <div class="guards">
-    <span><b>④ egress</b> default-deny (유출·SSRF)</span>
-    <span><b>⑤⑥ 암호화</b> WireGuard · etcd</span>
-    <span><b>⑦ 런타임</b> Tetragon 셸 SIGKILL</span>
-  </div>
-  <p class="one">같은 경로·같은 L7 허용이라도 <b>principal이 다르면 결과가 다르다</b> — alice 200 / bob 403.</p>
+  <p class="note">// 21/21은 기능 회귀 스위트(분모 없는 측정 아님) · 갭 28%(CONFIGURED 7·GOVERNANCE 2·NOT-COVERED 4)는 행 단위 공개.</p>
 
-  <h2>증거 — 전부 재현 가능</h2>
-  <div class="grid">
-    <div class="m h"><div class="big">72%<span class="u"> (29/40)</span></div><div class="l">검증가능성 커버리지</div></div>
-    <div class="m"><div class="big">21/21</div><div class="l">라이브 방어심층 검증</div></div>
-    <div class="m"><div class="big">8/8 · 17/17</div><div class="l">Cedar 인가 단위테스트</div></div>
-    <div class="m"><div class="big">11/11</div><div class="l">ReBAC (OpenFGA)</div></div>
-    <div class="m"><div class="big">452 / 0</div><div class="l">checkov pass / fail</div></div>
-    <div class="m"><div class="big">CRITICAL 1</div><div class="l">자체 검증이 잡은 실 버그 → 수정</div></div>
-  </div>
-  <p class="cav">21/21은 기능 회귀 스위트(분모 없는 측정 아님) · 72% 분모 = 40 · 갭(CONFIGURED 7·GOVERNANCE 2·NOT-COVERED 4)은 행 단위 공개.</p>
+  <hr>
 
-  <h2>왜 신뢰할 수 있나 — "안전하다"가 아니라 "갭을 공개한다"</h2>
+  <div class="flow">
+    identity<span class="a">→</span>segmentation<span class="a">→</span>authz<span class="a">→</span>encrypt<span class="a">→</span>runtime
+  </div>
+  <p class="proof">같은 경로·다른 신원 &nbsp;&middot;&nbsp; alice GET acct-alice <span class="ok">200</span> &nbsp; bob 같은 경로 <span class="no">403</span> &nbsp; db /bin/sh <span class="no">137</span> / id <span class="ok">0</span></p>
+
+  <hr>
+
   <div class="why">
-    <div class="row"><div class="k">재현 증거</div><div class="t">감사자가 부작용 없는 dry-run으로 <b>직접</b> 거부/허용을 확인.</div></div>
-    <div class="row"><div class="k">명시된 갭</div><div class="t">미검증 항목을 행 단위로 공개 — 28%가 구체적이다.</div></div>
-    <div class="row"><div class="k">정직성 증명</div><div class="t">요청자 JWT 미강제 행을 <b>스스로 추가해 헤드라인을 낮췄다</b> — 편한 숫자 대신 참값.</div></div>
+    <p class="lead">"안전하다"가 아니라 — <span style="color:var(--acc)">갭을 공개한다.</span></p>
+    <dl>
+      <dt>재현 증거</dt><dd>감사자가 부작용 없는 dry-run으로 <b>직접</b> 거부/허용을 확인.</dd>
+      <dt>명시된 갭</dt><dd>미검증 28%를 행 단위로 공개 — 두루뭉술하지 않다.</dd>
+      <dt>정직성</dt><dd>요청자 JWT 미강제 행을 <b>스스로 추가해 헤드라인을 낮췄다</b> — 편한 숫자 대신 참값.</dd>
+    </dl>
   </div>
 
-  <h2>자동채점기의 판정</h2>
-  <div class="term"><pre>alice → GET /accounts/acct-alice   <span class="ok">200</span>      bob → 같은 경로   <span class="no">403</span>
-db: /bin/sh   <span class="no">rc=137 (SIGKILL)</span>      db: id   <span class="ok">rc=0</span>      web → db   <span class="cy">000</span> (L3 drop)</pre></div>
+  <hr>
 
-  <div class="cta" style="margin-top:30px">
-    <a class="btn p" href="https://github.com/dsaedsae/cloudsec-policy-stack">GitHub 저장소 →</a>
-    <a class="btn" href="https://codespaces.new/dsaedsae/cloudsec-policy-stack">무설치 체험 (Codespaces) →</a>
-    <span class="x">발표 자료·도입 가이드·FSC 매핑은 저장소에.</span>
+  <div class="cta">
+    <a class="btn p" href="https://github.com/dsaedsae/cloudsec-policy-stack">repo</a>
+    <a class="btn" href="https://codespaces.new/dsaedsae/cloudsec-policy-stack">codespaces — 무설치 체험</a>
+    <span class="x">발표 자료·도입 가이드·FSC 매핑 → 저장소</span>
   </div>
 
-  <footer>
-    <b>교육·포트폴리오 목적의 보상통제 설계 레퍼런스 — 법률/금융 자문도, 공식 FSC 컴플라이언스 매핑도 아닙니다.</b>
-    규제 세부는 1차 출처 대조 필요 · 실 데이터스토어 없음 · 제3자 상표는 각 소유자 자산 · MIT
-  </footer>
+  <footer>교육·포트폴리오 레퍼런스 — 법률/금융 자문도 공식 FSC 컴플라이언스 매핑도 아님 · 규제 세부 1차 출처 대조 · MIT</footer>
 
 </div>
 </body>
