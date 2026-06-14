@@ -17,8 +17,9 @@ action as defense-in-depth / shadowed(dead) / ungated:
     python formal/cross_layer.py --open-auditlogs     # mutation: open L7 route -> shadow vanishes
     python formal/cross_layer.py --ungate-transfer    # mutation: route skips Cedar -> UNGATED (exit 1)
 
-Inputs are REAL artifacts: Cedar via cedarpy over cedar/; L7 reachability from
-k8s/netpol.yaml; and the per-route `gate` DERIVED from app/api/main.py (AST). A small z3
+Inputs: Cedar decisions via cedarpy over cedar/ (read live); the per-route `gate` DERIVED
+from app/api/main.py (AST, read live); and L7 reachability from a HAND-TRANSLATION of
+k8s/netpol.yaml's HTTP block (the file itself is NOT parsed — see HONEST SCOPE). A small z3
 finite-domain model enumerates the cross-layer witnesses.
 
 HONEST SCOPE (no over-claim): the domain is the 3 demo actions, so this is a FINITE-DOMAIN
@@ -33,6 +34,7 @@ It complements RBAC-graph / misconfig scanners (kubescape, trivy, kubesplaining)
 from __future__ import annotations
 
 import ast
+import html
 import json
 import re
 import sys
@@ -175,27 +177,28 @@ def emit_sarif(findings):
 def emit_html(findings, meta):
     sev_color = {"error": "#f06f6f", "warning": "#e0b341", "note": "#8b9099"}
     rows = "\n".join(
-        f'<tr><td class=a>{f["action"]}</td><td class=h>{f["http"]}</td>'
-        f'<td style="color:{sev_color[f["severity"]]}">{f["kind"]}</td>'
-        f'<td class=m>{f["verdict"]}</td></tr>' for f in findings)
+        f'<tr><td class=a>{html.escape(f["action"])}</td><td class=h>{html.escape(f["http"])}</td>'
+        f'<td style="color:{sev_color[f["severity"]]}">{html.escape(f["kind"])}</td>'
+        f'<td class=m>{html.escape(f["verdict"])}</td></tr>' for f in findings)
     rem = "\n".join(
-        f'<li><b>{f["action"]}</b> — {f["remediation"]}</li>' for f in findings if f["remediation"])
+        f'<li><b>{html.escape(f["action"])}</b> — {html.escape(f["remediation"])}</li>'
+        for f in findings if f["remediation"])
     n_err = sum(1 for f in findings if f["severity"] == "error")
     n_warn = sum(1 for f in findings if f["severity"] == "warning")
     return f"""<!doctype html><html lang=en><head><meta charset=utf-8>
 <title>cross-layer-lint report</title><style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;700;900&display=swap');
-:root{{--bg:#0b0d10;--fg:#e7e9ee;--mut:#8b9099;--line:#1b1f25;--acc:#34d399;--mono:'JetBrains Mono',Consolas,monospace}}
-body{{margin:0;background:var(--bg);color:var(--fg);font-family:'Inter',-apple-system,sans-serif;font-size:15px;line-height:1.6}}
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;700;900&display=swap');
+:root{{--bg:#0b0d10;--fg:#e7e9ee;--mut:#8b9099;--line:#1b1f25;--acc:#34d399;--mono:'JetBrains Mono',Consolas,monospace;--sans:'Noto Sans KR',-apple-system,'Segoe UI',sans-serif}}
+body{{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.6}}
 .wrap{{max-width:820px;margin:0 auto;padding:56px 32px}}
-.k{{font:700 12px/1 var(--mono);letter-spacing:.14em;color:var(--acc);text-transform:uppercase}}
+.k{{font:700 12px/1 var(--mono);letter-spacing:.04em;color:var(--acc)}}
 h1{{font-weight:900;font-size:34px;letter-spacing:-.02em;margin:.4em 0 .2em}}
 .sum{{font:700 14px var(--mono);color:var(--mut);margin:0 0 8px}}
 .sum b{{color:{sev_color['error']}}}
 table{{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:13px;margin:22px 0}}
 td,th{{border-bottom:1px solid var(--line);padding:.6em .4em;text-align:left;vertical-align:top}}
-.a{{color:var(--fg);font-weight:700}}.h{{color:var(--mut)}}.m{{font-family:'Inter',sans-serif;color:var(--mut)}}
-h2{{font:700 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:32px 0 10px}}
+.a{{color:var(--fg);font-weight:700}}.h{{color:var(--mut)}}.m{{font-family:var(--sans);color:var(--mut)}}
+h2{{font:700 12px var(--mono);letter-spacing:.04em;color:var(--mut);margin:32px 0 10px}}
 ul{{padding-left:18px}}li{{margin:8px 0;color:var(--mut)}}li b{{color:var(--fg)}}
 .note{{color:#4b515b;font-family:var(--mono);font-size:11.5px;border-top:1px solid var(--line);margin-top:34px;padding-top:14px}}
 </style></head><body><div class=wrap>
@@ -206,7 +209,7 @@ ul{{padding-left:18px}}li{{margin:8px 0;color:var(--mut)}}li b{{color:var(--fg)}
 {rows}
 </table>
 {f'<h2>remediation</h2><ul>{rem}</ul>' if rem else ''}
-<p class=note>// scope: {meta}. finite-domain check (3 demo actions); z3 demonstrates the technique.
+<p class=note>// scope: {html.escape(meta)}. finite-domain check (3 demo actions); z3 demonstrates the technique.
 cedar-policy-symcc = unbounded upgrade. complements RBAC/misconfig scanners (different gap). not a CVE.</p>
 </div></body></html>"""
 
@@ -240,7 +243,7 @@ def main() -> int:
     ungated = _enum(facts, A, lambda a: z3.And(Reach(a), z3.Not(Gated(a))))
 
     findings = build_findings(actions, grants, reach, gated)
-    meta = f"netpol={NETPOL.name}, cedar={CEDAR.name}/, app={APP_MAIN.name}{' [--open-auditlogs]' if open_audit else ''}"
+    meta = f"netpol={NETPOL.name} (hand-translated), cedar={CEDAR.name}/, app={APP_MAIN.name}{' [--open-auditlogs]' if open_audit else ''}"
 
     # --- report output (json / sarif / html) ---
     def _arg(flag):
