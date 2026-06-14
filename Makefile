@@ -41,6 +41,12 @@ brief:  ## regenerate the exec one-pager PDF from presentation/cloudsec-onepager
 
 docs:  ## build the docs site (strict)
 	$(PY) -m mkdocs build --strict
+
+site:  ## build the deployable bundle (docs + the decision-maker landing) into site/ (see DEPLOY.md)
+	$(PY) -m mkdocs build
+	cp presentation/cloudsec-onepager.html site/cloudsec-onepager.html
+	@cp presentation/cloudsec-onepager.pdf site/cloudsec-onepager.pdf 2>/dev/null || true
+	@echo "-> site/ ready — drag to Netlify/Cloudflare, or see DEPLOY.md"
 serve:  ## preview the docs site at http://localhost:8000
 	$(PY) -m mkdocs serve
 
@@ -51,4 +57,4 @@ verify:  ## live enforcement suite (needs the cluster)
 down:  ## tear the cluster down (frees RAM)
 	bash scripts/down.sh
 
-.PHONY: help setup doctor progress test m0 m1 m6 m7 brief docs serve up verify down
+.PHONY: help setup doctor progress test m0 m1 m6 m7 brief docs site serve up verify down

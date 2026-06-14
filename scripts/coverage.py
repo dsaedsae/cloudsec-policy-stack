@@ -19,8 +19,10 @@ CSV = ROOT / "docs" / "mls-coverage.csv"
 OUT = ROOT / "docs" / "assets" / "coverage.png"
 
 CATS = ["VERIFIED", "CONFIGURED", "GOVERNANCE", "NOT_COVERED"]
-COLORS = {"VERIFIED": "#2e7d32", "CONFIGURED": "#f9a825",
-          "GOVERNANCE": "#9e9e9e", "NOT_COVERED": "#c62828"}
+# brand palette (matches docs/stylesheets/extra.css + the decision-maker one-pager):
+# teal = "a test proved this" (VERIFIED), amber = claimed-untested, slate = governance, red = gap.
+COLORS = {"VERIFIED": "#1f8a70", "CONFIGURED": "#b8860b",
+          "GOVERNANCE": "#607d8b", "NOT_COVERED": "#c0392b"}
 
 
 def load(rows_path: pathlib.Path) -> list[dict]:

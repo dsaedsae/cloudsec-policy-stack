@@ -140,6 +140,7 @@ nav:
     - 05 · 배포·롤백: runbooks/05-deploy-rollback.md
     - 06 · AWS teardown: runbooks/06-aws-teardown.md
   - 평가·발표:
+    - 왜 신뢰할 수 있나 (의사결정자): docs/why-trust-this.md
     - 검증가능성 커버리지: docs/evaluation-coverage.md
     - 감사증거 패키지 (예시): docs/audit-evidence.md
     - 클라우드 + 비용 (무료부터): docs/aws-eks-path.md
