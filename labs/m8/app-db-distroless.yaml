@@ -1,0 +1,33 @@
+# OPT-IN defense-in-depth demo (Lab M8): a SHELL-FREE (distroless) data-tier pod —
+# the image-layer counterpart to k8s/app.yaml's alpine `db`. Pair it with
+# tracingpolicy-data-tier-no-exec.yaml to get TWO independent layers:
+#   * image layer   — there is no /bin/sh and no busybox in the image at all
+#                     (validated live: `kubectl exec ... /bin/sh` -> "no such file"
+#                     BEFORE any runtime policy applies). So a popped container has no
+#                     shell to fall back to.
+#   * runtime layer — the zero-exec TracingPolicy SIGKILLs any binary an attacker
+#                     WRITES into a writable mount and tries to run.
+#
+# VALIDATED LIVE (kind + Tetragon 1.7.0): this pod comes up Ready even with the
+# zero-exec policy active from t=0, and /bin/sh + /bin/busybox are absent.
+#
+# HONEST SCOPE — this is NOT a drop-in swap for the graded stack:
+#   - verify.sh's 21/21 and the api->db L7 hop assume the alpine nginx-unprivileged db
+#     on port 8080; chainguard/nginx's listen port and root-FS layout may differ.
+#   - securityContext hardening (readOnlyRootFilesystem + the writable emptyDirs that
+#     this image actually needs, runAsNonRoot/UID, dropped caps) is left as a
+#     validate-then-add exercise — only the bare image+label combo below was live-tested.
+#   - restart-tolerance of the zero-exec rule comes from Tetragon's enforcement-attach
+#     window (image-independent), NOT from distroless — see the policy file's caveats.
+#   - pin the image by digest (`@sha256:...`) in any real use.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: db-distroless
+  labels:
+    app: db
+    tier: data
+spec:
+  containers:
+    - name: db
+      image: cgr.dev/chainguard/nginx:latest   # distroless nginx — no shell, no busybox
