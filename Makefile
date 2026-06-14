@@ -44,16 +44,15 @@ brief:  ## regenerate the exec one-pager PDF from presentation/cloudsec-onepager
 	else echo "no chrome/chromium found — open presentation/cloudsec-onepager.html and Ctrl-P -> Save as PDF"; fi
 
 docs:  ## build the docs site (strict)
-	$(PY) -m mkdocs build --strict
+	NO_MKDOCS_2_WARNING=true $(PY) -m mkdocs build --strict
 
 site:  ## build the all-HTML deployable bundle into site/ (landing = root; docs = HTML) — see DEPLOY.md
-	$(PY) -m mkdocs build
-	$(PY) formal/cross_layer.py --html site/cross-layer-report.html || true
+	NO_MKDOCS_2_WARNING=true $(PY) -m mkdocs build
 	cp presentation/cloudsec-onepager.html site/cloudsec-onepager.html
 	@cp presentation/cloudsec-onepager.pdf site/cloudsec-onepager.pdf 2>/dev/null || true
 	cp presentation/cloudsec-onepager.html site/index.html
 	@# in the DEPLOYED copy only, swap the "see the repo" note for a relative link into the HTML docs
-	@sed -i 's#<span class="x">.*저장소에.</span>#<a class="btn" href="labs/">문서·학습 트랙 (HTML)</a>#' site/index.html 2>/dev/null || true
+	@sed -i 's#<span class="x">[^<]*</span>#<a class="btn" href="labs/">문서·학습 트랙 (HTML)</a>#' site/index.html 2>/dev/null || true
 	@echo "-> site/ : index.html = 의사결정자 랜딩, /labs /docs = 전부 HTML 문서. DEPLOY.md 참고."
 serve:  ## preview the docs site at http://localhost:8000
 	$(PY) -m mkdocs serve

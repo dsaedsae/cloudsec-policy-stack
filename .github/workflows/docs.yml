@@ -22,3 +22,5 @@ jobs:
         with: { python-version: "3.12" }
       - run: pip install -r requirements-docs.txt
       - run: python -m mkdocs build --strict
+        env:
+          NO_MKDOCS_2_WARNING: "true"   # suppress the Material dependency's promo banner (build is green either way)
