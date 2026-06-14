@@ -42,11 +42,14 @@ brief:  ## regenerate the exec one-pager PDF from presentation/cloudsec-onepager
 docs:  ## build the docs site (strict)
 	$(PY) -m mkdocs build --strict
 
-site:  ## build the deployable bundle (docs + the decision-maker landing) into site/ (see DEPLOY.md)
+site:  ## build the all-HTML deployable bundle into site/ (landing = root; docs = HTML) — see DEPLOY.md
 	$(PY) -m mkdocs build
 	cp presentation/cloudsec-onepager.html site/cloudsec-onepager.html
 	@cp presentation/cloudsec-onepager.pdf site/cloudsec-onepager.pdf 2>/dev/null || true
-	@echo "-> site/ ready — drag to Netlify/Cloudflare, or see DEPLOY.md"
+	cp presentation/cloudsec-onepager.html site/index.html
+	@# in the DEPLOYED copy only, swap the "see the repo" note for a relative link into the HTML docs
+	@sed -i 's#<span class="x">.*저장소에.</span>#<a class="btn" href="labs/">문서·학습 트랙 (HTML)</a>#' site/index.html 2>/dev/null || true
+	@echo "-> site/ : index.html = 의사결정자 랜딩, /labs /docs = 전부 HTML 문서. DEPLOY.md 참고."
 serve:  ## preview the docs site at http://localhost:8000
 	$(PY) -m mkdocs serve
 

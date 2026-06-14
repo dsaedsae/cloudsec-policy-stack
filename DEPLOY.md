@@ -19,8 +19,14 @@
 ## 전체 사이트 (문서까지) — 빌드 후 호스팅
 
 ```bash
-make site          # = mkdocs build + 랜딩을 site/ 에 복사 → 배포 번들 'site/' 생성
+make site          # 올-HTML 번들 'site/' 생성
 ```
+
+생성되는 `site/`는 **전부 HTML이다 (raw .md 0개)** — 배포하면 의사결정자는 *md를 한 번도 안 거친다*:
+
+- `site/index.html` = **rich 원페이저 랜딩**(사이트 루트)
+- `site/labs/`, `site/docs/...` = mkdocs가 렌더한 **HTML 문서**(랜딩의 "문서·학습 트랙" 링크로 연결)
+- `site/cloudsec-onepager.pdf` = leave-behind PDF
 
 그다음 셋 중 하나(전부 무료):
 
