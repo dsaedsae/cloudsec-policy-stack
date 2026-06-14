@@ -16,11 +16,12 @@ doctor:  ## what is installed / missing
 progress:  ## learning progress — auto-grade the no-cluster modules
 	$(PY) scripts/progress.py
 
-test:  ## the CI policy gate (5 suites, no cluster)
+test:  ## the CI policy gate (no cluster)
 	$(PY) cedar/authz.py
 	$(PY) cedar/agent_authz.py
 	$(PY) app/api/auth_test.py
 	$(PY) formal/cross_layer.py
+	$(PY) formal/cross_layer_test.py
 	$(PY) scripts/check-sa-consistency.py
 
 m0:  ## grade M0 (Cedar authz) — target 11/11

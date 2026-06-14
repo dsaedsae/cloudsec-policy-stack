@@ -217,15 +217,25 @@ cedar-policy-symcc = unbounded upgrade. complements RBAC/misconfig scanners (dif
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     argv = sys.argv[1:]
+    for flag in ("--out", "--json", "--sarif", "--html"):  # value-taking flags must be followed by a path
+        if flag in argv:
+            i = argv.index(flag)
+            if i + 1 >= len(argv) or argv[i + 1].startswith("--"):
+                print(f"error: {flag} requires a path argument", file=sys.stderr)
+                return 2
     open_audit = "--open-auditlogs" in argv
     rules = list(L7_RULES_BASE)
     if open_audit:
         rules.append(("GET", r"/auditlogs/[^/]+$"))
 
     actions = list(ACTION_HTTP)
-    grants = {a: cedar_grants(a) for a in actions}
-    reach = {a: l7_reachable(a, rules) for a in actions}
-    gated = {a: gated_in_app(a) for a in actions}
+    try:
+        grants = {a: cedar_grants(a) for a in actions}
+        reach = {a: l7_reachable(a, rules) for a in actions}
+        gated = {a: gated_in_app(a) for a in actions}
+    except FileNotFoundError as e:
+        print(f"error: missing input artifact: {e.filename or e}", file=sys.stderr)
+        return 1
     if "--ungate-transfer" in argv:
         gated["Transfer"] = False
 
