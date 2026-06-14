@@ -1,8 +1,9 @@
 /* cloudsec-policy-stack — site polish.
- * Design thesis: "verifiable by default". One semantic accent (teal = a test proved this),
- * status chips that mirror the coverage ledger, and a grade-command treatment that reads
- * like the autograder's verdict. No marketing gloss, no decorative colors beyond the 3
- * semantic tokens below. ~140 lines, zero JS. */
+ * Design thesis: "verifiable by default". One semantic accent (teal = a test proved this)
+ * and a grade-command treatment that reads like the autograder's verdict. Zero JS.
+ * NOTE: docs are now plain-markdown GitHub-portable — the chip/grid-card/hero/admonition
+ * syntax was removed repo-wide, so their CSS is gone too; only lab pills + the grade
+ * command + table polish remain (mermaid renders on both surfaces). */
 
 /* ── Semantic tokens (the ONLY palette beyond Material's indigo primary) ── */
 :root, [data-md-color-scheme="default"] {
@@ -18,50 +19,13 @@
   --md-accent-fg-color: #34d399;
 }
 
-/* ── Status chips: one system, reused for hero badges + the coverage ledger ──
- * The label text is ALWAYS present (color-blind safe; the claim IS the label). */
-.chip {
-  display: inline-block; padding: .08em .6em; border-radius: 1em;
-  font-size: .72em; font-weight: 600; line-height: 1.7; white-space: nowrap;
-  border: 1px solid transparent;
-}
-.chip--verified   { color: #1b5e20; background: #e6f4ea; }
-.chip--configured { color: #7a5d00; background: #fff8e1; }
-.chip--governance { color: #37474f; background: #eceff1; }
-.chip--notcovered { color: #b71c1c; background: #fdecea; }
-[data-md-color-scheme="slate"] .chip--verified   { color: #a5d6a7; background: #1b3a25; }
-[data-md-color-scheme="slate"] .chip--configured { color: #ffe082; background: #3a3320; }
-[data-md-color-scheme="slate"] .chip--governance { color: #cfd8dc; background: #2b3034; }
-[data-md-color-scheme="slate"] .chip--notcovered { color: #ef9a9a; background: #3a2222; }
-/* a chip used as a link keeps the chip look, drops underline */
-a.chip { text-decoration: none; }
-a.chip:hover { border-color: currentColor; }
-
-/* ── Hero ── */
-.hero-badges { text-align: center; margin: 1em 0 1.2em; line-height: 2.3; }
-.hero-badges .chip { margin: 0 .22em; }
-.hero-cta { text-align: center; margin: 0 0 1.6em; }
-.hero-cta .md-button { margin: .25em .3em; }
+/* ── Page H1: a teal underline = the "proven" accent ── */
 .md-content__inner > h1:first-of-type {
   color: var(--ci-ink); border-bottom: 2px solid var(--ci-verify);
   display: inline-block; padding-bottom: .35rem;
 }
 
-/* ── Grid cards (used by index contributions + the lab module ladder) ── */
-.md-typeset .grid.cards > ul > li,
-.md-typeset .grid > .card {
-  border: 1px solid var(--md-default-fg-color--lightest);
-  border-left: 3px solid var(--md-primary-fg-color);
-  border-radius: .5rem;
-  transition: border-color .15s ease, transform .15s ease;
-}
-.md-typeset .grid.cards > ul > li:hover,
-.md-typeset .grid > .card:hover {
-  border-color: var(--ci-ink); transform: translateY(-2px); box-shadow: none;
-}
-.md-typeset .grid.cards :is(.twemoji, svg) { color: var(--ci-ink); }
-
-/* ── Lab affordances ── */
+/* ── Lab affordances (raw-HTML pills; render as styled pills on the site, clean text on GitHub) ── */
 .lab-progress {
   display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .02em;
   padding: .1rem .5rem; border-radius: .3rem; background: var(--md-primary-fg-color); color: #fff;
@@ -75,7 +39,7 @@ a.chip:hover { border-color: currentColor; }
 .lab-badge.cluster    { background: #fff3e0; color: #bf360c; }   /* data palette — needs RAM */
 [data-md-color-scheme="slate"] .lab-badge.no-cluster { background: #2a2f4a; color: #c5cae9; }
 [data-md-color-scheme="slate"] .lab-badge.cluster    { background: #3a2c1c; color: #ffcc80; }
-/* header pill row: wrap cleanly on narrow viewports, gap replaces the old " · " separators */
+/* header pill row: wrap cleanly on narrow viewports, gap sits around the " · " separators */
 .md-typeset .lab-pills { display: flex; flex-wrap: wrap; gap: .35rem .5rem; align-items: center; margin: .5rem 0 1rem; }
 
 /* The grade command = the judge. Terminal look, lime-on-dark to rhyme with the
@@ -90,9 +54,8 @@ a.chip:hover { border-color: currentColor; }
 .md-typeset table:not([class]) th { background: var(--md-default-fg-color--lightest); font-weight: 700; }
 .md-typeset table:not([class]) td { font-variant-numeric: tabular-nums; }
 
-/* ── Admonitions / details: quiet, engineering tone (no heavy shadow) ── */
-.md-typeset .admonition, .md-typeset details { box-shadow: none; }
-.md-typeset .admonition.abstract > .admonition-title { border-left-color: var(--ci-ink); }
+/* ── Details (oral-Q&A toggles): quiet, engineering tone (no heavy shadow) ── */
+.md-typeset details { box-shadow: none; }
 
 /* ── Tabs: clear active state for direction ── */
 .md-tabs__link--active { font-weight: 700; }
