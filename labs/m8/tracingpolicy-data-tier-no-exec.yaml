@@ -19,12 +19,16 @@
 # io_uring has no exec opcode (N/A).
 #
 # HONEST CAVEATS:
-#   - Restart-safety is timing-fragile, not by design: this image's entrypoint is
-#     /docker-entrypoint.sh (a shell). In testing the restarted pod still came up only
-#     because the entrypoint shell slipped Tetragon's enforcement-attach window; a faster
-#     attach would SIGKILL the entrypoint -> CrashLoop. The robust-by-design fix is a
-#     SHELL-FREE (distroless / scratch + static binary) data-tier image: then there is no
-#     startup shell to race, and "any exec is illegitimate" holds cleanly.
+#   - Restart-tolerance comes from Tetragon's enforcement-attach WINDOW, not from the image.
+#     Validated live: BOTH this alpine image AND a distroless chainguard/nginx come up Ready
+#     with this policy active from t=0 — the container's PID1 entrypoint execve slips the
+#     attach window in either case (fragile + image-independent; a faster attach could SIGKILL
+#     the entrypoint -> CrashLoop). So distroless is NOT what makes it restart-safe.
+#   - Distroless's distinct benefit is IMAGE-LAYER (defense-in-depth), not restart-safety:
+#     chainguard/nginx ships NO /bin/sh and NO busybox at all (validated: `/bin/sh` -> "no such
+#     file" before this policy even applies), whereas the alpine image ships both. So a
+#     distroless data-tier image removes the shell entirely, and this runtime rule still kills
+#     any binary an attacker WRITES into a writable mount. Use distroless + this rule together.
 #   - This kills legitimate `kubectl exec` and exec-based liveness/readiness probes (that
 #     is the point — zero interactive exec in the datastore). Use httpGet probes.
 #   - For an allowlist (some exec permitted) rather than zero-exec, you need binary

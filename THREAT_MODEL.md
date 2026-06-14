@@ -159,9 +159,13 @@ portfolios, and it is exactly where this stack now adds controls.
   caller is nginx). The rule that actually worked is **zero-exec**: hook BOTH `sys_execve` and
   `sys_execveat` and SIGKILL all exec in `tier: data` — `id` / `sh` / a renamed `/tmp/x` busybox copy
   / busybox-by-name all rc 137, while nginx (PID 1, exec'd before the policy) keeps serving. It is
-  arg0-independent and covers execveat. Honest caveats: restart-safety is *timing-fragile* (the
-  entrypoint shell only survived because it slipped Tetragon's enforcement-attach window) — the
-  robust-by-design answer is a **shell-free / distroless** data-tier image; an allowlist (vs
+  arg0-independent and covers execveat. Honest caveats: restart-tolerance comes from Tetragon's
+  enforcement-attach **window**, not the image — validated live that BOTH the alpine image AND a
+  distroless `chainguard/nginx` come up Ready with this policy active from t=0 (the PID1 entrypoint
+  execve slips the window either way; fragile + image-independent). Distroless's distinct benefit is
+  **image-layer, not restart-safety**: chainguard/nginx ships NO `/bin/sh` and NO busybox (validated:
+  `/bin/sh` → "no such file" before the policy applies), so it removes the shell entirely while this
+  runtime rule still kills attacker-written binaries — true defense-in-depth. An allowlist (vs
   zero-exec) needs **BPF-LSM** (`security_bprm_creds_for_exec`) for binary identity. Also: the simple
   `cp /bin/busybox /tmp/x && /tmp/x sh` does NOT itself yield a shell on a busybox image (busybox
   dispatches by arg0 → "applet not found"), so the genuine residuals are execveat/fd-exec/argv0-spoof
