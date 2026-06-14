@@ -21,6 +21,10 @@
 .venv\Scripts\python.exe labs\m1\grade.py     # Failed checks: 16, 남은 위반 목록 출력
 ```
 
+> **Windows 메모:** checkov가 `UnicodeDecodeError: 'cp949'`로 죽으면 한 번만 `$env:PYTHONUTF8=1`을
+> 설정하고 다시 돌려라(또는 `setx PYTHONUTF8 1` 영구 설정). 윈도우 기본 코드페이지가 cp949라 UTF-8
+> 주석이 든 파일을 못 읽어서 그렇다 — CI(우분투·UTF-8)에서는 안 나는 로컬 한정 이슈다.
+
 > **핵심 사고방식:** "0 findings"가 목표가 아니라 **triage**가 목표다. 각 위반을 (a) 진짜 고치거나
 > (b) *문서화된 이유와 함께* 스킵한다. 이 랩은 전부 **고치는** 게 정답이다 — 하든드 워크로드에는
 > 스킵 주석이 필요 없다. (`labs/m1/.checkov.yaml`에 이미 *정당한* 스킵 3개가 있다: 로컬 이미지라
