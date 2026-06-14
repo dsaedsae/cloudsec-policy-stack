@@ -50,6 +50,7 @@ docs:  ## build the docs site (strict)
 site:  ## build the all-HTML deployable bundle into site/ (landing = root; docs = HTML) — see DEPLOY.md
 	NO_MKDOCS_2_WARNING=true $(PY) -m mkdocs build
 	cp presentation/cloudsec-onepager.html site/cloudsec-onepager.html
+	cp presentation/curriculum.html site/curriculum.html
 	@cp presentation/cloudsec-onepager.pdf site/cloudsec-onepager.pdf 2>/dev/null || true
 	cp presentation/cloudsec-onepager.html site/index.html
 	@# in the DEPLOYED copy only, swap the "see the repo" note for a relative link into the HTML docs

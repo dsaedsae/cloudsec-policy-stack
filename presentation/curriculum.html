@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cloudsec — 커리큘럼 · 무엇을 배우나</title>
+<!-- 모듈/스택/소요/환경은 labs/<m>/README · formal/README의 lab-pill에서 VERBATIM. self-contained, zero JS. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+:root{
+  --bg:#0b0d10; --fg:#e7e9ee; --mut:#8b9099; --faint:#4b515b; --line:#1b1f25;
+  --acc:#34d399;                /* single accent — used only on the load-bearing thing */
+  --mono:"JetBrains Mono","Cascadia Code",Consolas,monospace;
+  --sans:"Noto Sans KR",-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.62;
+  -webkit-font-smoothing:antialiased;letter-spacing:.1px}
+.wrap{max-width:840px;margin:0 auto;padding:60px 32px 72px}
+a{color:var(--acc);text-decoration:none}
+
+.mark{font:500 13px/1 var(--mono);color:var(--mut);display:flex;gap:10px;align-items:center}
+.mark .dot{width:9px;height:9px;border-radius:2px;background:var(--acc)}
+.mark b{color:var(--fg);font-weight:700}
+.mark .sep{color:var(--faint)}
+
+h1{font:900 clamp(30px,5vw,44px)/1.12 var(--sans);letter-spacing:-.02em;margin:34px 0 0}
+.deck{font-size:16px;color:var(--mut);max-width:40em;margin:16px 0 0}
+.deck b{color:var(--fg);font-weight:500}
+
+hr{border:0;border-top:1px solid var(--line);margin:40px 0}
+h2{font:700 12px/1 var(--mono);letter-spacing:.06em;color:var(--mut);margin:0 0 18px;text-transform:none}
+
+/* the loop — one mono line, not boxes */
+.loop{font-family:var(--mono);font-size:14px;color:var(--fg);line-height:2}
+.loop .a{color:var(--faint);padding:0 6px}
+.loop .x{color:var(--mut)}
+
+/* module ledger */
+table.mods{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:13px}
+.mods th{font-weight:500;color:var(--mut);text-align:left;padding:0 10px 10px 0;border-bottom:1px solid var(--line)}
+.mods td{padding:11px 10px 11px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.mods .m{color:var(--acc);font-weight:700;white-space:nowrap}
+.mods .d{font-family:var(--sans);color:var(--fg)}
+.mods .s{color:var(--mut)}
+.mods .t{color:var(--mut);white-space:nowrap;font-variant-numeric:tabular-nums}
+.mods .e{color:var(--acc);white-space:nowrap}          /* no-cluster = low-friction entry */
+.mods .e.cl{color:var(--faint)}                        /* cluster = needs RAM */
+.mods tr.sect td{border-bottom:0;padding-top:22px;color:var(--faint);font-size:11.5px;letter-spacing:.06em}
+
+/* tech stack — grouped mono rows */
+.stack{display:grid;grid-template-columns:max-content 1fr;gap:11px 22px;font-size:14px}
+.stack dt{font-family:var(--mono);font-size:12.5px;color:var(--acc);white-space:nowrap}
+.stack dd{margin:0;color:var(--mut)}
+.stack dd b{color:var(--fg);font-weight:500}
+
+/* recommended path — numbered steps */
+.path{counter-reset:step;display:grid;gap:14px}
+.path .step{display:grid;grid-template-columns:26px 1fr;gap:14px;align-items:baseline}
+.path .step::before{counter-increment:step;content:counter(step);font-family:var(--mono);font-size:12px;
+  color:var(--acc);border:1px solid var(--line);border-radius:6px;width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center}
+.path .h{font-weight:500;color:var(--fg)}
+.path .h .mono{font-family:var(--mono);font-size:13px;color:var(--acc)}
+.path .sub{color:var(--mut);font-size:14px;margin:2px 0 0}
+
+/* prereqs — sparse dl */
+.pre{display:grid;grid-template-columns:max-content 1fr;gap:10px 20px;font-size:14px}
+.pre dt{font-family:var(--mono);font-size:12.5px;color:var(--mut);white-space:nowrap}
+.pre dd{margin:0;color:var(--mut)}
+.pre dd b{color:var(--fg);font-weight:500}
+.pre code{font-family:var(--mono);font-size:12.5px;color:var(--fg);background:#14171c;padding:.05em .35em;border-radius:4px}
+
+.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:6px 0 0}
+.btn{font:500 13px/1 var(--mono);padding:13px 20px;border:1px solid var(--line);border-radius:8px;color:var(--fg);
+  transition:border-color .15s,color .15s}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.p{border-color:var(--acc);color:var(--acc)}
+
+footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--faint)}
+
+@media print{
+  @page{size:A4;margin:14mm}
+  :root{--bg:#fff;--fg:#15171c;--mut:#555b66;--faint:#9aa0ab;--line:#e2e5ea;--acc:#0f9e74}
+  body{font-size:10.5px;line-height:1.4}.wrap{max-width:none;padding:0}
+  h1{font-size:24px}.deck{font-size:11px}hr{margin:16px 0}
+  table.mods,.stack,.path,.pre{break-inside:avoid}
+  .pre code{background:#eef1f4}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="mark"><span class="dot"></span><b>cloudsec</b><span class="sep">/</span>verified&nbsp;by&nbsp;code<span class="sep">·</span>커리큘럼</div>
+
+  <h1>읽지 말고, 직접 다시 만들며 배운다</h1>
+  <p class="deck">클라우드 보안 통제 6계층을 <b>빈 골격에서 직접 재구현</b>하고, 이미 만들어 둔 검증 하네스가
+    <b>PASS/FAIL로 자동채점</b>한다. 정답을 베끼는 게 아니라 — 직접 쓰고, 일부러 부수고, 어디가 왜 막는지 손으로 확인한다.</p>
+
+  <hr>
+
+  <h2>학습 루프 (모듈마다)</h2>
+  <p class="loop">개념 읽기<span class="a">→</span>골격에 직접 작성<span class="x">(정답 안 봄)</span><span class="a">→</span>자동채점<span class="a">→</span>일부러 부수기<span class="x">(예측→확인)</span><span class="a">→</span>구두문답<span class="a">→</span>졸업과제</p>
+  <p class="loop x">학습자는 <code style="font-family:var(--mono);color:var(--fg)">labs/&lt;모듈&gt;/</code> 만 수정 · 원본은 정답지(졸업 후 diff) · 진도 카운터 <span class="x">N / 7</span>(코어 M0–M6), M7·M8은 졸업 후 심화</p>
+
+  <hr>
+
+  <h2>모듈 — 무엇을 / 무슨 스택으로 / 얼마나</h2>
+  <table class="mods">
+    <thead><tr><th>모듈</th><th>배우는 것</th><th>스택</th><th>소요</th><th>환경</th></tr></thead>
+    <tbody>
+      <tr><td class="m">M0</td><td class="d">인가 정책을 스펙만 보고 작성 — 소유자·이체한도·역할·동결. <span style="color:var(--mut)">과잉허용 잡기가 핵심</span></td><td class="s">Cedar</td><td class="t">~3–6h</td><td class="e">무클러스터</td></tr>
+      <tr><td class="m">M1</td><td class="d">시프트레프트 <b>triage</b> — 심어둔 16개 위반을 0으로. “0 findings”가 아니라 <span style="color:var(--mut)">왜 막는지</span></td><td class="s">checkov</td><td class="t">~1.5–3h</td><td class="e">무클러스터</td></tr>
+      <tr><td class="m">M2</td><td class="d">Cilium이 신뢰하는 <code style="font-family:var(--mono);color:var(--fg)">app</code> 라벨을 파드의 ServiceAccount에 묶기 — <b>신원 위조 차단</b></td><td class="s">VAP + CEL</td><td class="t">~30–45m</td><td class="e cl">클러스터 · RAM 6–8GB</td></tr>
+      <tr><td class="m">M3</td><td class="d">default-deny에서 <b>최소권한 홉</b>(외부→web→api→db)만 열기 + egress 잠그기</td><td class="s">Cilium L3/L7</td><td class="t">~30–45m</td><td class="e cl">클러스터</td></tr>
+      <tr><td class="m">M4</td><td class="d">data tier 셸을 커널에서 SIGKILL — 단 <b>정상 바이너리는 살림</b>. 선택성이 핵심(과잉차단도 결함)</td><td class="s">Tetragon eBPF</td><td class="t">~20–35m</td><td class="e cl">클러스터</td></tr>
+      <tr><td class="m">M5</td><td class="d"><b>전송 중</b>(WireGuard)·<b>저장</b>(etcd) 암호화를 직접 실행하고 암호문을 손으로 확인</td><td class="s">WireGuard+etcd</td><td class="t">~30–45m</td><td class="e cl">클러스터</td></tr>
+      <tr><td class="m">M6</td><td class="d">같은 “위임” 문제를 두 모델로 — <b>(A) Cedar ABAC 교집합</b>(confused-deputy 차단) <b>(B) OpenFGA ReBAC</b> 그래프</td><td class="s">Cedar+OpenFGA</td><td class="t">~2–4h</td><td class="e">무클러스터 · Part B Docker</td></tr>
+      <tr class="sect"><td colspan="5">심화 — 졸업 후 선택 (진도 카운터에 미포함)</td></tr>
+      <tr><td class="m">M7</td><td class="d">계층이 <b>합성될 때</b>의 모순 — Cilium L7 × Cedar PDP의 shadow/ungated 규칙 탐지(JSON/SARIF/HTML)</td><td class="s">z3 (SMT)</td><td class="t">~1–2h</td><td class="e">무클러스터</td></tr>
+      <tr><td class="m">M8</td><td class="d"><b>탐지 ≠ 차단</b> 경계 — M4 규칙이 어디까지 막고 어디서 새는지 정직하게 측정</td><td class="s">Tetragon</td><td class="t">~30–45m</td><td class="e cl">클러스터</td></tr>
+    </tbody>
+  </table>
+  <p class="loop x" style="margin-top:14px">모두 <b style="color:var(--fg);font-weight:500">비용 $0</b>(로컬 kind) · 무클러스터 랩(M0·M1·M6·M7)은 <b style="color:var(--acc);font-weight:500">Codespaces에서 0설치</b>로 즉시 채점</p>
+
+  <hr>
+
+  <h2>추천 순서 · 선수지식</h2>
+  <div class="path">
+    <div class="step"><div><div class="h">워밍업 — 클러스터 없이 기본기 <span class="mono">M0 → M1</span></div><p class="sub">인가(authz-as-code)와 스캔 triage. Codespaces 0설치 또는 Python만으로. <b style="color:var(--fg)">M0 첫 PASS ~5분.</b></p></div></div>
+    <div class="step"><div><div class="h">클러스터 세션 — 한 번 띄워 한 번에 <span class="mono">M2 → M3 → M4 → M5</span></div><p class="sub">신원·네트워크·런타임·암호화. kind를 <code>up</code> → 네 모듈 진행 → <code>down</code>. RAM ~6–8GB.</p></div></div>
+    <div class="step"><div><div class="h">인가 심화 — 다시 무클러스터 <span class="mono">M6</span></div><p class="sub">에이전트 위임 ABAC + ReBAC 그래프. Part B(OpenFGA)만 Docker.</p></div></div>
+    <div class="step"><div><div class="h">심화 선택 <span class="mono">M7 / M8</span></div><p class="sub">M7 교차계층 형식검증(무클러스터) · M8 런타임 탐지≠차단 측정(클러스터).</p></div></div>
+  </div>
+
+  <dl class="pre" style="margin-top:24px">
+    <dt>공통</dt><dd><b>Python 3.12</b> — 모든 채점기의 런타임.</dd>
+    <dt>무설치 체험</dt><dd>GitHub <b>Codespaces</b> — 무클러스터 랩(M0·M1·M6·M7)이 0설치로 즉시 채점.</dd>
+    <dt>클러스터 트랙</dt><dd>추가로 <code>Docker</code> · <code>kind</code> · <code>kubectl</code> · <code>helm</code> · <code>cilium-cli</code> · <code>terraform</code>, Windows는 <code>Git Bash</code>(.sh 스크립트·채점기).</dd>
+  </dl>
+
+  <hr>
+
+  <h2>끝나면 손에 남는 것</h2>
+  <dl class="stack">
+    <dt>방어심층</dt><dd>계층마다 <b>실행 테스트로 증명</b>하는 사고 — 슬라이드가 아니라 재현 가능한 PASS/FAIL.</dd>
+    <dt>제로트러스트 네트워킹</dt><dd>default-deny · 최소권한 홉 · egress 차단(Cilium L3/L7, eBPF).</dd>
+    <dt>policy-as-code</dt><dd>요청 단위 PDP · ABAC · ReBAC를 직접 작성(Cedar, OpenFGA).</dd>
+    <dt>어드미션·신원</dt><dd>라벨↔ServiceAccount 바인딩으로 신원 위조 차단(VAP+CEL, SPIFFE).</dd>
+    <dt>런타임 eBPF</dt><dd>커널에서 SIGKILL — 그리고 <b>탐지와 차단의 경계</b>를 직접 체감(Tetragon).</dd>
+    <dt>공급망</dt><dd>SBOM · 이미지 서명 · CVE 게이트 · 시프트레프트 triage(checkov, trivy, cosign, gitleaks).</dd>
+    <dt>형식검증</dt><dd>유한도메인으로 계층 간 정합성 확인(z3).</dd>
+    <dt>AI-에이전트 인가</dt><dd>위임 깊이 · confused-deputy · OWASP Agentic 위협(Cedar agent).</dd>
+  </dl>
+
+  <hr>
+
+  <div class="cta">
+    <a class="btn p" href="https://github.com/dsaedsae/cloudsec-policy-stack/tree/master/labs/m0">M0부터 시작</a>
+    <a class="btn" href="https://codespaces.new/dsaedsae/cloudsec-policy-stack">codespaces — 무설치 체험</a>
+    <a class="btn" href="cloudsec-onepager.html">한 장 소개로</a>
+  </div>
+
+  <footer>교육·포트폴리오 레퍼런스 — 법률/금융 자문도 공식 FSC 컴플라이언스 매핑도 아님 · 모듈·소요·스택은 각 랩 README에서 가져온 값 · MIT</footer>
+
+</div>
+</body>
+</html>
