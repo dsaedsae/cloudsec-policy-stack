@@ -77,6 +77,32 @@ bash scripts/up.sh && bash scripts/verify.sh && bash scripts/down.sh
 
 > Linux/macOS/Codespaces엔 `make` 단축키도 있습니다: `make setup` · `make progress` · `make m0` · `make test` · `make up`/`make verify`/`make down` (전체: `make help`).
 
+## 도구 — `cross-layer-lint`
+
+6개 계층을 각각 따로 검증하는 것을 넘어, **계층이 합성될 때** 정책이 서로 모순되는지를 본다. Cilium L7(어떤 경로가 *도달* 가능한가)과 Cedar PDP(어떤 행위가 *인가*되는가)를 z3 유한도메인 모델로 교차 검사해 두 결함을 분류한다:
+
+- **shadowed(dead) 규칙** — Cedar는 허용하지만 L7이 그 경로를 막아 `web→api`로는 도달 불가한 permit (의도된 out-of-band인가, 사고인가? — 검토 대상)
+- **ungated 경로** — L7으로 도달 가능한데 Cedar 게이트가 없는 실제 갭 → **exit 1**
+
+입력은 실제 산출물이다: Cedar는 `cedar/`(cedarpy), L7 도달성은 `k8s/netpol.yaml`, 라우트별 게이트는 `app/api/main.py`에서 AST로 도출.
+
+```bash
+make report                                    # -> outputs/cross-layer/report.{html,json,sarif}
+python formal/cross_layer.py                   # 텍스트 리포트 (ungated일 때만 exit 1)
+python formal/cross_layer.py --sarif x.sarif   # GitHub code scanning용 SARIF 2.1.0
+python formal/cross_layer.py --open-auditlogs  # 반증: L7 경로를 열면 shadow가 사라진다
+```
+
+출력 3종 — **HTML**은 사람이 읽는 보고서, **JSON**은 프로그램 연동, **SARIF 2.1.0**은 GitHub code scanning 업로드용. (`make site`는 HTML 보고서를 배포 번들에도 포함한다.)
+
+| 도구 | 보는 것 | 관계 |
+|------|---------|------|
+| kubescape · trivy | misconfig · CVE · RBAC 그래프 | 단일 계층 — 이 도구가 보완 |
+| kubesplaining | RBAC 권한 그래프 | 〃 |
+| **cross-layer-lint** | L7 도달성 × Cedar 인가의 **합성** | 계층-간 shadow/ungated |
+
+**정직한 범위:** 현재 도메인은 데모 3액션의 **유한도메인 검사**라 z3는 *기법*을 실증할 뿐, 임의 클러스터 대상 범용 스캐너가 아니다. Cedar 판정은 구체값(cedarpy)이고 무한 도메인 확장은 [cedar-policy-symcc](https://github.com/cedar-policy/cedar)(SMT로 컴파일하는 Cedar 심볼릭 컴파일러)가 정공법(로드맵). CVE가 아니라 *확인이 필요한 계층 상호작용*을 드러낸다 — 단일/이중 계층 검증은 이미 공개된 기법이므로 기여도는 정직하게 그 아래다.
+
 ## 상태
 
 - `scripts/verify.sh` — kind + Cilium + Tetragon에서 라이브 검증 21/21 (로컬·CI 공통).

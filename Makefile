@@ -32,6 +32,10 @@ m6:  ## grade M6 (agent-ABAC + ReBAC)
 m7:  ## run M7 (formal cross-layer consistency)
 	$(PY) formal/cross_layer.py
 
+report:  ## cross-layer-lint -> outputs/cross-layer/report.{json,sarif,html} (HTML for humans, SARIF for code-scanning)
+	$(PY) formal/cross_layer.py --out outputs/cross-layer
+	@echo "-> outputs/cross-layer/report.html  (open in a browser) · report.sarif (GitHub code scanning) · report.json"
+
 brief:  ## regenerate the exec one-pager PDF from presentation/cloudsec-onepager.html (needs chrome/chromium)
 	@b=$$(command -v chromium-browser chromium google-chrome chrome 2>/dev/null | head -1); \
 	if [ -n "$$b" ]; then "$$b" --headless=new --disable-gpu --no-pdf-header-footer \
@@ -44,6 +48,7 @@ docs:  ## build the docs site (strict)
 
 site:  ## build the all-HTML deployable bundle into site/ (landing = root; docs = HTML) — see DEPLOY.md
 	$(PY) -m mkdocs build
+	$(PY) formal/cross_layer.py --html site/cross-layer-report.html || true
 	cp presentation/cloudsec-onepager.html site/cloudsec-onepager.html
 	@cp presentation/cloudsec-onepager.pdf site/cloudsec-onepager.pdf 2>/dev/null || true
 	cp presentation/cloudsec-onepager.html site/index.html
@@ -60,4 +65,4 @@ verify:  ## live enforcement suite (needs the cluster)
 down:  ## tear the cluster down (frees RAM)
 	bash scripts/down.sh
 
-.PHONY: help setup doctor progress test m0 m1 m6 m7 brief docs site serve up verify down
+.PHONY: help setup doctor progress test m0 m1 m6 m7 report brief docs site serve up verify down

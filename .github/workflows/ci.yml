@@ -32,6 +32,22 @@ jobs:
       - name: Cross-layer policy consistency (Cilium L7 x Cedar; z3 finite-domain check)
         run: python formal/cross_layer.py
 
+      # Render the lint as downloadable JSON/SARIF/HTML on EVERY run (even when the
+      # gate above fails on an UNGATED path — that is exactly when you want the SARIF).
+      # Artifacts work on private+free repos. To surface findings in the GitHub
+      # "Security ▸ Code scanning" UI instead, the repo must be public or have GHAS;
+      # then swap the upload below for github/codeql-action/upload-sarif (+ permissions:
+      # security-events: write) pointing at outputs/cross-layer/report.sarif.
+      - name: Cross-layer report (JSON/SARIF/HTML)
+        if: always()
+        run: python formal/cross_layer.py --out outputs/cross-layer || true
+      - name: Upload cross-layer-lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cross-layer-report
+          path: outputs/cross-layer/
+
       - name: "Identity tier-SA consistency (no drift: rbac <-> 3 admission policies)"
         run: python scripts/check-sa-consistency.py
 
