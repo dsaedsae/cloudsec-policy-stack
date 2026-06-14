@@ -4,6 +4,8 @@
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dsaedsae/cloudsec-policy-stack)
 
+> 🏢 **의사결정자·도입 검토용 (md 말고):** [원페이저 PDF](presentation/cloudsec-onepager.pdf) — GitHub에서 바로 열립니다 · [HTML](presentation/cloudsec-onepager.html)(다운로드→브라우저, 이메일·인쇄용). 아래는 개발자/학습자용.
+
 무료 로컬 `kind` 클러스터 위에서 도는 방어심층(defense-in-depth) 쿠버네티스 보안 스택과, 각 통제를 직접 다시 구현해 보는 자가채점 학습 트랙입니다. 프로덕션 배포물이 아니라 학습·포트폴리오 산출물입니다.
 
 한 요청이 네트워크 → HTTP → 애플리케이션 인가 → 런타임의 독립된 정책 계층을 차례로 통과하고, 각 계층은 직접 돌리는 스크립트로 시행·검증됩니다.

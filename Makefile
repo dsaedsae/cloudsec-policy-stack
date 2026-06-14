@@ -32,6 +32,13 @@ m6:  ## grade M6 (agent-ABAC + ReBAC)
 m7:  ## run M7 (formal cross-layer consistency)
 	$(PY) formal/cross_layer.py
 
+brief:  ## regenerate the exec one-pager PDF from presentation/cloudsec-onepager.html (needs chrome/chromium)
+	@b=$$(command -v chromium-browser chromium google-chrome chrome 2>/dev/null | head -1); \
+	if [ -n "$$b" ]; then "$$b" --headless=new --disable-gpu --no-pdf-header-footer \
+	  --print-to-pdf=presentation/cloudsec-onepager.pdf presentation/cloudsec-onepager.html && \
+	  echo "-> presentation/cloudsec-onepager.pdf"; \
+	else echo "no chrome/chromium found — open presentation/cloudsec-onepager.html and Ctrl-P -> Save as PDF"; fi
+
 docs:  ## build the docs site (strict)
 	$(PY) -m mkdocs build --strict
 serve:  ## preview the docs site at http://localhost:8000
@@ -44,4 +51,4 @@ verify:  ## live enforcement suite (needs the cluster)
 down:  ## tear the cluster down (frees RAM)
 	bash scripts/down.sh
 
-.PHONY: help setup doctor progress test m0 m1 m6 m7 docs serve up verify down
+.PHONY: help setup doctor progress test m0 m1 m6 m7 brief docs serve up verify down
