@@ -24,7 +24,7 @@
 > **정직한 범위(과장 금지):** 이 룰은 *셸 **이름**의 직접 execve*만 죽인다(arg0 Postfix 매칭). 셸을
 > **다른 이름으로** 띄우면 우회된다(renamed-binary/execveat/fd-exec — Q4). 즉 "셸을 못 띄운다"가
 > 아니라 "나이브 직접 셸-명 execve를 죽인다"가 정확한 주장. 그 경계를 *라이브로 측정*하는 게
-> **[M8](../m8/README.md)**(심화)이고, 강건한 답은 matchBinaries/LSM이다([THREAT_MODEL](../../THREAT_MODEL.md) 잔여위험).
+> **[M8](../m8/README.md)**(심화)이고, 강건한 답은 **zero-exec**(execve+execveat 전부 Sigkill)·distroless 이미지다 — matchBinaries는 *호출자*를 매칭해 아님(M8 라이브 검증; [THREAT_MODEL](../../THREAT_MODEL.md) 잔여위험).
 
 ## Step 0 — 베이스라인
 
@@ -85,7 +85,7 @@ bash labs/m4/grade.sh        # id=0 PASS + sh=137 PASS → M4 GRADUATED. 채점 
 - [ ] "둘 다 요구"가 왜 false-pass를 막는지 설명할 수 있다
 - [ ] Postfix vs Equal, 과잉 kill이 왜 결함인지 안다
 - [ ] 구두 문답 4개 답안 없이
-- [ ] 이 룰이 *못* 죽이는 것(renamed-shell `/tmp/x sh`·execveat·fd-exec)을 말할 수 있다 → 강건한 답은 matchBinaries/LSM, 경계는 [M8](../m8/README.md)에서 측정
+- [ ] 이 룰이 *못* 죽이는 것(renamed-shell `/tmp/x sh`·execveat·fd-exec)을 말할 수 있다 → 강건한 답은 zero-exec(execve+execveat)/distroless(matchBinaries 아님 — 호출자 매칭), [M8](../m8/README.md)에서 라이브 검증
 - [ ] `k8s/tracingpolicy.yaml`과 비교
 
 다음: **M5 — 데이터 암호화 (run & interpret)** (같은 세션에서).

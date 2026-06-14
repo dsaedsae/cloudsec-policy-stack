@@ -28,7 +28,7 @@ ET2,encryption-transit,packet-captured ciphertext (tcpdump),B,VERIFIED,capture-w
 ER1,encryption-rest,etcd Secret AES-CBC,B,VERIFIED,enable-secrets-encryption: k8s:enc:aescbc / no plaintext
 ER2,encryption-rest,key rotation procedure,B,CONFIGURED,runbook 02 2-key flow; not automated/tested
 ER3,encryption-rest,managed KMS/HSM key mgmt,B,NOT_COVERED,local demo; AWS path documented only
-ED1,detection-edr,runtime shell-exec kill (data tier),A,VERIFIED,verify:shell rc=137 + id rc=0 (NAIVE direct shell-named execve only; bypassable via renamed-binary/execveat/fd-exec - robust=matchBinaries/LSM; see Lab M8/THREAT_MODEL)
+ED1,detection-edr,runtime shell-exec kill (data tier),A,VERIFIED,verify:shell rc=137 + id rc=0 (NAIVE direct shell-named execve only; bypassable via renamed-binary/execveat/fd-exec - robust=zero-exec(execve+execveat)+distroless - matchBinaries matches caller not new binary - M8-validated; see Lab M8/THREAT_MODEL)
 ED2,detection-edr,process-exec audit trail,B,CONFIGURED,Tetragon logs present; not asserted in suite
 ED3,detection-edr,broader runtime policies (nc/python/curl),B,NOT_COVERED,only shell in data tier
 SL1,shift-left,IaC + K8s manifest scan (checkov),B,VERIFIED,checkov 452 pass / 0 fail

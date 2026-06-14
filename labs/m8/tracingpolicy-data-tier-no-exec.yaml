@@ -1,0 +1,50 @@
+# Robust complement to M4's `block-shell-in-data-tier` (the naive arg0-Postfix rule).
+# OPT-IN demo artifact — NOT applied by scripts/up (it would kill the M4 "id survives"
+# check in verify.sh's 21/21 by design). Apply it yourself to explore the robust answer.
+#
+# VALIDATED LIVE on kind + Tetragon 1.7.0 (a tier=data nginx-unprivileged:alpine pod):
+#   id  /  /bin/sh -c echo  /  a renamed busybox copy (/tmp/x)  /  /bin/busybox id
+#       -> ALL SIGKILL (rc=137), arg0/name/rename-independent
+#   nginx (PID1, exec'd before the policy) keeps serving (Running, ready, 0 restarts).
+#
+# WHY "kill all exec" and NOT matchBinaries (corrects a common claim):
+#   Tetragon `matchBinaries` on sys_execve matches the CALLER binary, not the new image.
+#   So `matchBinaries NotIn [/usr/sbin/nginx]` kills `nginx -v` (caller = the runtime exec
+#   shim) AND MISSES an in-nginx-RCE shell (caller = nginx). It is the wrong tool for
+#   "which binary is being launched." A datastore should run only its main process, so we
+#   forbid ALL exec in the data tier instead of allowlisting by (spoofable) name.
+#
+# Hooks BOTH sys_execve and sys_execveat, so the execveat bypass (a separate, naive-rule-
+# unhooked syscall) is closed too. fd-exec still goes through execve(at) -> covered.
+# io_uring has no exec opcode (N/A).
+#
+# HONEST CAVEATS:
+#   - Restart-safety is timing-fragile, not by design: this image's entrypoint is
+#     /docker-entrypoint.sh (a shell). In testing the restarted pod still came up only
+#     because the entrypoint shell slipped Tetragon's enforcement-attach window; a faster
+#     attach would SIGKILL the entrypoint -> CrashLoop. The robust-by-design fix is a
+#     SHELL-FREE (distroless / scratch + static binary) data-tier image: then there is no
+#     startup shell to race, and "any exec is illegitimate" holds cleanly.
+#   - This kills legitimate `kubectl exec` and exec-based liveness/readiness probes (that
+#     is the point — zero interactive exec in the datastore). Use httpGet probes.
+#   - For an allowlist (some exec permitted) rather than zero-exec, you need binary
+#     identity from BPF-LSM (security_bprm_creds_for_exec), not arg0 strings.
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: data-tier-no-exec
+spec:
+  podSelector:
+    matchLabels:
+      tier: data
+  kprobes:
+    - call: "sys_execve"
+      syscall: true
+      selectors:
+        - matchActions:
+            - action: Sigkill
+    - call: "sys_execveat"
+      syscall: true
+      selectors:
+        - matchActions:
+            - action: Sigkill

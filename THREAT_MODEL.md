@@ -153,10 +153,19 @@ portfolios, and it is exactly where this stack now adds controls.
   execs path `/tmp/x` (no postfix match) → no SIGKILL; (b) **execveat** — a distinct syscall this
   `sys_execve` kprobe never sees (fexecve/memfd path); (c) **fd-exec** — arg0 is `/proc/self/fd/N`.
   So ED1's claim is precisely "naive direct shell-named execve is killed," NOT "a shell cannot
-  run." Robust fix: match the **resolved binary** (Tetragon `matchBinaries` / `sched_process_exec`
-  tracepoint / LSM `security_bprm_creds_for_exec`) and/or hook `execveat`, or allowlist exec in
-  the data tier instead of denylisting shell names. Documented residual; not yet hardened (would
-  need live validation). Surfaced by expert review; explored in Lab M8.
+  run." **Live-validated in Lab M8** (`labs/m8/tracingpolicy-data-tier-no-exec.yaml`, kind + Tetragon
+  1.7.0): `matchBinaries` is the WRONG tool — on `sys_execve` it matches the *caller* binary, not the
+  launched one (so `NotIn [/usr/sbin/nginx]` kills `nginx -v` and MISSES an in-nginx-RCE shell whose
+  caller is nginx). The rule that actually worked is **zero-exec**: hook BOTH `sys_execve` and
+  `sys_execveat` and SIGKILL all exec in `tier: data` — `id` / `sh` / a renamed `/tmp/x` busybox copy
+  / busybox-by-name all rc 137, while nginx (PID 1, exec'd before the policy) keeps serving. It is
+  arg0-independent and covers execveat. Honest caveats: restart-safety is *timing-fragile* (the
+  entrypoint shell only survived because it slipped Tetragon's enforcement-attach window) — the
+  robust-by-design answer is a **shell-free / distroless** data-tier image; an allowlist (vs
+  zero-exec) needs **BPF-LSM** (`security_bprm_creds_for_exec`) for binary identity. Also: the simple
+  `cp /bin/busybox /tmp/x && /tmp/x sh` does NOT itself yield a shell on a busybox image (busybox
+  dispatches by arg0 → "applet not found"), so the genuine residuals are execveat/fd-exec/argv0-spoof
+  or a non-busybox shell. Surfaced by expert review, live-validated in Lab M8.
 - **Runtime detection watches the *syscall* surface — which has a known evasion class.**
   `execve` has no io_uring opcode, so io_uring does not route around THIS rule — a *narrow* fact,
   NOT "the shell defense is unbypassable" (see the bullet above for its real bypasses). Broader

@@ -51,7 +51,7 @@ kubectl -n kube-system logs ds/tetragon -c export-stdout --tail=200 | grep proce
 
 이 룰은 `sys_execve` kprobe로 **arg0(파일명) postfix**를 본다. ⚠️ **이 룰은 견고한 셸 차단이 아니다(나이브
 직접 셸 execve만 죽인다):** `cp /bin/busybox /tmp/x && /tmp/x sh`(이름 변경 → arg0 미매칭)·`execveat`(미후킹
-별도 syscall)·fd-exec로 우회된다 — robust 답은 해소된 바이너리 매칭(`matchBinaries`/LSM)이다(`THREAT_MODEL.md`).
+별도 syscall)·fd-exec로 우회된다 — robust 답은 **zero-exec**(`sys_execve`+`sys_execveat`를 모두 후킹해 전부 Sigkill)·**distroless** 이미지다(`matchBinaries`는 *호출자* 바이너리를 매칭해 아님 — M8에서 라이브 검증; allowlist가 필요하면 BPF-LSM). 단순 `cp busybox /tmp/x && /tmp/x sh`는 busybox arg0-dispatch로 셸이 안 됨(실 잔여는 execveat/fd-exec/argv0-spoof). 배경: `THREAT_MODEL.md`.
 한편 `execve`는 io_uring 오피코드가 없어 io_uring이 *이 룰*을 우회하진 않지만, **파일/네트워크 같은 광역
 syscall-kprobe 룰은 `io_uring`으로 우회될 수 있다** —
 공격자가 read/write/connect 대신 io_uring 제출큐로 I/O를 수행하면 감시 중인 syscall이 발동하지
