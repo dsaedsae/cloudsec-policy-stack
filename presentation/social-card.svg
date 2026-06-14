@@ -1,49 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" font-family="'Noto Sans KR','Malgun Gothic','Segoe UI',sans-serif">
-  <defs>
-    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#1f8a70"/>
-      <stop offset="1" stop-color="#3f51b5"/>
-    </linearGradient>
-  </defs>
-  <rect width="1280" height="640" fill="#16182a"/>
-  <rect width="1280" height="8" fill="url(#bar)"/>
-  <text x="72" y="96" fill="#56d6b0" font-family="'JetBrains Mono',Consolas,monospace" font-size="22" font-weight="700" letter-spacing="3">KOREA FSC &#183; 망분리 완화 &#8594; 위험기반 MLS</text>
-  <text x="70" y="190" fill="#ffffff" font-size="64" font-weight="900">망분리를 풀면,</text>
-  <text x="70" y="268" fill="#ffffff" font-size="64" font-weight="900">신뢰를 무엇으로 대체하는가</text>
-  <text x="72" y="322" fill="#aab3c7" font-size="28">검증 가능한 다층보안(MLS) 보상통제를 &#8212; <tspan fill="#56d6b0" font-weight="700">코드로.</tspan></text>
-  <line x1="92" y1="409" x2="1004" y2="409" stroke="#39406a" stroke-width="2"/>
-  <g transform="translate(72,372)" font-size="20">
-    <rect width="150" height="74" rx="12" fill="#1e2236" stroke="#39406a"/>
-    <text x="75" y="32" fill="#8fd0ff" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14">요청 / 공격</text>
-    <text x="75" y="56" fill="#dfe5f2" text-anchor="middle" font-weight="700">진입</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <rect width="1280" height="640" fill="#0b0d10"/>
+  <rect x="72" y="74" width="11" height="11" rx="2" fill="#34d399"/>
+  <text x="95" y="84" fill="#8b9099" font-family="'JetBrains Mono',Consolas,monospace" font-size="19" font-weight="500"><tspan fill="#e7e9ee" font-weight="700">cloudsec</tspan> / verified by code &#183; Korea FSC MLS</text>
+  <text x="70" y="200" fill="#e7e9ee" font-family="'Noto Sans KR','Malgun Gothic',sans-serif" font-size="60" font-weight="900">망분리를 풀면,</text>
+  <text x="70" y="280" fill="#e7e9ee" font-family="'Noto Sans KR','Malgun Gothic',sans-serif" font-size="60" font-weight="900">신뢰를 무엇으로 대체하는가</text>
+  <text x="72" y="332" fill="#8b9099" font-family="'Noto Sans KR','Malgun Gothic',sans-serif" font-size="24">MLS 보상통제를 코드로 &#8212; 막는다는 사실을 매번 라이브로 재현.</text>
+  <g font-family="'JetBrains Mono',Consolas,monospace" font-size="22">
+    <text x="72" y="424" fill="#8b9099">coverage</text>
+    <rect x="210" y="410" width="220" height="7" rx="3" fill="#1b1f25"/>
+    <rect x="210" y="410" width="158" height="7" rx="3" fill="#34d399"/>
+    <text x="452" y="424" fill="#34d399" font-weight="700">72%</text>
+    <text x="540" y="424" fill="#8b9099">29/40 검증가능-as-code</text>
+    <text x="72" y="468" fill="#8b9099">verify</text>
+    <rect x="210" y="454" width="220" height="7" rx="3" fill="#1b1f25"/>
+    <rect x="210" y="454" width="220" height="7" rx="3" fill="#34d399"/>
+    <text x="452" y="468" fill="#34d399" font-weight="700">21/21</text>
+    <text x="540" y="468" fill="#8b9099">라이브 &#183; 전 계층</text>
   </g>
-  <g transform="translate(258,372)" font-size="20">
-    <rect width="180" height="74" rx="12" fill="#1e2236" stroke="#39406a"/>
-    <text x="90" y="32" fill="#56d6b0" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14">&#9312; 신원</text>
-    <text x="90" y="56" fill="#dfe5f2" text-anchor="middle" font-weight="700">admission</text>
-  </g>
-  <g transform="translate(474,372)" font-size="20">
-    <rect width="190" height="74" rx="12" fill="#1e2236" stroke="#39406a"/>
-    <text x="95" y="32" fill="#56d6b0" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14">&#9313; 세분화</text>
-    <text x="95" y="56" fill="#dfe5f2" text-anchor="middle" font-weight="700">Cilium L3/L7</text>
-  </g>
-  <g transform="translate(700,372)" font-size="20">
-    <rect width="180" height="74" rx="12" fill="#1e2236" stroke="#39406a"/>
-    <text x="90" y="32" fill="#56d6b0" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14">&#9314; 인가</text>
-    <text x="90" y="56" fill="#dfe5f2" text-anchor="middle" font-weight="700">Cedar PDP</text>
-  </g>
-  <g transform="translate(916,372)" font-size="20">
-    <rect width="160" height="74" rx="12" fill="#2b2118" stroke="#7a4a1e"/>
-    <text x="80" y="32" fill="#ffb877" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14">기밀 C</text>
-    <text x="80" y="56" fill="#ffd9b3" text-anchor="middle" font-weight="700">db</text>
-  </g>
-  <g transform="translate(72,500)" font-family="'JetBrains Mono',Consolas,monospace" font-weight="700" font-size="22">
-    <rect width="300" height="48" rx="24" fill="#173a2a"/>
-    <text x="24" y="31" fill="#7ee0a8">검증가능 72% (29/40)</text>
-    <rect x="320" width="200" height="48" rx="24" fill="#173a2a"/>
-    <text x="344" y="31" fill="#7ee0a8">라이브 21/21</text>
-    <rect x="540" width="250" height="48" rx="24" fill="#23284a"/>
-    <text x="564" y="31" fill="#c5cae9">MIT &#183; 무료 로컬</text>
-  </g>
-  <text x="1208" y="600" fill="#6b748f" text-anchor="end" font-family="'JetBrains Mono',Consolas,monospace" font-size="20" font-weight="700">cloudsec-policy-stack</text>
+  <text x="72" y="528" fill="#6b748f" font-family="'JetBrains Mono',Consolas,monospace" font-size="18">cedar 8/8&#183;17/17 &#160; rebac 11/11 &#160; checkov 452/0 &#160; +1 CVE</text>
+  <text x="72" y="582" fill="#8b9099" font-family="'JetBrains Mono',Consolas,monospace" font-size="20">identity <tspan fill="#3a4150">&#8594;</tspan> segmentation <tspan fill="#3a4150">&#8594;</tspan> authz <tspan fill="#3a4150">&#8594;</tspan> encrypt <tspan fill="#3a4150">&#8594;</tspan> runtime</text>
+  <text x="1208" y="600" fill="#4b515b" text-anchor="end" font-family="'JetBrains Mono',Consolas,monospace" font-size="18" font-weight="700">cloudsec-policy-stack</text>
 </svg>
