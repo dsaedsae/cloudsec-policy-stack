@@ -13,6 +13,8 @@
 
 > 선행: M2 권장(같은 클러스터 세션). 배경: [`docs/03-network-and-authz.md`](../../docs/03-network-and-authz.md).
 
+> **YAML 구조가 막막하면 → [배우기 모드: LEARN.md](LEARN.md).** 홉 규칙 1개(L3/L4/L7 전체)를 주석과 함께 읽고 → 두 번째 홉을 빈칸으로 채우고 → 나머지는 직접. L3/L4 DROP과 L7 403의 차이까지 짚어준다.
+
 ---
 
 ## Step 0 — 베이스라인

@@ -13,6 +13,8 @@
 
 > 선행: M2/M3 권장(같은 세션). 배경: [`docs/04-runtime.md`](../../docs/04-runtime.md).
 
+> **selector 문법이 막막하면 → [배우기 모드: LEARN.md](LEARN.md).** kprobe 한 개(matchArgs Postfix + Sigkill)를 주석과 함께 읽고 → operator를 빈칸으로 채우고 → 나머지는 직접. 이 룰이 못 막는 우회까지 짚어준다.
+
 ---
 
 ## 왜 런타임 통제인가
