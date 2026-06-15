@@ -9,7 +9,7 @@
 
 **미션:** M4의 `block-shell-in-data-tier`(execve kprobe → Sigkill, `tier: data`)는 셸 실행을 **실제로 막는다**.
 M8은 묻는다 — *어디까지* 막나? 언제 막나? 못 막는 건 뭔가? 그걸 **라이브로 측정**해 통제를 정확히 라벨한다.
-**메트릭은 변하지 않는다(72% 그대로):** M8은 통제를 더하거나 빼는 게 아니라 *기존 통제의 가장자리를 측정*한다 —
+**메트릭은 변하지 않는다(75% 그대로):** M8은 통제를 더하거나 빼는 게 아니라 *기존 통제의 가장자리를 측정*한다 —
 그걸 명시하는 것 자체가 정직한 결과다. ED1("runtime shell-exec kill")은 **VERIFIED 그대로**.
 
 > 🎯 **학습 성과:** 런타임 kill의 정직한 경계를 *라이브로 측정*해 설명할 수 있다 — detection≠prevention, execve(pre-image-load) vs I/O(write window), 그리고 io_uring에 blind한 건 *기본 syscall 정책*이고 LSM/KRSI가 해법이라는 것.
@@ -106,7 +106,7 @@ kubectl exec db -n shop -- id                     # -> rc=137 (정책 kill)
 - [ ] **B:** 실제 결과 보고(예상: marker 없음/쓰기 불가) + readOnlyRootFS 이중차단 이해
 - [ ] **C:** write-window를 측정(`bytes>0`) **또는** 정직한 SKIP + "synchronous-process-kill ≠ pre-operation"과 Sigkill vs +Override 설명
 - [ ] **D:** 비셸 exec + 파일 읽기 생존 확인 + io_uring/BPF-LSM(KRSI)을 robust 훅으로 지목
-- [ ] 헤드라인이 **왜 안 변하나**(72%) 설명 — M8은 통제 가감이 아니라 가장자리 측정
+- [ ] 헤드라인이 **왜 안 변하나**(75%) 설명 — M8은 통제 가감이 아니라 가장자리 측정
 
 ## 구두 문답
 1. <details><summary>execve+Sigkill은 prevention-grade인데 write+Sigkill은 왜 detection-grade?</summary>execve는 새 이미지 load *이전*에 죽어 셸 코드가 실행되지 않음(pre-image-load). write()는 프로세스를 동기적으로 죽여도 커널이 이미 바이트를 기록했을 수 있음. prevention-grade로 만들려면 Sigkill+Override.</details>
