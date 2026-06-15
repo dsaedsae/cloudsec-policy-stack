@@ -47,10 +47,10 @@ brief:  ## regenerate the exec one-pager PDF from presentation/cloudsec-onepager
 	else echo "no chrome/chromium found — open presentation/cloudsec-onepager.html and Ctrl-P -> Save as PDF"; fi
 
 docs:  ## build the docs site (strict)
-	NO_MKDOCS_2_WARNING=true $(PY) -m mkdocs build --strict
+	DISABLE_MKDOCS_2_WARNING=true NO_MKDOCS_2_WARNING=true $(PY) -m mkdocs build --strict
 
 site:  ## build the all-HTML deployable bundle into site/ (landing = root; docs = HTML) — see DEPLOY.md
-	NO_MKDOCS_2_WARNING=true $(PY) -m mkdocs build
+	DISABLE_MKDOCS_2_WARNING=true NO_MKDOCS_2_WARNING=true $(PY) -m mkdocs build
 	cp presentation/cloudsec-onepager.html site/cloudsec-onepager.html
 	cp presentation/curriculum.html site/curriculum.html
 	@cp presentation/cloudsec-onepager.pdf site/cloudsec-onepager.pdf 2>/dev/null || true

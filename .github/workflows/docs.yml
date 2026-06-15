@@ -23,4 +23,5 @@ jobs:
       - run: pip install -r requirements-docs.txt
       - run: python -m mkdocs build --strict
         env:
-          NO_MKDOCS_2_WARNING: "true"   # suppress the Material dependency's promo banner (build is green either way)
+          NO_MKDOCS_2_WARNING: "true"       # Material dependency ships TWO promo banners,
+          DISABLE_MKDOCS_2_WARNING: "true"  # one gated by each var; both needed. Build is green either way.
