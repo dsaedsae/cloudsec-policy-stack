@@ -94,7 +94,7 @@ def main() -> int:
         tr = subprocess.run(
             ["docker", "run", "--rm", "-v", f"{HERE}:/data", "openfga/cli:latest",
              "model", "transform", "--file", "/data/model.fga"],
-            capture_output=True, text=True, check=False,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
         )
         if tr.returncode != 0:
             return skip(f"model transform failed: {tr.stderr.strip()[:200]}")
@@ -104,7 +104,7 @@ def main() -> int:
         up = subprocess.run(
             ["docker", "run", "-d", "--name", CONTAINER,
              "-p", f"{HOST_PORT}:8080", "openfga/openfga:latest", "run"],
-            capture_output=True, text=True, check=False,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
         )
         if up.returncode != 0:
             return skip(f"could not start openfga: {up.stderr.strip()[:200]}")

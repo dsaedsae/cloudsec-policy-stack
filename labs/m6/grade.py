@@ -50,7 +50,7 @@ def grade_rebac() -> int:
         proc = subprocess.run(
             ["docker", "run", "--rm", "-v", f"{base}:/data", "openfga/cli:latest",
              "model", "test", "--tests", "/data/store.fga.yaml"],
-            capture_output=True, text=True,
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
         )
         out = (proc.stdout + proc.stderr).strip()
         print(out)

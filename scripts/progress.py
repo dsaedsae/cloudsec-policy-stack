@@ -34,7 +34,8 @@ CLUSTER = [
 
 def run(argv: list[str]) -> tuple[int | None, str, str]:
     try:
-        p = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True, timeout=300)
+        p = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=300)
     except Exception as e:  # missing interpreter, timeout, etc.
         return None, f"실행 실패: {e}", ""
     full = p.stdout + "\n" + p.stderr
