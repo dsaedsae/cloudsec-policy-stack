@@ -4,7 +4,7 @@
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dsaedsae/cloudsec-policy-stack)
 
-> 🏢 **의사결정자·도입 검토용 (md 말고):** [원페이저 PDF](presentation/cloudsec-onepager.pdf) — GitHub에서 바로 열립니다 · [HTML](presentation/cloudsec-onepager.html)(다운로드→브라우저, 이메일·인쇄용). 아래는 개발자/학습자용.
+> 의사결정자·도입 검토용: [원페이저 PDF](presentation/cloudsec-onepager.pdf)(GitHub에서 바로 열림) · [HTML](presentation/cloudsec-onepager.html)(브라우저·이메일·인쇄). 아래는 개발자/학습자용.
 
 무료 로컬 `kind` 클러스터 위에서 도는 방어심층(defense-in-depth) 쿠버네티스 보안 스택과, 각 통제를 직접 다시 구현해 보는 자가채점 학습 트랙입니다. 프로덕션 배포물이 아니라 **교육·포트폴리오 레퍼런스**이며, 법률/금융 자문도 공식 FSC 컴플라이언스 매핑도 아닙니다.
 
@@ -28,7 +28,7 @@
 
 이 repo의 핵심입니다. 모든 통제에는 실행 가능한 검증이 딸려 있고, [재구현 트랙](labs/README.md)은 그 검증기를 **자동채점기**로 뒤집습니다: 통제 하나를 빈 골격으로 만들어 두고, 스펙만 보고 다시 작성하면 기존 하네스가 PASS/FAIL로 채점합니다. 정답지를 베끼는 게 아니라 직접 쓰고 어디가 틀렸는지 확인합니다.
 
-> 🎓 **한눈에 보는 커리큘럼 (md 말고 HTML):** [커리큘럼 페이지](presentation/curriculum.html) — 배우는 것·기술 스택·추천 학습 순서·선수지식을 한 화면에(다운로드→브라우저, 또는 `make site` 배포 번들). 아래 표는 요약.
+> 커리큘럼 한눈에 보기(HTML): [커리큘럼 페이지](presentation/curriculum.html) — 배우는 것·기술 스택·추천 순서·선수지식. 아래 표는 요약.
 
 트랙은 M0부터 M6까지입니다. 세 모듈은 클러스터가 필요 없고(Python만), 나머지는 로컬 스택을 `up` → `down` 한 세션으로 띄워서 합니다.
 

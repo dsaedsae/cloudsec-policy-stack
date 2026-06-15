@@ -6,16 +6,15 @@ hide:
 
 # 망분리를 풀면, 신뢰를 무엇으로 대체하는가
 
-**검증 가능한 다층보안(MLS) 보상통제를 코드로 — 한 요청이 신원·세분화·인가·암호화·탐지를
-전부 통과해야 데이터에 닿는다. 그리고 그 사실을 매번 라이브로 증명한다.**
+검증 가능한 다층보안(MLS) 보상통제를 코드로 — 한 요청이 신원·세분화·인가·암호화·탐지를 전부 통과해야 데이터에 닿고, 막힌다는 사실을 매번 라이브로 증명한다.
 
-[**라이브 검증 21/21**](docs/evaluation-coverage.md) · [**검증가능 커버리지 72%**](docs/evaluation-coverage.md) · [**적대적 검증: CRITICAL 1 발견·수정**](THREAT_MODEL.md) · **무료 로컬 $0**
+[라이브 검증 21/21](docs/evaluation-coverage.md) · [검증가능 커버리지 72%](docs/evaluation-coverage.md) · [적대적 검증: CRITICAL 1 발견·수정](THREAT_MODEL.md) · 무료 로컬 $0
 
-🏁 **[여기서 시작 — M0 재구현 (클러스터 불필요·Python만)](labs/m0/README.md)** · [트랙 전체 보기](labs/README.md)
+[여기서 시작 — M0 재구현 (클러스터 불필요·Python만)](labs/m0/README.md) · [트랙 전체 보기](labs/README.md)
 
-> ⚖️ 교육·포트폴리오 목적의 보상통제 설계 레퍼런스입니다 — **법률/금융 자문도, 공식 FSC 컴플라이언스 매핑도 아닙니다.** 규제 세부(고시·조문·시행일)는 1차 출처 대조가 필요하다.
+> 교육·포트폴리오 목적의 보상통제 설계 레퍼런스다 — 법률/금융 자문도, 공식 FSC 컴플라이언스 매핑도 아니다. 규제 세부(고시·조문·시행일)는 1차 출처 대조가 필요하다.
 
-> **한 문단 요약** — 한국 금융권은 10년간 **물리/논리 망분리**로 보안을 유지했다. FSC(금융위원회) 「금융분야 망분리 개선 [로드맵](docs/financial-mls-mapping.md)」(2024-08-13)이 이를 위험기반 **다층보안(MLS)** 으로 전환하면서, "네트워크 위치로 신뢰"가 사라진 자리를 **보상통제(compensating controls)** 로 메워야 한다. 이 프로젝트는 그 보상통제를 **하나의 워크로드 위에 코드로 구현하고, 21개 통제를 라이브로 검증**한 재현 가능한 레퍼런스다. 적대적(LLM) 재검토가 우리 자신의 인가 정책에서 **실제 우회 취약점**을 찾아 수정한 과정까지 정직하게 포함한다.
+> 한국 금융권은 10년간 물리/논리 망분리로 보안을 유지했다. FSC(금융위원회) 「금융분야 망분리 개선 [로드맵](docs/financial-mls-mapping.md)」(2024-08-13)이 이를 위험기반 다층보안(MLS)으로 전환하면서, "네트워크 위치로 신뢰"가 사라진 자리를 보상통제(compensating controls)로 메워야 한다. 이 프로젝트는 그 보상통제를 하나의 워크로드 위에 코드로 구현하고 21개 통제를 라이브로 검증한 재현 가능한 레퍼런스다. 적대적(LLM) 재검토가 자체 인가 정책에서 실제 우회 취약점을 찾아 수정한 과정까지 포함한다.
 
 ---
 
@@ -74,10 +73,10 @@ flowchart TB
 
 ## 기여 (contributions)
 
-- 🗺️ **규제 → 통제 매핑** — FSC 망분리 완화/MLS 보상통제 6종을 NIST SP 800-207·ISMS-P·**검증 항목**에 1:1 매핑. [→ MLS 매핑](docs/financial-mls-mapping.md)
-- ✅ **검증가능성 기준 + 커버리지 측정** — "각 규제 요구는 시행을 증명하는 실행 테스트에 대응돼야 한다"를 기준으로, MLS 보상통제의 **72%가 코드로 검증가능**함을 *정량화*(갭 공개). [→ 평가](docs/evaluation-coverage.md)
-- 🛡️ **정직한 적대적 검증** — LLM 멀티에이전트 재검토가 **우리 SA-use 정책의 실제 우회(CRITICAL)** 를 발견 → 수정 → 라이브 재검증. 과대주장 대신 잔여위험 명시.
-- ⚖️ **현재 인가 흐름에 정렬 + 프런티어** — RBAC+ABAC 하이브리드 · policy-as-code · 지속평가. **AI-에이전트 위임(Cedar)·ReBAC(OpenFGA)** 을 실행 데모로 충족(NHI 생애주기 프레이밍 포함). [→ 인가 모델](docs/authorization-model.md)
+- **규제 → 통제 매핑** — FSC 망분리 완화/MLS 보상통제 6종을 NIST SP 800-207·ISMS-P·검증 항목에 1:1 매핑. [→ MLS 매핑](docs/financial-mls-mapping.md)
+- **검증가능성 기준 + 커버리지 측정** — "각 규제 요구는 시행을 증명하는 실행 테스트에 대응돼야 한다"를 기준으로, MLS 보상통제의 72%가 코드로 검증가능함을 정량화(갭 공개). [→ 평가](docs/evaluation-coverage.md)
+- **적대적 검증** — LLM 멀티에이전트 재검토가 자체 SA-use 정책의 실제 우회(CRITICAL)를 발견 → 수정 → 라이브 재검증. 잔여위험 명시.
+- **인가 흐름 정렬 + 프런티어** — RBAC+ABAC 하이브리드 · policy-as-code · 지속평가. AI-에이전트 위임(Cedar)·ReBAC(OpenFGA)을 실행 데모로 충족(NHI 생애주기 포함). [→ 인가 모델](docs/authorization-model.md)
 
 ---
 
@@ -86,7 +85,7 @@ flowchart TB
 | 항목 | 결과 |
 |------|------|
 | **검증가능성 커버리지 (정량 헤드라인)** | 워크로드 적용가능 MLS 보상통제 sub-requirement의 **72% (29/40)** 가 *코드로 검증* — 갭(CONFIGURED 7·NOT-COVERED 4·GOVERNANCE 2)을 정직하게 공개. [→ 평가](docs/evaluation-coverage.md) |
-| 라이브 방어심층 검증 (기능 회귀 스위트) | **21 / 21 PASS** — 차단/허용 enforcement 전부. WireGuard는 api/db를 **다른 노드로 강제**(podAntiAffinity)하고, **tcpdump 패킷캡처**로 선상의 WG 암호문(UDP/51871, 40pkt·캡처 상한) 존재 + 평문 0을 확인 — 결정적 증거는 WG패킷+노드분산, 평문부재는 보강(`scripts/capture-wg.sh`) |
+| 라이브 방어심층 검증 (기능 회귀 스위트) | **21 / 21 PASS** — 차단/허용 enforcement 전부. WireGuard는 api/db를 다른 노드로 강제(podAntiAffinity)하고 tcpdump로 선상 WG 암호문(UDP/51871, 25s 윈도우) + 평문 0 확인(`scripts/capture-wg.sh`) |
 | Cedar 인가 단위테스트 | **8 / 8** (코어) · **17 / 17** AI-에이전트 위임(confused-deputy 차단 + ASI08 위임깊이 cap·홉별 클램프·출처 게이트; P2·P3·P5·P6·P7 mutation으로 반증가능) |
 | ReBAC 관계 테스트 (OpenFGA) | **11 / 11** `fga model test` + 라이브 `/check` 11/11 — 인가 모델의 ReBAC 갭을 실행으로 충족 |
 | 공급망: 이미지 스캔 + SBOM (trivy) | 게이트가 **실제 CVE 1건(HIGH) 포착→remediation→green** · CycloneDX SBOM **103 컴포넌트** |
@@ -104,4 +103,4 @@ flowchart TB
 - **왜 중요한지** → [금융 망분리 완화 매핑](docs/financial-mls-mapping.md) · [위협 모델](THREAT_MODEL.md)
 - **운영·클라우드·발표** → [런북](runbooks/README.md) · [AWS 경로](docs/aws-eks-path.md) · [토크 아웃라인](presentation/talk-outline.md)
 
-> **정직 메모** — 이것은 *워크로드 보상통제 레이어*의 레퍼런스다(인증서가 아니다). 실 데이터스토어 없음, X-User는 미인증 데모 입력, WireGuard는 노드간 암호화(api/db를 다른 노드로 강제해 크로스노드 증명 + tcpdump 패킷캡처로 암호문 확인), 규제 세부는 1차 출처 대조 필요. 한계를 명시하는 것 자체가 MLS의 "자율보안·정직성"에 부합한다.
+> **한계** — 워크로드 보상통제 레이어의 레퍼런스다(인증서가 아니다). 실 데이터스토어 없음, X-User는 미인증 데모 입력, WireGuard는 노드간 암호화, 규제 세부는 1차 출처 대조 필요.
