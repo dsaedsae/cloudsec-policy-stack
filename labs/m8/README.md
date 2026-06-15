@@ -84,9 +84,9 @@ kubectl apply -f labs/m8/tracingpolicy-data-tier-no-exec.yaml
 kubectl apply -f labs/m8/app-db-distroless.yaml
 kubectl wait --for=condition=Ready pod/db-distroless --timeout=120s
 # 이미지 층 증거 — 셸이 *이미지에 없다*(정책 이전에 "no such file"):
-kubectl exec db-distroless -- /bin/sh -c echo     # -> exec: "/bin/sh": no such file
-# 런타임 층 증거 — 셸이 있는 alpine db에선 exec가 137로 죽는다:
-kubectl exec db -- id                             # -> rc=137 (정책 kill)
+kubectl exec db-distroless -- sh -c echo          # -> exec: "sh": no such file  (Git Bash: bare `sh`, not `/bin/sh` — MSYS가 경로를 변조함)
+# 런타임 층 증거 — 셸이 있는 alpine db에선 exec가 137로 죽는다 (db는 shop 네임스페이스):
+kubectl exec db -n shop -- id                     # -> rc=137 (정책 kill)
 ```
 
 **라이브 검증됨(kind+Tetragon 1.7.0):** distroless 파드는 zero-exec 정책이 t=0부터 켜진 상태로도 Ready로

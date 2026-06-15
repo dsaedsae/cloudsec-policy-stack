@@ -5,6 +5,10 @@
 # the apiserver manifest is backed up first (reversible). The 32-byte key is
 # generated here and never committed (terraform/.enc is gitignored).
 set -euo pipefail
+# Git Bash (MSYS) rewrites bare absolute paths handed to native kubectl.exe/docker.exe
+# (e.g. /registry/secrets/... -> C:/Program Files/Git/registry/...), which breaks the raw
+# etcd read and causes a spurious FAIL on Windows. Disable that conversion for this script.
+export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CTX="kind-cloudsec"; NODE="cloudsec-control-plane"
 ENC_DIR="$ROOT/terraform/.enc"; mkdir -p "$ENC_DIR"

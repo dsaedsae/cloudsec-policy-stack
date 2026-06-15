@@ -32,8 +32,9 @@ spec:
     #   CEL 예: variables.app == 'web' && variables.sa == 'web-sa'
     - expression: >
         true
-      # TODO: 거부 시 왜 거부됐는지 알려주는 메시지(변수 보간). 채점기는 메시지 안의
-      #   'forged' 또는 'B7' 토큰으로 "내 정책이 막았다"를 RBAC 403과 구분한다 — 토큰 하나는 넣어라.
+      # TODO: 거부 시 왜 거부됐는지 알려주는 메시지(변수 보간). 채점기는 거부 출력에 뜨는
+      #   '정책 이름'(이 VAP의 metadata.name = shop-label-identity)으로 "내 정책이 막았다"를
+      #   RBAC 403과 구분한다 — 메시지의 'forged'/'B7'는 운영자용 설명일 뿐 채점 기준은 아니다.
       messageExpression: >
         "TODO"
 ---

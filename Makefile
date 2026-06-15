@@ -2,7 +2,9 @@
 # Linux / macOS / GitHub Codespaces. (Windows: use the PowerShell scripts in scripts/.)
 
 .DEFAULT_GOAL := help
-PY := python
+# Prefer the project venv if present (so `make m7` / `make test` get z3/cedarpy without
+# needing the venv activated); fall back to bare python (e.g. Codespaces after `make setup`).
+PY := $(shell [ -x .venv/bin/python ] && echo .venv/bin/python || echo python)
 
 help:  ## list the targets
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  make %-10s %s\n", $$1, $$2}'
