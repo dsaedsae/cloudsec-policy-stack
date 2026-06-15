@@ -29,6 +29,19 @@ DEMO_JWT_SECRET = os.environ.get("DEMO_JWT_SECRET", "demo-fixture-key-not-a-real
 RESOURCE_AUD = os.environ.get("RESOURCE_AUD", "https://api.shop.local")  # this resource's audience
 
 
+class AuthRequired(ValueError):
+    """No verified Bearer token AND the X-User fallback is disabled (AUTH_REQUIRE_JWT mode).
+    Subclasses ValueError so existing handlers still catch it; the FastAPI layer maps it to
+    401 (authentication required), distinct from a malformed-X-User 400."""
+
+
+def _require_jwt() -> bool:
+    """Enforce mode — set on the live/cluster deployment (AUTH_REQUIRE_JWT=1): a verified
+    Bearer JWT is MANDATORY and the unauthenticated X-User fallback is disabled. Read at
+    call time so it is per-deployment togglable and unit-testable (auth_test.py)."""
+    return os.environ.get("AUTH_REQUIRE_JWT", "").strip().lower() in ("1", "true", "yes")
+
+
 def validate_user(user: str) -> str:
     """Charset-validate a principal id, or raise ValueError."""
     if not _USER_RE.match(user or ""):
@@ -73,4 +86,7 @@ def principal_for(authorization: str | None, x_user: str) -> str:
         if not authorization.lower().startswith("bearer "):
             raise ValueError("unsupported Authorization scheme (expected Bearer)")
         return f'User::"{verify_bearer(authorization[7:].strip())}"'
+    # No Authorization header. In enforce mode the unauthenticated X-User fallback is OFF.
+    if _require_jwt():
+        raise AuthRequired("authentication required: Bearer JWT (X-User fallback disabled)")
     return f'User::"{validate_user(x_user)}"'

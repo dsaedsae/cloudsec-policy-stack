@@ -20,7 +20,7 @@ import pathlib
 import cedarpy
 from fastapi import FastAPI, Header, HTTPException, Request
 
-from auth import principal_for, principal_id
+from auth import AuthRequired, principal_for, principal_id
 
 CEDAR = pathlib.Path(__file__).parent / "cedar"
 POLICIES = (CEDAR / "policies.cedar").read_text(encoding="utf-8")
@@ -36,6 +36,9 @@ def resolve_principal(authorization: str | None, x_user: str) -> str:
     X-User fallback is 400 (malformed input). Fail closed either way."""
     try:
         return principal_for(authorization, x_user)
+    except AuthRequired:
+        # Enforce mode (AUTH_REQUIRE_JWT): no Bearer token and X-User fallback disabled.
+        raise HTTPException(status_code=401, detail="authentication required (Bearer JWT)")
     except ValueError:
         # A PRESENT (non-empty) Authorization header that failed is an authentication
         # failure (401) — bad signature/audience/expiry OR an unsupported scheme.

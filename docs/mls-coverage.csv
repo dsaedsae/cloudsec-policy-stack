@@ -15,7 +15,7 @@ ID4,credential-forgery,SPIFFE SVID mutual-auth on edge,A,CONFIGURED,opt-in netpo
 ID5,credential-forgery,tier SA has zero K8s API rights,A,VERIFIED,verify:api-sa no create-pods/secrets
 ID6,credential-forgery,SA token not mounted,A,VERIFIED,live: web/api token path ABSENT (kubectl exec) + 3 tiers automountServiceAccountToken=false / no kube-api-access volume
 ID7,credential-forgery,SA-use other namespaces,A,VERIFIED,verify-kyverno: Kyverno SA-use ClusterPolicy DENY in 2nd ns (kyv-demo) - cluster-wide proven (opt-in capstone)
-ID8,credential-forgery,requester Bearer-JWT signature+audience verification (RFC 8707),A,CONFIGURED,auth_test.py 14/14 verifier logic (fixture key/no cluster) rejects bad-aud/sig/expiry/forged/non-Bearer; live API not Bearer-mandatory (X-User fallback) so enforcement not live-asserted
+ID8,credential-forgery,requester Bearer-JWT signature+audience verification (RFC 8707),A,CONFIGURED,auth_test.py 18/18 (fixture key/no cluster) rejects bad-aud/sig/expiry/forged/non-Bearer + AUTH_REQUIRE_JWT enforce mode makes Bearer mandatory & disables X-User fallback (unit-proven); still CONFIGURED: live stack defaults to X-User demo input, in-cluster 401 assertion pending (enforce mode breaks the X-User-based verify suite until migrated)
 LP1,least-privilege,Cedar owner check,A,VERIFIED,verify:bob GET alice 403
 LP2,least-privilege,Cedar transfer limit,A,VERIFIED,verify:transfer 5000 403
 LP3,least-privilege,Cedar frozen-account forbid,A,VERIFIED,verify:frozen 403

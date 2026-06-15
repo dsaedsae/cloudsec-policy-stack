@@ -11,6 +11,7 @@ whole point of RFC 8707 resource-indicator / audience binding.
 
 from __future__ import annotations
 
+import os
 import pathlib
 import sys
 import time
@@ -81,20 +82,48 @@ CASES = [
         "reject"),
 ]
 
+# Enforce mode (AUTH_REQUIRE_JWT=1, set on the live/cluster deployment): a verified Bearer
+# JWT is MANDATORY and the unauthenticated X-User fallback is OFF. Same resolver, env flipped.
+ENFORCE_CASES = [
+    ("[enforce] no Authorization header -> reject (X-User fallback disabled)",
+        lambda: auth.principal_for(None, "bob"),
+        "reject"),
+    ("[enforce] X-User present but no Bearer -> reject (not downgraded to demo identity)",
+        lambda: auth.principal_for(None, "alice"),
+        "reject"),
+    ("[enforce] valid Bearer still resolves to its sub",
+        lambda: auth.principal_for(f"Bearer {mint(sub='alice')}", "ignored"),
+        'User::"alice"'),
+    ("[enforce] wrong-audience token still rejected",
+        lambda: auth.principal_for(f"Bearer {mint(aud='https://evil.other')}", "x"),
+        "reject"),
+]
 
-def run() -> int:
-    w = max(len(n) for n, _, _ in CASES) + 2
+
+def _run(cases, w) -> int:
     passed = 0
-    for name, fn, expect in CASES:
+    for name, fn, expect in cases:
         try:
             outcome = fn()  # a principal UID string on success
         except ValueError:
-            outcome = "reject"  # fail closed
+            outcome = "reject"  # fail closed (AuthRequired subclasses ValueError)
         ok = outcome == expect
         passed += ok
         print(f"{'PASS' if ok else 'FAIL'}  {name:<{w}} -> {outcome!r} (want {expect!r})")
-    print(f"\n{passed}/{len(CASES)} bearer/audience scenarios")
-    return 0 if passed == len(CASES) else 1
+    return passed
+
+
+def run() -> int:
+    w = max(len(n) for n, _, _ in CASES + ENFORCE_CASES) + 2
+    passed = _run(CASES, w)                       # default mode: X-User fallback ON
+    os.environ["AUTH_REQUIRE_JWT"] = "1"          # enforce mode: Bearer mandatory
+    try:
+        passed += _run(ENFORCE_CASES, w)
+    finally:
+        os.environ.pop("AUTH_REQUIRE_JWT", None)
+    total = len(CASES) + len(ENFORCE_CASES)
+    print(f"\n{passed}/{total} bearer/audience + enforce scenarios")
+    return 0 if passed == total else 1
 
 
 if __name__ == "__main__":
