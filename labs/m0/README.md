@@ -33,6 +33,12 @@
 > **첫 교훈이 바로 여기 있다:** 정책이 *하나도 없는데* 5/8이 통과한다. Cedar는 **default-deny** —
 > permit이 없으면 전부 Deny이므로, "Deny 기대" 시나리오 5개는 공짜로 맞는다. 즉 **Deny 통과는
 > 정책이 옳다는 증거가 아니다.** 이 함정은 Step 3에서 다시 만난다.
+>
+> **더 날카로운 관찰:** 통과하는 5개 중 하나가 `transfer from FROZEN account (forbid overrides)`다 —
+> R4(forbid)를 검증하려고 만든 시나리오인데 **R4를 한 줄도 안 썼는데 PASS다.** alice는 동결 계좌의
+> 소유자이고 금액(100)도 한도(1000) 이내라 R2 permit이 있었다면 Allow였겠지만, permit이 없어
+> default-deny로 떨어진 것이다. forbid가 실제로 일하는지는 그것이 덮을 R2 permit을 켠 *뒤에야*
+> 드러난다(Step 3-A). guardrail은 그것이 막을 permit이 켜져 있어야 비로소 관측된다.
 
 ## Step 1 — 읽기 (30–60분)
 
@@ -57,6 +63,21 @@ when { /* 조건식 */ };
 //   && / ||                              결합
 // forbid는 어떤 permit보다 우선한다 (explicit deny wins).
 ```
+
+### 채점 전에 먼저 도는 관문: schema validation
+
+`grade.py`는 시나리오를 평가하기 **전에** 정책을 `schema.json`에 대해 정적 검증한다(`cedarpy.validate_policies`).
+스키마에 없는 속성·타입오류·없는 액션을 참조하면 **평가에 가기도 전에 ERRORS로 멈춘다** — 이게
+policy-as-code의 핵심 이득이다(런타임 요청 없이 배포 전 결함 차단). 흔한 실수와 실제 에러 문구:
+
+- `resource.ownerr`처럼 오타 → ``attribute `ownerr` on entity type `Account` not found``
+- `resource.transferLimit`(엉뚱한 타입에서 속성 읽기 — `transferLimit`은 `User` 속성이지 `Account`가 아니다)
+  → 똑같이 ``attribute `transferLimit` on entity type `Account` not found``
+
+두 번째가 특히 중요하다: **owner는 `Account` 속성, transferLimit은 `User` 속성**이다(`schema.json`을 보면
+명시돼 있다). principal/resource를 헷갈려 `principal.owner`나 `resource.transferLimit`를 쓰면 validation이
+잡아준다 — 평가까지 가서 엉뚱한 Deny로 디버깅하는 대신, **검증 단계에서 정확한 줄을 짚어준다.**
+파싱 에러(주로 `;` 누락)일 땐 채점기가 세미콜론 힌트까지 출력한다(`authz.py`의 hint 분기).
 
 ## Step 2 — 재구현: 스펙 → 정책 (핵심, 1–3시간)
 
@@ -102,6 +123,27 @@ when { principal == resource.owner };
 | **B** | R1의 소유자 조건 제거(무조건 permit) | ? |
 | **C** | R2의 한도 비교를 `<=`에서 `<`로 | ? |
 
+<details><summary>A를 돌려본 후에 열 것 — forbid가 load-bearing인 이유</summary>
+
+**A는 정확히 1개를 깬다: `transfer from FROZEN account`가 Deny→Allow로 뒤집힌다.** 왜? alice는
+동결 계좌의 소유자이고 금액(100)도 한도(1000) 이내라 **R2 permit이 매치한다** — forbid가 없으면
+그 permit이 곧장 Allow다. 즉 forbid는 "permit이 이미 Allow를 내주는 요청"을 덮어쓰려고 존재한다.
+이게 Step 0에서 본 빈-정책 함정의 거울상이다: 빈 정책에선 그 시나리오가 *permit이 없어서* Deny였고
+(forbid 무관), 여기선 *permit이 켜져 forbid가 진짜 일을 해야* Deny다. **`forbid > permit`은 이렇게
+permit과 forbid가 동시에 매치할 때만 관측 가능하다** — 둘 중 하나라도 빠지면 보이지 않는다.
+
+</details>
+
+<details><summary>B를 돌려본 후에 열 것</summary>
+
+**B는 `non-owner views another's account`를 Deny→Allow로 깬다.** `when` 조건을 지워 무조건 permit이
+되면 bob이 alice 계좌를 조회해도 Allow다 — 전형적인 **BOLA / IDOR**(객체 수준 인가 누락, OWASP API
+Security #1)다. 1개만 깨지는 게 핵심: owner-views-own은 여전히 Allow(소유자도 무조건 permit에 포함),
+ext를 켜면 EXT1(auditor가 남 계좌 조회)도 *우연히* Allow가 되지만 그건 다른 이유다. 조건 제거가
+"적게 깨진다"고 안전한 게 아니다 — 깨진 1개가 바로 인가의 존재 이유다.
+
+</details>
+
 <details><summary>뮤테이션 C를 돌려본 후에 열 것</summary>
 
 **C는 core 8/8을 그대로 통과한다.** 시나리오에 "정확히 한도만큼(1000) 이체"하는 **경계 케이스가
@@ -142,13 +184,34 @@ ext 시나리오 3개: ① auditor가 남의 계좌 조회 → Allow ② auditor
 8. <details><summary>principal id가 공격자 제어 입력(X-User 헤더)일 때 무엇을 막아야 하나?</summary>charset 검증. User::"..." 문자열에 따옴표 등을 인젝션해 UID를 탈출하는 것 — main.py가 정규식 ^[A-Za-z0-9_-]{1,64}$로 막고 400을 돌려준다.</details>
 9. <details><summary>이 정책을 AWS 관리형으로 옮기려면?</summary>Amazon Verified Permissions — 같은 Cedar 정책/스키마가 그대로 올라간다. isAuthorized API로 평가. ($5/100만 요청)</details>
 10. <details><summary>빈 정책이 5/8을 통과하고, 뮤테이션 C가 core 8/8을 통과했다 — 두 사건의 공통 교훈은?</summary>둘 다 "통과 = 증명"이 아님을 보여준다. Deny는 default-deny 때문에 공짜로 맞을 수 있고(옳은 이유로 Deny인지 별도 확인 필요), Allow도 경계를 안 찌르면 뮤턴트가 살아남는다. 통과하는 스위트 ≠ 좋은 스위트 — 뮤턴트를 죽이는 스위트가 좋은 스위트다(mutation testing).</details>
+11. <details><summary>R2의 세 조건(`owner` && `amount > 0` && `amount <= limit`)은 각각 어떤 잘못된 요청을 막나? 하나씩 빼면?</summary>owner 조건 → 남의 계좌에서 이체(BOLA). `amount > 0` → 음수 이체로 *역방향* 가치 추출(피해자→공격자). `amount <= limit` → 한도 초과 대량 인출. 셋은 AND라 *하나라도* 빠지면 그 클래스의 공격이 열린다. 핵심은 `amount > 0`: 한도 검사(`<= 1000`)만 있으면 -100은 한도를 *만족*하므로 통과한다 — 음수 가드는 한도 가드가 못 잡는 별개의 결함을 막는다(`docs/01-authz-no-cluster.md`의 break-and-fix가 정확히 이 줄을 지운다).</details>
+12. <details><summary>E1을 `permit(principal in Role::"auditor", action, resource)`로 풀면 11/11인가? 안 되면 무엇이 잡나?</summary>안 된다. `action`을 묶지 않은 와일드카드는 auditor에게 *Transfer까지* 열어준다 — EXT2(auditor 이체 시도)가 Deny 기대인데 Allow로 뒤집혀 FAIL. 올바른 E1은 `action == Action::"ViewAccount"`로 액션을 고정한다. 이게 ext 시나리오가 존재하는 이유: 과잉 허용(over-grant)은 core 8개로는 안 잡히고, "auditor가 *하면 안 되는* 일"을 명시적으로 Deny-기대로 박아야 잡힌다. 최소권한은 "허용을 추가"가 아니라 "허용의 *범위*를 좁히는" 문제다.</details>
+13. <details><summary>carol의 transferLimit은 0이다. 그럼 R2가 carol의 이체를 어차피 막지 않나? 왜 forbid나 액션 고정이 따로 필요한가?</summary>아니다 — limit 0은 *우연한* 방어일 뿐이다. R2 permit은 `resource.owner == principal`을 먼저 요구하므로 carol은 *남의* 계좌(acct-alice)에선 owner 조건에서 이미 막힌다(limit과 무관). 만약 carol이 자기 계좌를 가졌다면 limit 0이 0원 이체만 막고, 운영이 limit을 올리는 순간 열린다. 보안을 *데이터값*(limit=0)에 의존시키면 안 되고 *정책 구조*(auditor에게 Transfer permit을 아예 안 주기)로 보장해야 한다 — EXT2가 검증하는 건 후자다.</details>
+14. <details><summary>이 4개 정책에 평가 순서가 있나? Cedar는 어떻게 최종 결정을 합치나?</summary>없다 — Cedar 정책은 순서 무관이다. 엔진은 매치하는 *모든* forbid와 permit을 모은 뒤 합친다: forbid가 하나라도 매치하면 Deny, 아니면 permit이 하나라도 매치할 때 Allow, 그 외 default-deny. 그래서 정책을 파일에서 재배치해도 결정이 안 바뀐다(IAM의 명시적 Deny 우선과 같은 모델). 이게 "정책을 독립적으로 추가/리뷰 가능"의 토대 — 한 줄을 읽을 때 위쪽 정책의 실행 순서를 머릿속에 둘 필요가 없다.</details>
+
+## 현실 연결 (이 통제가 막는 실제 사고 클래스)
+
+- **인가를 PDP 한 곳에 모으는 이유.** R1 같은 객체 수준 인가를 컨트롤러 if문에 흩뿌리면 엔드포인트마다
+  빠뜨려 BOLA(OWASP API #1)가 난다(뮤테이션 B가 재현하는 결함). Cedar처럼 PDP로 모으면 *모든* 요청이
+  같은 정책을 거치고, 그 정책을 단위테스트로 회귀까지 막는다.
+- **R4 forbid = 차단의 덧씌우기(overlay), 권한 회수가 아니다.** 동결·제재 대상은 "permit을 다 회수"하는
+  게 아니라 "그 위에 forbid 한 장"으로 막는다 — permit 로직을 안 건드리고 차단을 덧씌우고 즉시 해제할 수
+  있다. AWS IAM의 명시적 Deny, SCP가 같은 패턴이다(Step 3-A의 forbid>permit이 정확히 이 구조다).
+
+## Go deeper (1차 출처)
+
+- Cedar 언어 레퍼런스 / 평가·검증 시맨틱 — <https://docs.cedarpolicy.com/> (default-deny·`forbid>permit`·validation 정의)
+- Amazon Verified Permissions (Cedar 관리형 PDP, `IsAuthorized`) — <https://aws.amazon.com/verified-permissions/>
+- OWASP API Security Top 10 — **API1:2023 Broken Object Level Authorization**(R1/뮤테이션 B가 막는 것) — <https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/>
+- NIST SP 800-207 *Zero Trust Architecture* — 매 요청 동적 인가(이 PDP가 세션 grant를 캐시하지 않는 이유) — <https://csrc.nist.gov/pubs/sp/800/207/final>
+- 이 repo의 인가 모델 포지셔닝(RBAC+ABAC 하이브리드, ReBAC·에이전트 위임 데모) — [`docs/authorization-model.md`](../../docs/authorization-model.md)
 
 ## 졸업 기준 (셀프 체크)
 
 - [ ] `grade.py --ext` **11/11**
 - [ ] 뮤테이션 A·B의 깨질 시나리오를 **사전에 정확히 예측**했다
 - [ ] 뮤테이션 C가 core를 통과하는 이유와, ext ③이 그것을 잡는 이유를 설명할 수 있다
-- [ ] 구두 문답 10개를 답안 안 보고 말로 답했다
+- [ ] 구두 문답 14개를 답안 안 보고 말로 답했다
 - [ ] **이제 정답지를 열어라:** `git diff --no-index labs/m0/policies.cedar cedar/policies.cedar` —
   내 답과 원본의 차이를 읽고, 각 차이가 *스타일*인지 *의미*인지 판별할 수 있다
 
