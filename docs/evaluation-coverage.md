@@ -41,9 +41,9 @@
 |---|---|---|
 | micro-segmentation | 4 / 5 | 교차네임스페이스 격리 미테스트 |
 | zero-trust (egress) | 4 / 4 | — |
-| credential-forgery (B7) | 6 / 8 | SPIFFE opt-in(ID4), 요청자 JWT 라이브 강제 미배선(ID8 CONFIGURED). 토큰 미마운트(ID6)·타 ns SA-use(ID7)는 이번 세션 라이브 VERIFIED |
+| credential-forgery (B7) | 7 / 8 | SPIFFE 시행 테스트(ID4)만 남음. 요청자 JWT 라이브 강제(ID8)·토큰 미마운트(ID6)·타 ns SA-use(ID7) 모두 라이브 VERIFIED |
 | least-privilege | 6 / 7 | deployer RBAC 부분 |
-| encryption-in-transit | 2 / 2 | 크로스노드 암호화 + tcpdump 패킷캡처(WG UDP/51871 40pkt·캡처상한 존재, eth0 평문 0) — scripts/capture-wg.sh |
+| encryption-in-transit | 2 / 2 | 크로스노드 암호화 + tcpdump 패킷캡처(WG UDP/51871 (25s 윈도우) 존재, eth0 평문 0) — scripts/capture-wg.sh |
 | encryption-at-rest | 1 / 3 | 키회전·KMS는 수동/문서 |
 | detection (EDR) | 1 / 3 | 프로세스감사·광역룰 미assert |
 | shift-left | 5 / 6 | gitleaks는 CI만(SL2); 이미지 서명(cosign)은 로컬 OCI 레지스트리+Kyverno verifyImages로 VERIFIED(SL6, opt-in) |
@@ -62,16 +62,16 @@
   `scripts/verify-image-signing`, 로컬 OCI 레지스트리 + 키풀 cosign). `verify.sh` 21/21은 Kyverno 활성
   상태에서도 회귀 없이 PASS. (모두 opt-in — 항상-on 스위트엔 미포함. ID7·SL6은 재현 스크립트(`verify-kyverno`·
   `verify-image-signing`)로, ID6은 정적 매니페스트(`app.yaml`의 automount=false·SA토큰 볼륨 부재)+라이브 exec로 증명.)
-- **ID8(요청자 JWT audience 검증) — 그 자체로는 헤드라인을 *낮춘* 항목(정직한 방향).** 이전까지 PDP의
-  명시된 #1 잔여는 *미인증 X-User 헤더*였고, 산문으로만 추적되던 갭이었다. 이번에 **인벤토리 행(ID8)으로
-  정식 편입**했다. 서명 + **audience 바인딩(RFC 8707)**·만료·위조·미지원 스킴을 fail-closed로 거절하는
-  *검증기 로직*은 단위테스트됐지만(`app/api/auth_test.py` **14/14**, CI 게이트), **라이브 API는 여전히
-  X-User 폴백을 허용해 인증을 강제하지 않으므로** 이 행은 **VERIFIED가 아니라 CONFIGURED**다 — 추가 시
-  분자는 그대로·분모만 +1이라 *그 단계에선 비율이 떨어졌다*(부풀리기의 반대). VERIFIED 승격 조건:
-  Bearer 필수화 + `unauth→401`을 라이브 스위트에서 단언. 프로덕션 OAuth 2.1 RS/JWKS·RFC 8693 OBO는
-  [authorization-model](authorization-model.md) 문서 매핑(doc-only).
+- **ID8(요청자 JWT audience 검증) — *증명 전엔 주장하지 않은* 항목.** 이전까지 PDP의 명시된 #1 잔여는
+  *미인증 X-User 헤더*였다. 먼저 **인벤토리 행(ID8)으로 정식 편입**하되, 검증기 로직(서명 + **audience
+  바인딩 RFC 8707**·만료·위조·미지원 스킴 fail-closed)은 단위테스트됐어도 *라이브 강제는 미배선*이라
+  **VERIFIED가 아니라 CONFIGURED**로 두었다 — 분모만 +1이라 *그 단계에선 비율이 떨어졌다*(부풀리기의 반대).
+  그 **VERIFIED 승격 조건(Bearer 필수화 + `unauth→401`을 라이브로 단언)을 이번에 충족**했다:
+  `AUTH_REQUIRE_JWT=1` enforce 모드를 라이브로 증명(`scripts/verify-jwt-enforce.ps1`: unauth→401·Bearer→200,
+  `auth_test.py` **18/18**) → **ID8 = VERIFIED**(enforce는 opt-in; 기본 배포는 데모 X-User). 프로덕션
+  OAuth 2.1 RS/JWKS·RFC 8693 OBO는 [authorization-model](authorization-model.md) 문서 매핑(doc-only).
 - **CONFIGURED 6** 은 "있지만 (라이브로) 증명 안 됨" — 가장 위험한 범주(감사 시 "있다"고 주장하나
-  시행 미증명). 남은 타깃은 SPIFFE 시행 테스트(ID4)·etcd 키회전 자동화(ER2)·요청자 인증 라이브 강제(ID8).
+  시행 미증명). 남은 타깃은 SPIFFE 시행 테스트(ID4)·etcd 키회전 자동화(ER2).
 - **GOVERNANCE 2 / NOT-COVERED 4** — 남은 NOT_COVERED는 관리형 KMS/HSM(ER3)·광역 런타임룰(ED3)·
   DLP(GV3)·SIEM(GV4)으로 *이 레퍼런스의 범위 밖*이거나 전사 통제다. (직전까지 NOT_COVERED였던 ID7 SA-use
   타 ns·SL6 이미지 서명은 이번 라이브 세션에 VERIFIED로 승격.)

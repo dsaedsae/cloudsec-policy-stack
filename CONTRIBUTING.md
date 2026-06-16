@@ -14,7 +14,7 @@
 ## 게이트 (PR 전 통과)
 
 ```bash
-make test     # CI 정책 게이트: 5개 스위트 (Cedar 8/8 · agent 17/17 · JWT 14/14 · cross-layer · SA-drift)
+make test     # CI 정책 게이트: 5개 스위트 (Cedar 8/8 · agent 17/17 · JWT 18/18 · cross-layer · SA-drift)
 make docs     # mkdocs build --strict (링크/구조 검증)
 ```
 

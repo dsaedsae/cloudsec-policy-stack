@@ -10,9 +10,10 @@
    누가 보여주는 게 아니라 *감사자가 스스로 실행*해 확인한다. → [감사증거 패키지](audit-evidence.md)
 2. **명시된 갭 (25%가 구체적이다).** 미검증 항목을 범주로 공개: **CONFIGURED 6 · GOVERNANCE 2 · NOT_COVERED 4**.
    "대충 다 됐다"가 아니라 *어느 통제가 왜 아직 미검증인지*가 행 단위로 적혀 있다. → [`mls-coverage.csv`](mls-coverage.csv)
-3. **정직성의 증명 (스스로 점수를 낮춤).** 요청자 JWT 검증 로직은 단위테스트되지만 *라이브 강제는 아직 아니다*
-   (X-User fallback 허용). 그래서 그 행(ID8)을 **CONFIGURED로 인벤토리에 추가해 헤드라인을 *낮췄다*** — 분모 +1,
-   분자 그대로. **높고 편한 숫자 대신 낮은 참값을 택했다.** → [평가·커버리지](evaluation-coverage.md)
+3. **정직성의 증명 (증명되면 올리고, 안 되면 내린다).** 요청자 JWT 행(ID8)을 처음엔 **CONFIGURED로 추가해
+   헤드라인을 *낮췄다*** — 검증기 로직은 단위테스트됐어도 라이브 강제 전엔 VERIFIED라 *주장하지 않았다*. 이후
+   enforce 모드(`AUTH_REQUIRE_JWT`)를 **라이브로 증명**(`verify-jwt-enforce`: unauth→401·Bearer→200)해
+   **VERIFIED로 끌어올렸다.** 편한 숫자가 아니라 *증명에 따라 움직이는* 참값. → [평가·커버리지](evaluation-coverage.md)
 
 ## 적대적 자기검증
 
