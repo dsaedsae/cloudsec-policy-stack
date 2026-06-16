@@ -1,0 +1,15 @@
+# M9 break-and-fix artifact — NOT part of the shipped stack. Apply it to OPEN the web tier's
+# egress to the internet (simulating a one-line misconfiguration that removes the exfil
+# containment boundary), then watch grade.sh flip `web -> 인터넷` from 000 (HELD) to 200 (BREACH).
+# Revert with:  kubectl delete -f labs/m9/break/allow-web-egress.yaml
+#
+# Cilium egress is additive: the shipped policy lets web egress only to api:8080 + DNS, so web is
+# default-deny outbound. This rule ADDS `world` (everything outside the cluster) to web's allowed
+# egress -- the popped web pod can now reach the internet (data exfiltration).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: m9-break-allow-web-egress, namespace: shop }
+spec:
+  endpointSelector: { matchLabels: { app: web } }
+  egress:
+    - toEntities: ["world"]

@@ -39,6 +39,18 @@ bash labs/m9/grade.sh
 
 각 줄이 "공격자가 *여기서 막힌다*"는 한 지점이고, 그게 어느 verify 통제(ZT·NS·ID·ED)에 대응하는지 추적한다.
 
+## break-and-fix — 경계를 직접 열어 본다 (예측 → 파괴 → 복원)
+
+봉쇄를 *제거하면* 블래스트 반경이 어떻게 커지나 손으로 확인한다. **먼저 예측하라:** egress 차단을 풀면 grade.sh의 *어느 줄*이 BREACH로 뒤집힐까?
+
+```bash
+kubectl apply -f labs/m9/break/allow-web-egress.yaml    # web egress를 인터넷으로 개방 (한 줄 오설정 시뮬)
+bash labs/m9/grade.sh                                    # 예측 확인: web -> 인터넷 이 000 HELD -> 200 BREACH
+kubectl delete -f labs/m9/break/allow-web-egress.yaml    # 복원 → 다시 000 HELD
+```
+
+방금 한 일: 통제 **하나**(egress default-deny)를 떼니 *털린 web이 데이터를 인터넷으로 유출*할 수 있게 됐다. 봉쇄는 "있으면 가두고, 없으면 샌다" — 실무 침해의 상당수가 이런 *한 줄 오설정*이다. (같은 식으로 다른 경계도: `kubectl create rolebinding m9-break --clusterrole=view --serviceaccount=shop:web-sa -n shop` → 권한상승 줄이 BREACH → `kubectl delete rolebinding m9-break -n shop` 로 복원.)
+
 ## 정직한 한계 — assume-breach가 *못* 가두는 것
 
 봉쇄는 force field가 아니다. 졸업하려면 이 잔여를 *말로* 설명할 수 있어야 한다:
@@ -52,6 +64,7 @@ bash labs/m9/grade.sh
 ## 졸업 기준
 
 - [ ] `grade.sh` — **모든 봉쇄 경계 HELD**
+- [ ] **break-and-fix**: egress를 열어 `web -> 인터넷`이 BREACH로 뒤집히는 걸 *예측·확인*하고 복원했다
 - [ ] 각 경계가 *어느 통제*에 대응하는지(L3/L7/egress/SA/Tetragon) 짚을 수 있다
 - [ ] "왜 제로데이 *차단* 정책은 없고 assume-breach가 답인가"를 설명할 수 있다
 - [ ] 위 *정직한 한계* 5개를 답안 없이 말할 수 있다
