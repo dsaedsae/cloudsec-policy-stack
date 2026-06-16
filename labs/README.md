@@ -4,9 +4,9 @@
 그 검증기를 **자동 채점기**로 뒤집는다: 통제 하나를 **빈 파일에서 직접 재구현**하면 채점기가
 PASS/FAIL로 판정한다. 따라치기가 아니라 — 스펙만 보고 쓰고, 틀리면 *왜* 틀렸는지 채점으로 배운다.
 
-> 💡 **처음이라면 — 먼저 환경 준비:** **[환경 준비 (SETUP)](SETUP.md)** 를 1분 보고(클론엔 `.venv`가 없다), 그다음 **[M0](m0/README.md)**. 클러스터 없이 Python만으로 5분이면 첫 채점을 본다. 무엇이 빠졌는지 한 번에 보려면 `powershell -File scripts\doctor.ps1`. **무설치로**: GitHub Codespaces(Code ▸ Codespaces)면 무클러스터 랩이 브라우저에서 바로 돈다 — 진도는 `python scripts/progress.py`.
+> **처음이라면 — 먼저 환경 준비:** **[환경 준비 (SETUP)](SETUP.md)** 를 1분 보고(클론엔 `.venv`가 없다), 그다음 **[M0](m0/README.md)**. 클러스터 없이 Python만으로 5분이면 첫 채점을 본다. 무엇이 빠졌는지 한 번에 보려면 `powershell -File scripts\doctor.ps1`. **무설치로**: GitHub Codespaces(Code ▸ Codespaces)면 무클러스터 랩이 브라우저에서 바로 돈다 — 진도는 `python scripts/progress.py`.
 
-> 📝 **돌아온 학습자 / 면접 직전:** 각 모듈의 **구두 문답**(접힌 답안)으로 복습하라. 어느 모듈이든 사이드바에서 1클릭으로 점프.
+> **돌아온 학습자 / 면접 직전:** 각 모듈의 **구두 문답**(접힌 답안)으로 복습하라. 어느 모듈이든 사이드바에서 1클릭으로 점프.
 
 ## 모듈 사다리
 
@@ -41,11 +41,11 @@ flowchart LR
 
 ## 한눈에 — 모듈별 스택 · 시간 · 비용
 
-> ⏱ 시간은 *졸업까지의 대략치*(읽기 + 재구현 + break/fix 포함) — **첫 채점은 ~5분**으로 훨씬 빠르다. 💵 비용은 **전부 로컬 $0** —
+> 시간은 *졸업까지의 대략치*(읽기 + 재구현 + break/fix 포함) — **첫 채점은 ~5분**으로 훨씬 빠르다. 비용은 **전부 로컬 $0** —
 > 클러스터 랩의 진짜 비용은 돈이 아니라 **RAM ~6–8GB**다. AWS는 *선택*(관리형 등가물 단발 체험 ~$1–3/세션;
 > 끄는 걸 잊으면 월 $178 함정) → [비용 사다리](../docs/aws-eks-path.md).
 > **M0가 가장 길다**(~3–6h) — Cedar 문법 + 핵심 사고(통과≠증명)를 처음 익히기 때문. 이후 **클러스터 랩(M2–M5)은 짧다**(스택은 무겁지만 작성량은 적다). 부담되면 M0의 5분 첫 채점만 먼저 보고 와도 된다.
-> 🧭 트랙 = **코어 7(M0–M6) + 심화 2(M7–M8)**. 진도 카운터 'N / 7'은 코어 기준이고, M7·M8은 졸업 후 선택하는 심화다.
+> 트랙 = **코어 7(M0–M6) + 심화 2(M7–M8)**. 진도 카운터 'N / 7'은 코어 기준이고, M7·M8은 졸업 후 선택하는 심화다.
 
 | 모듈 | 스택 | 하는 일 (졸업 기준) | 클러스터 | ~시간 | 비용 |
 |---|---|---|---|---|---|
@@ -59,23 +59,23 @@ flowchart LR
 | **[M7](../formal/README.md)** | z3 (formal) | 교차계층 shadow/dead-rule 탐지 (심화) | 불필요 (Python) | ~1–2h | **$0** 로컬 |
 | **[M8](m8/README.md)** | Tetragon | 런타임 kill 경계 측정 — detect≠prevent (심화) | 필요 · RAM ~6–8GB | ~30–45m | **$0** 로컬 |
 
-> 📖 **먼저 읽을 개념 페이지**(형식 1단계): M0→[01](../docs/01-authz-no-cluster.md) · M1→[02](../docs/02-scan.md) · M2→[05](../docs/05-identity.md) · M3→[03](../docs/03-network-and-authz.md) · M4→[04](../docs/04-runtime.md) · M5→[06](../docs/06-data-protection.md) · M6→[인가모델](../docs/authorization-model.md)·[NHI](../docs/nhi.md) · M8→[04](../docs/04-runtime.md). (번호 오프셋 주의: M2↔05, M3↔03, M5↔06.)
+> **먼저 읽을 개념 페이지**(형식 1단계): M0→[01](../docs/01-authz-no-cluster.md) · M1→[02](../docs/02-scan.md) · M2→[05](../docs/05-identity.md) · M3→[03](../docs/03-network-and-authz.md) · M4→[04](../docs/04-runtime.md) · M5→[06](../docs/06-data-protection.md) · M6→[인가모델](../docs/authorization-model.md)·[NHI](../docs/nhi.md) · M8→[04](../docs/04-runtime.md). (번호 오프셋 주의: M2↔05, M3↔03, M5↔06.)
 
-> 🧩 클러스터 랩(**M2–M5**)은 **한 세션에 묶어라**: `scripts/up.ps1`(스탠드업 ~5–10m) → M2→M3→M4→M5 → `scripts/down.ps1`.
+> 클러스터 랩(**M2–M5**)은 **한 세션에 묶어라**: `scripts/up.ps1`(스탠드업 ~5–10m) → M2→M3→M4→M5 → `scripts/down.ps1`.
 > M8은 별도 클러스터 세션. 무클러스터(M0·M1·M6·M7)는 아무 때나 독립 실행.
-> ℹ️ 아래 카드/체크리스트의 `python ...`은 **활성화된 .venv 기준**이다. 클론 직후엔 `.venv\Scripts\python.exe ...`로 실행하라([SETUP](SETUP.md)). `.sh` 채점기는 **Git Bash**, `.ps1`은 **PowerShell**.
+> 아래 카드/체크리스트의 `python ...`은 **활성화된 .venv 기준**이다. 클론 직후엔 `.venv\Scripts\python.exe ...`로 실행하라([SETUP](SETUP.md)). `.sh` 채점기는 **Git Bash**, `.ps1`은 **PowerShell**.
 
 ## 모듈 카드 (요약)
 
-- 0️⃣ **[M0 · 인가 as-code (Cedar)](m0/README.md)** — 빈 정책에서 owner·한도·역할·동결 인가 작성. 졸업 **core 8 + ext 3 = 11/11**. 채점 `python labs/m0/grade.py --ext` · *클러스터 불필요*
-- 1️⃣ **[M1 · 쉬프트레프트 (checkov)](m1/README.md)** — 신입이 짠 워크로드의 **16개 결함을 사냥**해 수정. 졸업 **Failed checks 0**. 채점 `python labs/m1/grade.py` · *클러스터 불필요*
-- 2️⃣ **[M2 · 신원 (admission CEL)](m2/README.md)** — 라벨↔SA 일관성 VAP(ValidatingAdmissionPolicy)의 CEL 작성. 졸업 위조 DENY / 정합 ADMIT **5/5**. 채점 `bash labs/m2/grade.sh` · *클러스터 필요*
-- 3️⃣ **[M3 · 네트워크 (Cilium)](m3/README.md)** — default-deny에서 최소권한 홉(L3/L7/egress) 재구성. 졸업 **7/7**. 채점 `bash labs/m3/grade.sh` · *클러스터 필요*
-- 4️⃣ **[M4 · 런타임 (Tetragon eBPF)](m4/README.md)** — 셸 exec만 골라 SIGKILL하는 TracingPolicy. 졸업 **id=0 + sh=137**. 채점 `bash labs/m4/grade.sh` · *클러스터 필요*
-- 5️⃣ **[M5 · 암호화 (실행·해석)](m5/README.md)** — WireGuard 캡처·etcd 암호화를 직접 돌리고 해석. 졸업 **ET1 채점 + 해석**. 채점 `bash labs/m5/grade.sh` · *클러스터 필요*
-- 6️⃣ **[M6 · 프런티어 (agent-ABAC + ReBAC)](m6/README.md)** — AI 에이전트 위임을 ABAC 교집합 + ReBAC(관계기반) 그래프로. 졸업 **17/17 + 11/11**. 채점 `python labs/m6/grade.py` · *클러스터 불필요 (Part B Docker)*
-- 7️⃣ **[M7 · 심화 (교차계층 일관성, formal)](../formal/README.md)** — Cilium L7 × Cedar의 그림자/dead-rule을 z3로 탐지(ViewAuditLog shadow, 반증가능). 채점 `python formal/cross_layer.py` · *클러스터 불필요*
-- 8️⃣ **[M8 · 심화 (런타임 kill 경계)](m8/README.md)** — Tetragon shell-kill의 정직한 경계: detection≠prevention, execve vs I/O, io_uring 클래스. 채점 `powershell -File scripts\verify-runtime-scope.ps1` · *클러스터 필요*
+- **[M0 · 인가 as-code (Cedar)](m0/README.md)** — 빈 정책에서 owner·한도·역할·동결 인가 작성. 졸업 **core 8 + ext 3 = 11/11**. 채점 `python labs/m0/grade.py --ext` · *클러스터 불필요*
+- **[M1 · 쉬프트레프트 (checkov)](m1/README.md)** — 신입이 짠 워크로드의 **16개 결함을 사냥**해 수정. 졸업 **Failed checks 0**. 채점 `python labs/m1/grade.py` · *클러스터 불필요*
+- **[M2 · 신원 (admission CEL)](m2/README.md)** — 라벨↔SA 일관성 VAP(ValidatingAdmissionPolicy)의 CEL 작성. 졸업 위조 DENY / 정합 ADMIT **5/5**. 채점 `bash labs/m2/grade.sh` · *클러스터 필요*
+- **[M3 · 네트워크 (Cilium)](m3/README.md)** — default-deny에서 최소권한 홉(L3/L7/egress) 재구성. 졸업 **7/7**. 채점 `bash labs/m3/grade.sh` · *클러스터 필요*
+- **[M4 · 런타임 (Tetragon eBPF)](m4/README.md)** — 셸 exec만 골라 SIGKILL하는 TracingPolicy. 졸업 **id=0 + sh=137**. 채점 `bash labs/m4/grade.sh` · *클러스터 필요*
+- **[M5 · 암호화 (실행·해석)](m5/README.md)** — WireGuard 캡처·etcd 암호화를 직접 돌리고 해석. 졸업 **ET1 채점 + 해석**. 채점 `bash labs/m5/grade.sh` · *클러스터 필요*
+- **[M6 · 프런티어 (agent-ABAC + ReBAC)](m6/README.md)** — AI 에이전트 위임을 ABAC 교집합 + ReBAC(관계기반) 그래프로. 졸업 **17/17 + 11/11**. 채점 `python labs/m6/grade.py` · *클러스터 불필요 (Part B Docker)*
+- **[M7 · 심화 (교차계층 일관성, formal)](../formal/README.md)** — Cilium L7 × Cedar의 그림자/dead-rule을 z3로 탐지(ViewAuditLog shadow, 반증가능). 채점 `python formal/cross_layer.py` · *클러스터 불필요*
+- **[M8 · 심화 (런타임 kill 경계)](m8/README.md)** — Tetragon shell-kill의 정직한 경계: detection≠prevention, execve vs I/O, io_uring 클래스. 채점 `powershell -File scripts\verify-runtime-scope.ps1` · *클러스터 필요*
 
 ## 형식 (모든 모듈 공통)
 

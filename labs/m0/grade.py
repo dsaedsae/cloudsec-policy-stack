@@ -45,6 +45,24 @@ HINTS = {
 }
 
 
+def _norm(text: str) -> str:
+    """주석(//)·빈 줄·공백 차이를 지운 토큰 시퀀스 — 통째 복사 탐지용."""
+    return " ".join(
+        ln.split("//", 1)[0].strip()
+        for ln in text.splitlines()
+        if ln.split("//", 1)[0].strip()
+    )
+
+
+def _is_copy_of_canonical() -> bool:
+    """학습자 정책이 정답지(cedar/policies.cedar)와 사실상 동일한지 — 불완전한 억지력.
+    reformat/rename로 우회 가능하고, 정답은 곧 shipped 산출물이라 repo에서 숨길 수 없다.
+    그래도 가장 게으른 `cp` 복사는 잡고, "이건 졸업이 아니다"를 분명히 신호한다."""
+    learner = (HERE / "policies.cedar").read_text(encoding="utf-8")
+    canonical = (ROOT / "cedar" / "policies.cedar").read_text(encoding="utf-8")
+    return _norm(learner) == _norm(canonical)
+
+
 def grade(ext: bool, hint: bool) -> int:
     with tempfile.TemporaryDirectory() as td:
         base = Path(td)
@@ -56,6 +74,11 @@ def grade(ext: bool, hint: bool) -> int:
             requests += json.loads((HERE / "requests-ext.json").read_text(encoding="utf-8"))
         (base / "requests.json").write_text(json.dumps(requests), encoding="utf-8")
         rc = main(base, hint_map=HINTS if hint else None)
+    if _is_copy_of_canonical():
+        print("\n  COPY DETECTED — labs/m0/policies.cedar 가 정답지(cedar/policies.cedar)와 사실상 동일하다.")
+        print("    이건 졸업이 아니라 복사다 — 채점기는 통과해도 *유일하게 측정되는 것(너의 배움)*이 0이다.")
+        print("    직접 다시 써라. 졸업 후 diff로 비교하는 게 마지막 단계다(자가학습 약속).")
+        return 1
     if rc == 0:
         print("\nM0 " + ("GRADUATED — 정답지와 diff 리뷰로 마무리하라 (README 졸업 기준)"
                           if ext else "core CLEAR — 졸업 채점은 --ext"))

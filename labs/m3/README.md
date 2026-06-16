@@ -7,7 +7,7 @@
 **미션:** default-deny에서 시작해 **최소권한 홉**(외부→web→api→db)만 여는 CiliumNetworkPolicy를
 직접 구성한다. L7으로 web→api 경로를 메서드/path까지 제한하고, egress도 default-deny로 막는다.
 
-> 🎯 **학습 성과 (면접에서 말할 수 있는 것):** default-deny에서 최소권한 L3/L7/egress 홉을 재구성하고, "위치≠신뢰"와 *과차단도 결함*(가용성)이라는 양면을 설명할 수 있다. → [캡스톤 M3](../capstone.md)
+> **학습 성과 (면접에서 말할 수 있는 것):** default-deny에서 최소권한 L3/L7/egress 홉을 재구성하고, "위치≠신뢰"와 *과차단도 결함*(가용성)이라는 양면을 설명할 수 있다. → [캡스톤 M3](../capstone.md)
 
 **클러스터 필요.** **편집 파일:** `labs/m3/netpol.yaml` (허용 홉 5개의 rule).
 

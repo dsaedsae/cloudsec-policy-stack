@@ -7,7 +7,7 @@
 **미션:** Cilium이 신뢰하는 `app` 라벨을 파드의 ServiceAccount에 묶는 `ValidatingAdmissionPolicy`의
 **CEL 검증식**을 직접 써서, 위조 신원(label≠SA)을 admission에서 거부한다.
 
-> 🎯 **학습 성과 (면접에서 말할 수 있는 것):** 라벨↔SA admission CEL을 작성해 위조 신원을 거부하고, 이 통제가 *못* 막는 자기일관 위조와 그걸 닫는 후속 통제(SA-use 게이트·SPIFFE)를 설명할 수 있다. → [캡스톤 M2](../capstone.md)
+> **학습 성과 (면접에서 말할 수 있는 것):** 라벨↔SA admission CEL을 작성해 위조 신원을 거부하고, 이 통제가 *못* 막는 자기일관 위조와 그걸 닫는 후속 통제(SA-use 게이트·SPIFFE)를 설명할 수 있다. → [캡스톤 M2](../capstone.md)
 
 **클러스터 필요.** **편집 파일:** `labs/m2/admission-policy.yaml` (validations의 expression/message만).
 

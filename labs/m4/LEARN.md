@@ -125,6 +125,6 @@ bash labs/m4/grade.sh
 
 ---
 
-🎯 정리:  
+정리:  
 skeleton을 완성한 후 `grade.sh` 로 검증하고, 왜 "operator: Postfix"를 썼는지,  
 그리고 이 룰이 못 막는 것(renamed/execveat)이 뭔지 설명할 수 있으면 M4 통과입니다.

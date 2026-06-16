@@ -7,7 +7,7 @@
 **미션:** data tier 파드에서 셸(`/bin/sh` 류) 실행을 커널에서 즉시 SIGKILL하되, 정상 바이너리는
 건드리지 않는 **선택적** TracingPolicy를 작성한다. DB 컨테이너가 셸을 띄울 일은 없다 — 그건 침입이다.
 
-> 🎯 **학습 성과 (면접에서 말할 수 있는 것):** 셸 exec만 *선택적으로* SIGKILL하는 TracingPolicy를 작성하고, 이 룰이 *못* 막는 것(나이브 직접 execve만 잡음 — renamed/execveat 우회, M8에서 측정)을 정직히 말할 수 있다. → [캡스톤 M4](../capstone.md)
+> **학습 성과 (면접에서 말할 수 있는 것):** 셸 exec만 *선택적으로* SIGKILL하는 TracingPolicy를 작성하고, 이 룰이 *못* 막는 것(나이브 직접 execve만 잡음 — renamed/execveat 우회, M8에서 측정)을 정직히 말할 수 있다. → [캡스톤 M4](../capstone.md)
 
 **클러스터 필요.** **편집 파일:** `labs/m4/tracingpolicy.yaml` (selectors).
 

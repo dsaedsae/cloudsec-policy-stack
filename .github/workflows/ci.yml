@@ -90,7 +90,8 @@ jobs:
       # mirroring how cilium-cli is installed below.
       - name: Trivy image vuln+secret gate + CycloneDX SBOM
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+          # pinned: install.sh + trivy both from the v0.71.1 tag (no moving main/latest)
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/v0.71.1/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.71.1
           trivy image --scanners vuln,secret --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 cloudsec-api:local
           mkdir -p outputs/sbom
           trivy image --quiet --format cyclonedx --output outputs/sbom/cloudsec-api.cdx.json cloudsec-api:local
@@ -108,7 +109,14 @@ jobs:
 
       - name: Install Cilium (L7 + mutual auth + WireGuard) + Tetragon (runtime)
         run: |
-          curl -sL https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz | sudo tar xzC /usr/local/bin
+          # pinned cilium-cli + sha256 verification (was: releases/latest, a moving target)
+          CILIUM_CLI_VERSION=v0.19.4
+          base="https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}"
+          curl -sSL --fail -o cilium.tar.gz "${base}/cilium-linux-amd64.tar.gz"
+          curl -sSL --fail -o cilium.tar.gz.sha256sum "${base}/cilium-linux-amd64.tar.gz.sha256sum"
+          sed 's/cilium-linux-amd64.tar.gz/cilium.tar.gz/' cilium.tar.gz.sha256sum | sha256sum --check
+          sudo tar xzC /usr/local/bin -f cilium.tar.gz
+          rm -f cilium.tar.gz cilium.tar.gz.sha256sum
           cilium install --version 1.16.5 \
             --set l7Proxy=true \
             --set encryption.enabled=true --set encryption.type=wireguard \

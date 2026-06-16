@@ -15,7 +15,7 @@
 **메트릭은 변하지 않는다(75% 그대로):** ED1은 **VERIFIED 그대로** — M8/[ADR 0001](../../docs/decisions/0001-data-tier-zero-exec.md)은
 통제를 더/덜 만든 게 아니라 *증거를 선택적→zero-exec로 정직하게 진화*시키고 기본으로 승격했을 뿐(개수 불변).
 
-> 🎯 **학습 성과:** 런타임 kill의 정직한 경계를 *라이브로 측정*해 설명할 수 있다 — detection≠prevention, execve(pre-image-load) vs I/O(write window), 그리고 io_uring에 blind한 건 *기본 syscall 정책*이고 LSM/KRSI가 해법이라는 것.
+> **학습 성과:** 런타임 kill의 정직한 경계를 *라이브로 측정*해 설명할 수 있다 — detection≠prevention, execve(pre-image-load) vs I/O(write window), 그리고 io_uring에 blind한 건 *기본 syscall 정책*이고 LSM/KRSI가 해법이라는 것.
 
 빠른 실행: `.venv` 불필요, 클러스터만. (런닝 db의 TracingPolicy를 잠깐 교체했다가 shipped zero-exec로 복원한다.)
 ```powershell
