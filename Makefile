@@ -55,8 +55,10 @@ site:  ## build the all-HTML deployable bundle into site/ (landing = root; docs 
 	cp presentation/curriculum.html site/curriculum.html
 	@cp presentation/cloudsec-onepager.pdf site/cloudsec-onepager.pdf 2>/dev/null || true
 	cp presentation/cloudsec-onepager.html site/index.html
-	@# in the DEPLOYED copy only, swap the "see the repo" note for a relative link into the HTML docs
-	@sed -i 's#<span class="x">[^<]*</span>#<a class="btn" href="labs/">문서·학습 트랙 (HTML)</a>#' site/index.html 2>/dev/null || true
+	@# in the DEPLOYED root copy only, upgrade the practice button's href from the GitHub labs URL
+	@# to the in-site HTML hub (better UX, keeps the visitor on-site). If this no-ops, the source
+	@# GitHub URL still works -- keep this match-string in sync with the href in cloudsec-onepager.html.
+	@sed -i 's#href="https://github.com/dsaedsae/cloudsec-policy-stack/tree/master/labs"#href="labs/"#' site/index.html 2>/dev/null || true
 	@echo "-> site/ : index.html = 의사결정자 랜딩, /labs /docs = 전부 HTML 문서. DEPLOY.md 참고."
 serve:  ## preview the docs site at http://localhost:8000
 	$(PY) -m mkdocs serve

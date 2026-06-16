@@ -118,11 +118,22 @@ footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--faint)}
 
   <hr>
 
+  <div class="why">
+    <p class="lead">읽었으면 — <span style="color:var(--acc)">직접 다시 만들어 본다.</span></p>
+    <dl>
+      <dt>시작점</dt><dd><b>M0 · Cedar 인가</b> — 빈 파일에서 정책을 재구현해 채점기 11/11. 클러스터 불필요, 노트북에서 <b>python만</b>.</dd>
+      <dt>첫 채점</dt><dd>클론 후 한 번만 <code style="font-family:var(--mono);color:var(--fg)">python -m venv .venv</code> → <code style="font-family:var(--mono);color:var(--fg)">.venv\Scripts\python.exe -m pip install -r requirements-dev.txt</code>. 그 뒤 <code style="font-family:var(--mono);color:var(--fg)">.venv\Scripts\python.exe labs\m0\grade.py</code> → 빈 정책도 <b>5/8</b>(default-deny로 Deny가 공짜)에서 출발하는 게 첫 교훈. <b>첫 PASS ~5분.</b></dd>
+      <dt>트랙</dt><dd>무클러스터 <b>M0·M1·M6·M7</b>은 <b>Codespaces 0설치</b>로 즉시 채점 · 클러스터 <b>M2–M5·M8</b>은 한 세션(RAM 6–8GB). 코어 7 + 심화 2.</dd>
+    </dl>
+  </div>
+
+  <hr>
+
   <div class="cta">
     <a class="btn p" href="https://github.com/dsaedsae/cloudsec-policy-stack">repo</a>
+    <a class="btn p" href="https://github.com/dsaedsae/cloudsec-policy-stack/tree/master/labs">실습 시작 — 재구현 트랙 (M0부터)</a>
     <a class="btn" href="https://codespaces.new/dsaedsae/cloudsec-policy-stack">codespaces — 무설치 체험</a>
-    <a class="btn scr" href="curriculum.html">학습자라면 — 커리큘럼·순서</a>
-    <span class="x">발표 자료·도입 가이드·FSC 매핑 → 저장소</span>
+    <a class="btn scr" href="curriculum.html">커리큘럼·모듈 순서 →</a>
   </div>
 
   <footer>교육·포트폴리오 레퍼런스 — 법률/금융 자문도 공식 FSC 컴플라이언스 매핑도 아님 · 규제 세부 1차 출처 대조 · MIT</footer>
