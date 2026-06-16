@@ -18,7 +18,7 @@
    Cilium L3 │ default-deny in+out; only web→api→db; egress locked   │ no exfil
    Cilium L7 │ only GET/POST on /accounts/* reach api (Envoy)        │ path/method
    Cedar     │ api PDP authorizes every call: owner? limit? role?    │ authz-as-code
-   Tetragon  │ eBPF runtime: SIGKILLs a shell spawned in the db pod  │ detect+prevent
+   Tetragon  │ eBPF runtime: SIGKILLs ALL exec in the db pod (0-exec)│ detect+prevent
    Data      │ WireGuard in-transit + Secret encryption at-rest      │ protect the data
    ─────────────────────────────────────────────────────────────────────────
    checkov   │ shift-left scan of Terraform + K8s (CI gate, 0 fail)  │ + gitleaks
@@ -49,7 +49,7 @@
 - **IaC** — 클러스터와 Cilium CNI를 선언적 Terraform으로. CI에서 `terraform validate` 수행.
 - **제로트러스트 네트워크 (Cilium / eBPF)** — ingress·egress 기본 차단, 최소권한 홉만 허용. `web→api`는 L7(Envoy)이라 계정 API만 도달하고, egress는 다음 홉 + DNS로 잠겨 침해된 파드가 인터넷·클라우드 메타데이터·API 서버에 닿지 못합니다.
 - **인가 as-code (Cedar)** — `api`는 매 요청마다 Cedar를 호출하는 PDP입니다: 소유자 확인, 이체 한도, 동결 계좌 거부(forbid), 역할 계층. Amazon Verified Permissions로 이식 가능.
-- **런타임 (Tetragon / eBPF)** — db 티어의 셸 실행을 커널에서 SIGKILL하는 `TracingPolicy`(정상 프로세스는 건드리지 않음).
+- **런타임 (Tetragon / eBPF)** — db 티어의 *모든* exec를 커널에서 SIGKILL하는 **zero-exec** `TracingPolicy`(데이터스토어는 정당하게 exec할 일이 없음 — PID1만 유지). 선택적 셸-kill 프리미티브와 그 우회→zero-exec 측정은 M4·M8 랩에서 직접 짜고 측정한다.
 - **신원** — 티어별 ServiceAccount, `app` 라벨을 SA에 묶는 `ValidatingAdmissionPolicy`, 그리고 워크로드 신원 표준인 SPIFFE 상호인증(상시 스위트가 아니라 수동으로 검증되는 configured 상태).
 - **데이터** — 전송 중 WireGuard 파드 간 암호화 + etcd 내 Secret 저장 암호화.
 - **CI 게이트** — GitHub Actions가 Cedar 테스트·checkov·`terraform validate`·gitleaks를 돌리고, kind 잡이 스택을 띄워 라이브 검증을 재실행합니다.

@@ -1,12 +1,20 @@
 # Layer 4 (runtime): Tetragon (eBPF) detection + prevention.
-# Network policy and Cedar act before/at the request; nothing watches a workload
-# AFTER it's compromised. This kills any attempt to run a shell inside the data
-# tier (db) — a database container has no business spawning /bin/sh, so an exec
-# of one is treated as intrusion and SIGKILLed in-kernel.
+# Network policy and Cedar act before/at the request; nothing watches a workload AFTER
+# it is compromised. A datastore tier runs only its main process (db probes are httpGet,
+# not exec), so we forbid ALL exec there and SIGKILL it in-kernel.
+#
+# This is the ZERO-EXEC rule, not the earlier selective shell-name kill. The selective
+# rule (arg0-Postfix on /sh,/bash,...) is bypassable — `matchBinaries` matches the CALLER
+# not the launched image; arg0 is defeated by renamed copies, execveat, and fd-exec (all
+# found LIVE in M8). Hooking BOTH sys_execve and sys_execveat and killing every exec in
+# tier=data closes those, name-independently. The selective rule + its "over-blocking is
+# also a defect" lesson live on in the M4 lab.
+#   Decision record: docs/decisions/0001-data-tier-zero-exec.md
+#   Live validation:  labs/m8/tracingpolicy-data-tier-no-exec.yaml (id/sh/renamed/busybox -> 137)
 apiVersion: cilium.io/v1alpha1
 kind: TracingPolicy
 metadata:
-  name: block-shell-in-data-tier
+  name: data-tier-no-exec
 spec:
   podSelector:
     matchLabels:
@@ -14,13 +22,11 @@ spec:
   kprobes:
     - call: "sys_execve"
       syscall: true
-      args:
-        - index: 0
-          type: "string"
       selectors:
-        - matchArgs:
-            - index: 0
-              operator: "Postfix"
-              values: ["/sh", "/bash", "/dash", "/ash", "/busybox"]
-          matchActions:
+        - matchActions:
+            - action: Sigkill
+    - call: "sys_execveat"
+      syscall: true
+      selectors:
+        - matchActions:
             - action: Sigkill

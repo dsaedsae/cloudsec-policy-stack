@@ -50,14 +50,18 @@ try {
     Probe "probe-web" "web->kube-apiserver blocked"           "000" @("-k", "https://10.96.0.1:443/")
 
     Write-Host "== Tetragon runtime (eBPF) =="
-    # Prove a SELECTIVE in-kernel kill, robustly: a NON-shell exec (id) still runs
-    # (pod healthy, rc=0) while a shell exec is SIGKILLed (rc=137). Requiring BOTH rules
-    # out a false-pass on container-not-Ready / no-sh / RBAC-deny (those break id too).
+    # Prove the ZERO-EXEC rule (shipped default): the data tier runs only its main process
+    # (db probes are httpGet, not exec), so ALL exec is SIGKILLed -- id AND sh both rc=137.
+    # The pod must still be Ready, so a not-Ready / no-pod false-pass (which also fails id)
+    # is ruled out. (The earlier selective shell-name rule was bypassable -- ADR 0001; the
+    # selective primitive + "over-blocking is also a defect" lesson live on in the M4 lab.)
     $dbpod = kubectl --context $ctx -n shop get pod -l tier=data -o jsonpath="{.items[0].metadata.name}"
+    $ready = kubectl --context $ctx -n shop get pod $dbpod -o jsonpath="{.status.containerStatuses[0].ready}"
     kubectl --context $ctx -n shop exec $dbpod -- id 2>$null | Out-Null; $rcId = $LASTEXITCODE
     kubectl --context $ctx -n shop exec $dbpod -- sh -c "echo x" 2>$null | Out-Null; $rcSh = $LASTEXITCODE
-    if ($rcId -eq 0 -and ($rcSh -eq 137 -or $rcSh -eq 143)) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "shell killed (137), id runs (0): Tetragon", "137", "$rcSh", "PASS" }
-    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "Tetragon selective kill (id=$rcId sh=$rcSh)", "137", "$rcSh", "FAIL"; $script:fail = 1 }
+    $killId = ($rcId -eq 137 -or $rcId -eq 143); $killSh = ($rcSh -eq 137 -or $rcSh -eq 143)
+    if ($ready -eq "true" -and $killId -and $killSh) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "zero-exec: all data-tier exec killed (id+sh)", "137", "$rcSh", "PASS" }
+    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "Tetragon zero-exec (ready=$ready id=$rcId sh=$rcSh)", "137", "$rcSh", "FAIL"; $script:fail = 1 }
 
     Write-Host "== Identity (B7): least-privilege RBAC + label<->SA admission =="
     # A tier SA has ZERO Kubernetes API rights (no RoleBinding), so a popped pod's

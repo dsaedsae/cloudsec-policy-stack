@@ -145,34 +145,36 @@ portfolios, and it is exactly where this stack now adds controls.
   This is deliberate scoping for a local portfolio, stated in the README too.
 - **Cilium identity still trusts the CNI and kernel.** mutual auth raises the bar
   to "compromise SPIRE or the node," but a root-on-node attacker is out of scope.
-- **The shipped shell-kill rule is NOT a robust shell-block (honest scope of ED1).** It hooks
-  `sys_execve` and matches arg0 (the caller-supplied filename) by Postfix over shell basenames
-  in `tier: data`. That deterministically kills the *naive* case (`kubectl exec … sh` → rc 137,
-  verified) — but a capable attacker in the db pod evades it: (a) **renamed binary** — the pod
-  has a writable `/tmp` emptyDir + a readable busybox, so `cp /bin/busybox /tmp/x && /tmp/x sh`
-  execs path `/tmp/x` (no postfix match) → no SIGKILL; (b) **execveat** — a distinct syscall this
-  `sys_execve` kprobe never sees (fexecve/memfd path); (c) **fd-exec** — arg0 is `/proc/self/fd/N`.
-  So ED1's claim is precisely "naive direct shell-named execve is killed," NOT "a shell cannot
-  run." **Live-validated in Lab M8** (`labs/m8/tracingpolicy-data-tier-no-exec.yaml`, kind + Tetragon
-  1.7.0): `matchBinaries` is the WRONG tool — on `sys_execve` it matches the *caller* binary, not the
-  launched one (so `NotIn [/usr/sbin/nginx]` kills `nginx -v` and MISSES an in-nginx-RCE shell whose
-  caller is nginx). The rule that actually worked is **zero-exec**: hook BOTH `sys_execve` and
-  `sys_execveat` and SIGKILL all exec in `tier: data` — `id` / `sh` / a renamed `/tmp/x` busybox copy
-  / busybox-by-name all rc 137, while nginx (PID 1, exec'd before the policy) keeps serving. It is
-  arg0-independent and covers execveat. Honest caveats: restart-tolerance comes from Tetragon's
+- **The shipped runtime rule is zero-exec (robust for data-tier exec); residuals are below.** The
+  data tier runs only its main process (db probes are `httpGet`, not exec), so the shipped
+  `TracingPolicy` hooks **both `sys_execve` and `sys_execveat`** and SIGKILLs **all** exec in
+  `tier: data` — `id` / `sh` / a renamed `/tmp/x` busybox copy / busybox-by-name all rc 137, while
+  nginx (PID 1, exec'd before the policy) keeps serving (live-validated, kind + Tetragon 1.7.0). It is
+  **arg0/name-independent and covers execveat**, so the bypasses that defeat a naive rule are closed.
+  *Why zero-exec and not a selective shell-name rule:* the earlier arg0-Postfix cut (now the **M4 lab
+  primitive** `block-shell-in-data-tier`) killed only the naive `kubectl exec … sh` case and was
+  evadable — (a) **renamed binary** (`cp /bin/busybox /tmp/x && /tmp/x sh`, arg0 unmatched),
+  (b) **execveat** (a syscall a lone `sys_execve` kprobe never sees), (c) **fd-exec** (arg0
+  `/proc/self/fd/N`); and `matchBinaries` is the WRONG fix (on `sys_execve` it matches the *caller*, so
+  `NotIn [/usr/sbin/nginx]` kills `nginx -v` and MISSES an in-nginx-RCE shell whose caller is nginx).
+  Forbidding ALL exec sidesteps name/arg0 spoofing entirely. Decision record:
+  `docs/decisions/0001-data-tier-zero-exec.md`; the selective→bypass→zero-exec measurement is Lab M8.
+  **Residual risk that REMAINS under zero-exec:** (1) restart-tolerance comes from Tetragon's
   enforcement-attach **window**, not the image — validated live that BOTH the alpine image AND a
-  distroless `chainguard/nginx` come up Ready with this policy active from t=0 (the PID1 entrypoint
-  execve slips the window either way; fragile + image-independent). Distroless's distinct benefit is
-  **image-layer, not restart-safety**: chainguard/nginx ships NO `/bin/sh` and NO busybox (validated:
-  `/bin/sh` → "no such file" before the policy applies), so it removes the shell entirely while this
-  runtime rule still kills attacker-written binaries — true defense-in-depth. An allowlist (vs
-  zero-exec) needs **BPF-LSM** (`security_bprm_creds_for_exec`) for binary identity. Also: the simple
-  `cp /bin/busybox /tmp/x && /tmp/x sh` does NOT itself yield a shell on a busybox image (busybox
-  dispatches by arg0 → "applet not found"), so the genuine residuals are execveat/fd-exec/argv0-spoof
-  or a non-busybox shell. Surfaced by expert review, live-validated in Lab M8.
+  distroless `chainguard/nginx` come up Ready with the policy active from t=0 (the PID1 entrypoint
+  execve slips the window; fragile + image-independent; a faster attach could SIGKILL the entrypoint
+  → CrashLoop). (2) It scopes the **data tier only** — web/api tiers are not zero-exec (ED3
+  NOT_COVERED). (3) I/O is detection- not prevention-grade, and (4) the io_uring/LSM surface still
+  applies (both next bullets). **Defense-in-depth — image layer:** a distroless data-tier image ships
+  NO `/bin/sh` and NO busybox (validated: `/bin/sh` → "no such file" before the policy applies), so it
+  removes the shell entirely while this runtime rule still kills any binary an attacker WRITES into a
+  writable mount — use both. An allowlist (some exec permitted) would need **BPF-LSM**
+  (`security_bprm_creds_for_exec`) for binary identity, not arg0 strings. Surfaced by expert review,
+  live-validated in Lab M8.
 - **Runtime detection watches the *syscall* surface — which has a known evasion class.**
-  `execve` has no io_uring opcode, so io_uring does not route around THIS rule — a *narrow* fact,
-  NOT "the shell defense is unbypassable" (see the bullet above for its real bypasses). Broader
+  `execve` has no io_uring opcode, so io_uring does not route around the exec rule — a *narrow* fact
+  about io_uring, not a completeness claim. The exec defense's real residuals (attach-window, other
+  tiers) are in the bullet above; arg0/execveat/fd-exec spoofing is **closed** by zero-exec. Broader
   syscall-kprobe rules (file read/write, network connect) CAN be bypassed via **io_uring**'s
   submission queue (ARMO "Curing" PoC, 2025). Robust answer: hook the **LSM layer (BPF-LSM/KRSI)**,
   which observes the kernel *operation* regardless of invocation. Precision (per ARMO): Tetragon's

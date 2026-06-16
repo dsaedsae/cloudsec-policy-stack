@@ -1,0 +1,29 @@
+# M4 정답지 — 선택적 셸-kill(arg0-Postfix). labs/m4/tracingpolicy.yaml 을 다 채운 뒤 비교용.
+#
+# 이건 *학습용 프리미티브*다 — TracingPolicy selector 문법(matchArgs Postfix · Sigkill · 선택성)을
+# 익히는 룰. 정직한 범위: 셸 *이름*의 직접 execve만 죽인다(나이브 컷). renamed-copy(/tmp/x sh)·
+# execveat·fd-exec로 우회된다 — 그 경계를 M8이 라이브로 측정한다.
+#
+# 실제 shipped 기본은 이게 아니라 zero-exec다(k8s/tracingpolicy.yaml: sys_execve+sys_execveat 전부
+# Sigkill, 이름 무관). 그 결정 근거는 docs/decisions/0001-data-tier-zero-exec.md, 빌드·검증은 M8.
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: block-shell-in-data-tier
+spec:
+  podSelector:
+    matchLabels:
+      tier: data
+  kprobes:
+    - call: "sys_execve"
+      syscall: true
+      args:
+        - index: 0
+          type: "string"      # execve 의 첫 인자 = 실행 파일 경로
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Postfix"   # 경로가 셸 이름으로 *끝나면* 매칭 (접두 무시)
+              values: ["/sh", "/bash", "/dash", "/ash", "/busybox"]
+          matchActions:
+            - action: Sigkill       # 커널에서 즉시 종료 (rc=137). /usr/bin/id 는 목록에 없어 생존 = 선택적

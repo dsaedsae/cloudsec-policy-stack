@@ -29,9 +29,9 @@
 - **못 막는 것:** _앵커 — 위치로 신뢰하지 않음이 핵심; 과차단도 결함(가용성)._
 
 ## M4 · 런타임 (Tetragon eBPF)
-- **재구현:** _data tier 셸 exec만 골라 SIGKILL, id=0 + sh=137._
-- **막는 것:** _침해 후(post-exploit) 데이터 티어에서 셸 실행._
-- **못 막는 것(정직):** _앵커 — 셸 없는 nc/python, 다른 tier, 노드 루트는 범위 밖(ED2/ED3=CONFIGURED/NOT_COVERED)._
+- **재구현:** _data tier 셸 exec만 골라 SIGKILL, id=0 + sh=137 — 선택적 프리미티브(selector 문법)._
+- **막는 것:** _침해 후(post-exploit) 데이터 티어에서 *나이브* 셸 실행._
+- **못 막는 것(정직):** _앵커 — 선택적 룰은 renamed-binary(`/tmp/x sh`)·execveat·fd-exec로 우회되고(`matchBinaries`는 호출자 매칭), 셸 없는 nc/python·다른 tier·노드 루트는 범위 밖. **그래서 shipped 기본은 zero-exec**(execve+execveat 전부 Sigkill — id도 137; M8 측정·ADR 0001)이고 M4는 그 출발점이다(ED2/ED3=CONFIGURED/NOT_COVERED)._
 
 ## M5 · 암호화 (전송 + 저장)
 - **재구현:** _ET1(크로스노드 WireGuard) 채점 + capture-wg/etcd 직접 실행·해석._

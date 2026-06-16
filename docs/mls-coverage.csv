@@ -28,9 +28,9 @@ ET2,encryption-transit,packet-captured ciphertext (tcpdump),B,VERIFIED,capture-w
 ER1,encryption-rest,etcd Secret AES-CBC,B,VERIFIED,enable-secrets-encryption: k8s:enc:aescbc / no plaintext
 ER2,encryption-rest,key rotation procedure,B,CONFIGURED,runbook 02 2-key flow; not automated/tested
 ER3,encryption-rest,managed KMS/HSM key mgmt,B,NOT_COVERED,local demo; AWS path documented only
-ED1,detection-edr,runtime shell-exec kill (data tier),A,VERIFIED,verify:shell rc=137 + id rc=0 (NAIVE direct shell-named execve only; bypassable via renamed-binary/execveat/fd-exec - robust=zero-exec(execve+execveat)+distroless - matchBinaries matches caller not new binary - M8-validated; see Lab M8/THREAT_MODEL)
+ED1,detection-edr,runtime exec kill (data tier),A,VERIFIED,verify:ALL data-tier exec SIGKILLed (id+sh rc=137) - shipped rule is zero-exec (execve+execveat), name/arg0-independent; supersedes the naive selective shell-name rule (bypassable via renamed/execveat/fd-exec) now kept in the M4 lab; matchBinaries matches caller not new binary - M8-validated; ADR docs/decisions/0001
 ED2,detection-edr,process-exec audit trail,B,CONFIGURED,Tetragon logs present; not asserted in suite
-ED3,detection-edr,broader runtime policies (nc/python/curl),B,NOT_COVERED,only shell in data tier
+ED3,detection-edr,broader runtime policies (other tiers / non-exec),B,NOT_COVERED,data-tier exec fully blocked (zero-exec); web/api tiers + network-tool/non-exec coverage out of scope
 SL1,shift-left,IaC + K8s manifest scan (checkov),B,VERIFIED,checkov 452 pass / 0 fail
 SL2,shift-left,secret scan (gitleaks),B,CONFIGURED,CI step; not in verify suite
 SL3,shift-left,CI enforcement gate,B,VERIFIED,CI runs verify.sh on push

@@ -56,7 +56,7 @@ FSC 로드맵(2024-08-13): **위치 기반 분리 → 위험 기반 MLS**.
 - **① 신원** admission · SA-use · SPIFFE
 - **② 세분화** Cilium L3/L7 default-deny
 - **③ 인가** Cedar per-request (owner·한도·역할·동결)
-- **④ egress / ⑤⑥ 암호화 / ⑦ 런타임** — 유출 차단 · WireGuard·etcd · Tetragon 셸 SIGKILL
+- **④ egress / ⑤⑥ 암호화 / ⑦ 런타임** — 유출 차단 · WireGuard·etcd · Tetragon exec SIGKILL(zero-exec)
 
 각 계층은 **재실행 가능한 테스트**에 묶인다.
 
@@ -98,7 +98,7 @@ FSC 로드맵(2024-08-13): **위치 기반 분리 → 위험 기반 MLS**.
 
 ## 라이브 데모 (5분, 그대로 실행)
 
-<p class="mono mut" style="line-height:2.1"><span class="ok">$</span> bash scripts/verify.sh &nbsp;&nbsp;→&nbsp;&nbsp;<span class="ok">21/21 PASS</span><br>forged app:api on web-sa &nbsp;→&nbsp;<span class="no">DENY</span><br>db: /bin/sh <span class="no">137</span> &nbsp; db: id <span class="ok">0</span><br>etcd raw &nbsp;→&nbsp;<span class="ok">k8s:enc:aescbc:v1:</span> (평문 0)</p>
+<p class="mono mut" style="line-height:2.1"><span class="ok">$</span> bash scripts/verify.sh &nbsp;&nbsp;→&nbsp;&nbsp;<span class="ok">21/21 PASS</span><br>forged app:api on web-sa &nbsp;→&nbsp;<span class="no">DENY</span><br>db: /bin/sh <span class="no">137</span> &nbsp; db: id <span class="no">137</span> (zero-exec)<br>etcd raw &nbsp;→&nbsp;<span class="ok">k8s:enc:aescbc:v1:</span> (평문 0)</p>
 
 ---
 

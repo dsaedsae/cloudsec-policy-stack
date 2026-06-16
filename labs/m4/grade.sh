@@ -40,5 +40,5 @@ if [ "$rc_sh" = 137 ] || [ "$rc_sh" = 143 ]; then printf '  %-46s expect 137  go
 else printf '  %-46s expect 137  got %-4s FAIL\n' "셸 exec(sh) (안 죽었다=통제 없음)" "$rc_sh"; fail=1; fi
 
 echo "----------------------------------------------------------------"
-if [ "$fail" = 0 ]; then echo "M4 GRADUATED — 정답지 비교: k8s/tracingpolicy.yaml"; else echo "M4: FAIL 확인. matchArgs(Postfix 셸 목록)·matchActions(Sigkill)을 다시 보라."; fi
+if [ "$fail" = 0 ]; then echo "M4 GRADUATED — 정답지 비교: labs/m4/tracingpolicy.solution.yaml (shipped 기본은 zero-exec: k8s/tracingpolicy.yaml, ADR 0001/M8)"; else echo "M4: FAIL 확인. matchArgs(Postfix 셸 목록)·matchActions(Sigkill)을 다시 보라."; fi
 exit $fail

@@ -39,20 +39,23 @@ probe probe-web "web->kube-apiserver blocked"            000 -k "https://10.96.0
 
 echo "== Tetragon runtime (eBPF) =="
 DBPOD=$(kubectl --context "$CTX" -n shop get pod -l tier=data -o jsonpath='{.items[0].metadata.name}')
-# Prove a SELECTIVE in-kernel kill, robustly: a NON-shell exec (`id`) still runs (pod
-# healthy, rc=0) while a shell exec is SIGKILLed (rc=137). Requiring BOTH rules out a
-# false-pass on container-not-Ready / no-sh / RBAC-deny / wrong-context — all of which
-# would ALSO break `id`. Only a Tetragon policy that kills the shell specifically (and
-# leaves a legit binary alone) passes. (`id` execs /usr/bin/id, not /busybox, so the
-# TracingPolicy's shell-postfix match does not hit it.)
+# Prove ZERO-EXEC in the data tier: a datastore execs nothing legit (db probes are httpGet),
+# so the shipped rule SIGKILLs ALL exec — both a shell AND a normal binary like `id`. (The
+# earlier selective shell-name rule was bypassable; see docs/decisions/0001-data-tier-zero-exec.md.
+# The selective rule + its "over-blocking is also a defect" lesson live on in the M4 lab.)
+# Robustness against false-pass: the pod must be Ready (not dead/unreachable), AND both exec
+# attempts must be EXACTLY 137/143 (in-kernel SIGKILL) — a not-ready / RBAC / wrong-context
+# failure yields a generic non-137 rc, not 137.
+READY=$(kubectl --context "$CTX" -n shop get pod "$DBPOD" -o jsonpath='{.status.containerStatuses[0].ready}')
+killed() { [ "$1" = 137 ] || [ "$1" = 143 ]; }
 set +e
 kubectl --context "$CTX" -n shop exec "$DBPOD" -- id >/dev/null 2>&1; rc_id=$?
 kubectl --context "$CTX" -n shop exec "$DBPOD" -- sh -c 'echo x' >/dev/null 2>&1; rc_sh=$?
 set -e
-if [ "$rc_id" = 0 ] && { [ "$rc_sh" = 137 ] || [ "$rc_sh" = 143 ]; }; then
-  printf '  %-48s expect %-4s got %-4s %s\n' "shell killed (137), id runs (0): selective Tetragon" "137" "$rc_sh" "PASS"
+if [ "$READY" = true ] && killed "$rc_id" && killed "$rc_sh"; then
+  printf '  %-48s expect %-4s got %-4s %s\n' "zero-exec: all data-tier exec killed (id+sh)" "137" "$rc_sh" "PASS"
 else
-  printf '  %-48s expect %-4s got %-4s %s\n' "Tetragon selective kill (id=$rc_id sh=$rc_sh)" "137" "$rc_sh" "FAIL"; fail=1
+  printf '  %-48s expect %-4s got %-4s %s\n' "Tetragon zero-exec (ready=$READY id=$rc_id sh=$rc_sh)" "137" "$rc_sh" "FAIL"; fail=1
 fi
 
 echo "== Identity (B7): least-privilege RBAC + label<->SA admission =="

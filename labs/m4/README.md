@@ -27,6 +27,7 @@
 > **다른 이름으로** 띄우면 우회된다(renamed-binary/execveat/fd-exec — Q4). 즉 "셸을 못 띄운다"가
 > 아니라 "나이브 직접 셸-명 execve를 죽인다"가 정확한 주장. 그 경계를 *라이브로 측정*하는 게
 > **[M8](../m8/README.md)**(심화)이고, 강건한 답은 **zero-exec**(execve+execveat 전부 Sigkill)·distroless 이미지다 — matchBinaries는 *호출자*를 매칭해 아님(M8 라이브 검증; [THREAT_MODEL](../../THREAT_MODEL.md) 잔여위험).
+> **그 zero-exec가 실제 shipped 기본**(`k8s/tracingpolicy.yaml`)이고, 이 랩의 선택적 룰은 그 *출발점인 학습용 프리미티브*다 — selector 문법(matchArgs Postfix·Sigkill·선택성)을 익히고 그 한계를 깨닫는 단계. 강건화 결정 기록: [ADR 0001](../../docs/decisions/0001-data-tier-zero-exec.md).
 
 ## Step 0 — 베이스라인
 
@@ -88,6 +89,6 @@ bash labs/m4/grade.sh        # id=0 PASS + sh=137 PASS → M4 GRADUATED. 채점 
 - [ ] Postfix vs Equal, 과잉 kill이 왜 결함인지 안다
 - [ ] 구두 문답 4개 답안 없이
 - [ ] 이 룰이 *못* 죽이는 것(renamed-shell `/tmp/x sh`·execveat·fd-exec)을 말할 수 있다 → 강건한 답은 zero-exec(execve+execveat)/distroless(matchBinaries 아님 — 호출자 매칭), [M8](../m8/README.md)에서 라이브 검증
-- [ ] `k8s/tracingpolicy.yaml`과 비교
+- [ ] `labs/m4/tracingpolicy.solution.yaml`과 비교 (그리고 **실제 shipped 기본은 zero-exec** `k8s/tracingpolicy.yaml`임을 안다 — 이 선택적 룰은 그 출발점)
 
 다음: **M5 — 데이터 암호화 (run & interpret)** (같은 세션에서).

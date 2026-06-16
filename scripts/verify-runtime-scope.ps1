@@ -1,49 +1,68 @@
-# verify-runtime-scope.ps1 - OPT-IN: the HONEST edges of the Tetragon shell-kill (M8).
-# M4/ED1 proves the shell-exec kill WORKS (sh -> 137, id -> 0). This script measures its
-# SCOPE and timing semantics so the control is not over- or under-claimed:
-#   Station A  selective in-kernel kill is real           (sh rc=137, id rc=0)
-#   Station D  the rule's match-scope is execve-of-shell  (a non-shell exec AND a file read survive)
-# Stations B/C are documented (not asserted here) - see notes printed at the end + labs/m8/README.md.
-# Does NOT change ED1 (still VERIFIED) and does NOT touch the always-on verify.sh 21/21 suite.
+# verify-runtime-scope.ps1 - OPT-IN (M8): measure the DELTA between the selective shell-kill
+# (M4's naive primitive) and the ZERO-EXEC rule that is the SHIPPED default. Applies each rule to
+# the live db pod, probes, and RESTORES the shipped zero-exec on exit. Windows twin of
+# verify-runtime-scope.sh (same probes).
+#   Phase 1  selective (M4)   -> a non-shell exec (id) SURVIVES, a shell exec dies (137)
+#   Phase 2  zero-exec (ship) -> id ALSO dies (137): the name-independent gap is closed
+# Does NOT change ED1 (VERIFIED) or the 75% metric. NOTE: temporarily swaps the data-tier
+# TracingPolicy on the running db; the finally block restores shipped zero-exec. Run standalone.
 $ErrorActionPreference = "Continue"
 $ctx = "kind-cloudsec"; $ns = "shop"; $fail = 0
+$ROOT = (Resolve-Path "$PSScriptRoot\..").Path
+$SEL  = Join-Path $ROOT "labs\m4\tracingpolicy.solution.yaml"   # selective (M4 primitive)
+$ZERO = Join-Path $ROOT "k8s\tracingpolicy.yaml"               # zero-exec (shipped default)
+$SEL_NAME = "block-shell-in-data-tier"; $ZERO_NAME = "data-tier-no-exec"
 $DBPOD = kubectl --context $ctx -n $ns get pod -l tier=data -o "jsonpath={.items[0].metadata.name}" 2>$null
 if (-not $DBPOD) { Write-Host "SKIP: no tier=data pod in $ns (run scripts\up.ps1 first)"; exit 0 }
 
-function Probe($label, $expect, [scriptblock]$cmd) {
-    & $cmd *> $null; $rc = $LASTEXITCODE
-    $ok = ($rc -eq $expect)
-    if (-not $ok) { $script:fail = 1 }
-    Write-Host ("  {0,-52} rc={1,-4} expect {2,-4} {3}" -f $label, $rc, $expect, $(if ($ok) { "PASS" } else { "FAIL" }))
+function Only($file) {  # apply exactly ONE rule (delete both first so they never overlap), let eBPF load
+    kubectl --context $ctx delete tracingpolicy $SEL_NAME $ZERO_NAME *> $null
+    kubectl --context $ctx apply -f $file *> $null
+    Start-Sleep -Seconds 6
+}
+function Probe($label, $expect, [string[]]$cmd) {
+    kubectl --context $ctx -n $ns exec $DBPOD -- @cmd *> $null; $rc = $LASTEXITCODE
+    $ok = ($rc -eq $expect); if (-not $ok) { $script:fail = 1 }
+    Write-Host ("  {0,-40} rc={1,-4} expect {2,-4} {3}" -f $label, $rc, $expect, $(if ($ok) { "PASS" } else { "FAIL" }))
 }
 
-Write-Host "== Tetragon shell-kill SCOPE (detection != prevention; ED1 unchanged) =="
-Write-Host "-- Station A: selective in-kernel kill --"
-Probe "id (non-shell binary) survives"          0   { kubectl --context $ctx -n $ns exec $DBPOD -- id }
-Probe "sh -c (shell execve) SIGKILLed"           137 { kubectl --context $ctx -n $ns exec $DBPOD -- sh -c "echo x" }
-Write-Host "-- Station D: match-scope is execve-of-shell-names only --"
-Probe "cat /etc/passwd (file read) survives"     0   { kubectl --context $ctx -n $ns exec $DBPOD -- cat /etc/passwd }
+try {
+    Write-Host "== M8: selective (M4 primitive) vs zero-exec (shipped) - measure the DELTA =="
+    Write-Host "-- Phase 1: SELECTIVE rule (M4 naive cut) - apply + measure --"
+    Only $SEL
+    Probe "id (non-shell binary) SURVIVES"      0   @("id")
+    Probe "sh -c (shell execve) SIGKILLed"       137 @("sh", "-c", "echo x")
+    Probe "cat /etc/passwd (file read) survives" 0   @("cat", "/etc/passwd")
+    Write-Host "   -> selective: only shell-name execve dies; id + file-read live (this is the GAP)."
+    Write-Host "-- Phase 2: ZERO-EXEC rule (shipped default) - apply + measure --"
+    Only $ZERO
+    Probe "id (non-shell binary) now KILLED"     137 @("id")
+    Probe "sh -c (shell execve) KILLED"           137 @("sh", "-c", "echo x")
+    Write-Host "   -> zero-exec: ALL data-tier exec dies, name-independent (closes the renamed/execveat gap)."
+    Write-Host "----------------------------------------------------------------"
+    if ($fail -eq 0) { Write-Host "PASS: selective lets id run (the gap); zero-exec (shipped) closes it - name-independent." }
+    else { Write-Host "FAIL above." }
+}
+finally {
+    kubectl --context $ctx delete tracingpolicy $SEL_NAME *> $null
+    kubectl --context $ctx apply -f $ZERO *> $null
+    Write-Host "(restored shipped zero-exec: k8s/tracingpolicy.yaml; selective rule removed)"
+}
 
-Write-Host "----------------------------------------------------------------"
-if ($fail -eq 0) {
-    Write-Host "PASS: kill is selective + scope-limited to execve-of-[/sh,/bash,/dash,/ash,/busybox]."
-} else { Write-Host "FAIL above." }
 Write-Host ""
-Write-Host "HONEST NOTES (documented, not asserted here - see labs/m8/README.md + THREAT_MODEL.md):"
-Write-Host "  SCOPE/bypass: the rule matches execve arg0 by shell-name postfix - NOT a robust shell-block."
-Write-Host "    Bypassable via renamed binary (cp /bin/busybox /tmp/x && /tmp/x sh -> arg0 unmatched),"
-Write-Host "    execveat (unhooked syscall), and fd-exec. ED1 = 'naive direct shell-named execve is killed',"
-Write-Host "    NOT 'a shell cannot run'. Robust: matchBinaries / sched_process_exec / LSM, or exec allowlist."
-Write-Host "  B (execve timing, DOCUMENTED not measured here): execve+Sigkill is pre-image-load"
-Write-Host "    ('before the shell initializes'), so the shell never runs its first command -> no"
-Write-Host "    measurable side-effect window for execve. (The pod HAS writable emptyDirs at /tmp,"
-Write-Host "    /var/cache/nginx, /var/run; the moot-ness is the pre-image-load timing, not a lack of writable paths.)"
-Write-Host "  C (I/O window): Tetragon's docs state a SIGKILL in a write() syscall does NOT guarantee"
-Write-Host "    the bytes are not written - synchronous-process-kill != pre-operation. Making a kprobe"
-Write-Host "    rule prevention-grade for I/O needs Sigkill + the Override action. Our shell rule is"
-Write-Host "    Sigkill-only = prevention-grade for execve, detection-grade for I/O. SKIP-prone on kind"
-Write-Host "    (Tetragon #4883); see labs/m8/tracingpolicy-write-window.yaml to explore it live."
-Write-Host "  io_uring: a non-execve I/O path (e.g. IORING_OP_READ) is invisible to Tetragon's DEFAULT"
-Write-Host "    syscall policies (ARMO 'Curing', 2025); LSM/KRSI hooks WOULD see it. The shipped"
-Write-Host "    execve rule itself is unaffected (io_uring has no execve opcode)."
+Write-Host "HONEST NOTES (documented, not asserted here - see labs/m8/README.md + THREAT_MODEL.md + ADR 0001):"
+Write-Host "  WHY zero-exec is shipped: the selective rule matches execve arg0 by shell-name postfix - NOT a"
+Write-Host "    robust shell-block. Bypassable via renamed binary (cp /bin/busybox /tmp/x && /tmp/x sh -> arg0"
+Write-Host "    unmatched), execveat (a separate unhooked syscall), and fd-exec. matchBinaries is the WRONG fix"
+Write-Host "    (it matches the CALLER, not the launched image). The data tier runs only its main process (db"
+Write-Host "    probes are httpGet, not exec), so the shipped default forbids ALL exec - name-independent,"
+Write-Host "    covers execveat. The selective primitive + 'over-blocking is a defect' lesson live on in M4;"
+Write-Host "    this shows why M8/ADR 0001 promoted zero-exec to the default."
+Write-Host "  B (execve timing, DOCUMENTED not measured here): execve+Sigkill is pre-image-load. The pod HAS"
+Write-Host "    writable emptyDirs at /tmp etc.; the moot-ness is the timing, not a lack of writable paths."
+Write-Host "  C (I/O window): a write()+Sigkill rule kills the process but the kernel may already have done the"
+Write-Host "    I/O (synchronous-process-kill != pre-operation); prevention-grade needs Sigkill+Override."
+Write-Host "    SKIP-prone on kind (Tetragon #4883); see labs/m8/tracingpolicy-write-window.yaml."
+Write-Host "  io_uring: a non-execve I/O path is invisible to Tetragon's DEFAULT syscall policies (ARMO"
+Write-Host "    'Curing' 2025); LSM/KRSI hooks would see it. The execve-based rules here are unaffected."
 exit $fail

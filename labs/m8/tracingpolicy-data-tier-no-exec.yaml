@@ -1,6 +1,7 @@
-# Robust complement to M4's `block-shell-in-data-tier` (the naive arg0-Postfix rule).
-# OPT-IN demo artifact — NOT applied by scripts/up (it would kill the M4 "id survives"
-# check in verify.sh's 21/21 by design). Apply it yourself to explore the robust answer.
+# This IS the shipped data-tier runtime rule: k8s/tracingpolicy.yaml is a verbatim copy of this
+# zero-exec policy, applied by scripts/up. ADR 0001 promoted it from the earlier selective
+# arg0-Postfix cut (now the M4 lab primitive `block-shell-in-data-tier`). This annotated copy
+# carries the live-validation record + the design rationale; verify.sh asserts it (id+sh -> 137).
 #
 # VALIDATED LIVE on kind + Tetragon 1.7.0 (a tier=data nginx-unprivileged:alpine pod):
 #   id  /  /bin/sh -c echo  /  a renamed busybox copy (/tmp/x)  /  /bin/busybox id
