@@ -4,6 +4,8 @@
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dsaedsae/cloudsec-policy-stack)
 
+> **EN (TL;DR):** A free, local-`kind` **defense-in-depth Kubernetes security stack** + a **self-grading re-implementation track** (M0–M8): you rebuild each control — Cedar authz, Cilium L3/L7, Tetragon runtime, identity admission, encryption, agent-ABAC — from a stripped skeleton, and the existing test/verify harness auto-grades it. An **education/portfolio reference** (not production; not legal/compliance advice). **Content is in Korean.** Start (no cluster, ~5 min): `make setup && make m0`, or open in Codespaces.
+
 > 의사결정자·도입 검토용: [원페이저 PDF](presentation/cloudsec-onepager.pdf)(GitHub에서 바로 열림) · [HTML](presentation/cloudsec-onepager.html)(브라우저·이메일·인쇄). 아래는 개발자/학습자용.
 
 무료 로컬 `kind` 클러스터 위에서 도는 방어심층(defense-in-depth) 쿠버네티스 보안 스택과, 각 통제를 직접 다시 구현해 보는 자가채점 학습 트랙입니다. 프로덕션 배포물이 아니라 **교육·포트폴리오 레퍼런스**이며, 법률/금융 자문도 공식 FSC 컴플라이언스 매핑도 아닙니다.

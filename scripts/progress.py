@@ -17,11 +17,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 # (label, argv, todo-힌트) — 같은 인터프리터로 실행.
+# 재구현 가능한 무클러스터 모듈 (학습자 스켈레톤이 있어 진도에 집계).
 NOCLUSTER = [
     ("M0  Cedar authz",        [sys.executable, "labs/m0/grade.py", "--ext"], "labs/m0/policies.cedar 재구현 (목표 11/11)"),
     ("M1  shift-left scan",    [sys.executable, "labs/m1/grade.py"],          "labs/m1/workload.yaml 16결함 수정 (Failed 0)"),
     ("M6  agent-ABAC+ReBAC",   [sys.executable, "labs/m6/grade.py"],          "labs/m6/{agent-policies.cedar,model.fga} (17/17+11/11; Part B=docker)"),
-    ("M7  formal cross-layer", [sys.executable, "formal/cross_layer.py"],     "canonical 검사 (재구현 스켈레톤 없음 — 읽고 실행)"),
+]
+# 레퍼런스 모듈: 재구현 스켈레톤이 없음(읽고 실행) → 표시는 하되 진도에는 미집계.
+REFERENCE = [
+    ("M7  formal cross-layer", [sys.executable, "formal/cross_layer.py"]),
 ]
 CLUSTER = [
     ("M2  identity VAP/CEL",   "bash labs/m2/grade.sh"),
@@ -65,6 +69,12 @@ def main() -> int:
             print(f"  [ todo ]  {label:<24}  {hint}")
 
     print()
+    for label, argv in REFERENCE:
+        rc, last, _ = run(argv)
+        status = last[:56] if rc == 0 else "실행 실패"
+        print(f"  [ ref  ]  {label:<24}  {status}")
+    print("            (M7 = reference 모듈 · 재구현 스켈레톤 없음 → 진도 미집계)\n")
+
     for label, how in CLUSTER:
         print(f"  [cluster] {label:<24}  {how}")
 

@@ -1,4 +1,4 @@
-# 환경 준비 (Windows 기준) — clone에서 첫 채점까지
+# 환경 준비 (전체 OS) — clone에서 첫 채점까지
 
 이 한 페이지면 **빈 클론에서 M0 첫 PASS까지** 갈 수 있다. 트랙은 둘로 나뉜다:
 
@@ -10,6 +10,14 @@
 ---
 
 ## Track A — Python 랩 (M0/M1/M6) · 5분
+
+> **macOS / Linux / Codespaces — `make`로 한 번에:**
+> ```bash
+> git clone https://github.com/dsaedsae/cloudsec-policy-stack && cd cloudsec-policy-stack
+> make setup     # .venv 생성 + 의존성 설치 (cedarpy, checkov ...)
+> make m0        # M0 첫 채점 (처음엔 5/8)
+> ```
+> GitHub Codespaces(Code ▸ Codespaces)면 위가 브라우저에서 그대로 돈다. **아래는 Windows(PowerShell) 기준.**
 
 먼저 저장소를 클론하고 그 안으로 들어간다 — **이하 모든 명령은 repo 루트(`cloudsec-policy-stack/`)에서** 실행한다(`.venv\Scripts\python.exe` 경로가 그 기준이다):
 

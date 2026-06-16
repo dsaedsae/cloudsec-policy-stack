@@ -9,8 +9,12 @@ PY := $(shell [ -x .venv/bin/python ] && echo .venv/bin/python || echo python)
 help:  ## list the targets
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  make %-10s %s\n", $$1, $$2}'
 
-setup:  ## install the no-cluster deps (cedarpy, checkov, pyjwt, z3)
-	$(PY) -m pip install -r requirements-dev.txt
+venv:  ## create the project .venv (Python 3.12)
+	python3 -m venv .venv
+
+setup: ## create .venv if missing, then install the no-cluster deps (cedarpy, checkov, pyjwt, z3)
+	@test -d .venv || python3 -m venv .venv
+	.venv/bin/python -m pip install -r requirements-dev.txt
 
 doctor:  ## what is installed / missing
 	bash scripts/doctor.sh
@@ -70,4 +74,4 @@ verify:  ## live enforcement suite (needs the cluster)
 down:  ## tear the cluster down (frees RAM)
 	bash scripts/down.sh
 
-.PHONY: help setup doctor progress test m0 m1 m6 m7 report brief docs site serve up verify down
+.PHONY: help venv setup doctor progress test m0 m1 m6 m7 report brief docs site serve up verify down

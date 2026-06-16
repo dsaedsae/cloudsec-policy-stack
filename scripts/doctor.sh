@@ -23,7 +23,7 @@ $cedarpy && echo "$OK""cedarpy (M0/M6)" || echo "$NO""cedarpy (M0/M6)"
 $checkov && echo "$OK""checkov (M1)" || echo "$NO""checkov (M1)"
 has docker && echo "$OK""docker (M6 Part B / M1 trivy)" || echo "$NO""docker"
 if ! ($venv && $cedarpy && $checkov); then
-  echo "   고치기: python -m venv .venv ; .venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt"
+  echo "   고치기: make setup   # (.venv 생성 + 의존성). 또는: python3 -m venv .venv && .venv/bin/python -m pip install -r requirements-dev.txt"
 fi
 # Track B
 echo
@@ -34,7 +34,7 @@ for t in docker kind kubectl helm cilium terraform; do
 done
 daemon=false; has docker && docker info >/dev/null 2>&1 && daemon=true
 $daemon && echo "$OK""docker 데몬 실행중" || echo "$NO""docker 데몬 (Docker Desktop 켜기)"
-[ ${#missing[@]} -gt 0 ] && echo "   고치기: choco install kind kubernetes-cli kubernetes-helm cilium-cli ; winget install Hashicorp.Terraform Docker.DockerDesktop"
+[ ${#missing[@]} -gt 0 ] && echo "   고치기(macOS): brew install kind kubernetes-cli helm cilium-cli terraform docker   # Linux는 배포판 패키지 / 공식 설치 스크립트"
 echo
 echo "=== 모듈별 준비 ==="
 ( $venv && $cedarpy ) && echo "  M0 : READY" || echo "  M0 : 미비 (Track A)"

@@ -5,7 +5,7 @@
 </div>
 
 > **준비(한 번만):** 클론엔 `.venv`가 없다 → `python -m venv .venv` 후
-> `.venv\Scripts\python.exe -m pip install -r requirements-dev.txt`. 자세히는 [SETUP](../SETUP.md).
+> `.venv\Scripts\python.exe -m pip install -r requirements-dev.txt` — **macOS/Linux는 `make setup`** 한 줄. 자세히는 [SETUP](../SETUP.md).
 
 **미션:** 핀테크 데모의 인가 정책을 **스펙만 보고** 직접 작성해 채점기 11/11을 달성한다.
 클러스터 불필요 — 노트북에서 python만으로 한다.
@@ -25,6 +25,9 @@
 # repo 루트에서 (.venv의 python 사용)
 .venv\Scripts\python.exe cedar\authz.py        # 정답 정책의 8/8 — 목표 상태를 눈으로 확인
 .venv\Scripts\python.exe labs\m0\grade.py      # 내 (빈) 정책의 채점 — 5/8부터 시작한다
+```
+```bash
+# macOS / Linux / Codespaces:  make m0    (또는  .venv/bin/python labs/m0/grade.py)
 ```
 
 > **첫 교훈이 바로 여기 있다:** 정책이 *하나도 없는데* 5/8이 통과한다. Cedar는 **default-deny** —
