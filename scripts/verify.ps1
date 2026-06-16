@@ -15,6 +15,28 @@ try { $cn = (terraform "-chdir=$tfdir" output -raw cluster_name 2>$null) } catch
 if (-not $cn) { $cn = "cloudsec" }
 $ctx = "kind-$cn"
 $script:fail = 0
+# Structured results: every check funnels through Result, which prints the same human line
+# AND records a JUnit <testcase> (outputs\verify\junit.xml). Twin of verify.sh's result().
+$script:tc = ''; $script:n = 0; $script:nf = 0
+$Junit = if ($env:VERIFY_JUNIT) { $env:VERIFY_JUNIT } else { Join-Path $Root 'outputs\verify\junit.xml' }
+function XEsc($s) { return ([string]$s -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;' -replace '"', '&quot;') }
+function Result($name, $exp, $got, $status) {
+    "{0,-46} expect {1,-4} got {2,-4} {3}" -f $name, $exp, $got, $status
+    $script:n++; $nm = XEsc $name
+    if ($status -eq 'PASS') {
+        $script:tc += ('  <testcase classname="verify.ps1" name="{0}"/>' -f $nm) + "`n"
+    } else {
+        $script:nf++; $script:fail = 1
+        $script:tc += ('  <testcase classname="verify.ps1" name="{0}"><failure message="expect {1} got {2}"/></testcase>' -f $nm, (XEsc $exp), (XEsc $got)) + "`n"
+    }
+}
+function Write-Junit {
+    $dir = Split-Path -Parent $Junit
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+    $head = '<?xml version="1.0" encoding="UTF-8"?>' + "`n" + ('<testsuites><testsuite name="verify.ps1" tests="{0}" failures="{1}">' -f $script:n, $script:nf) + "`n"
+    Set-Content -Path $Junit -Value ($head + $script:tc + '</testsuite></testsuites>') -Encoding utf8
+    Write-Host ("  (JUnit report: {0} — {1} tests, {2} failures)" -f $Junit, $script:n, $script:nf)
+}
 
 kubectl --context $ctx apply -f (Join-Path $Root "k8s\probes.yaml") | Out-Null
 try {
@@ -24,8 +46,8 @@ try {
 
     function Probe($src, $desc, $exp, $cargs) {
         $code = & kubectl --context $ctx -n shop exec $src -- curl -s -o /dev/null -m 8 -w "%{http_code}" @cargs 2>$null
-        if ($code -eq $exp) { $res = "PASS" } else { $res = "FAIL"; $script:fail = 1 }
-        "{0,-46} expect {1,-4} got {2,-4} {3}" -f $desc, $exp, $code, $res
+        $res = if ($code -eq $exp) { 'PASS' } else { 'FAIL' }
+        Result $desc $exp $code $res
     }
 
     # NOTE: the transfer bodies are written '{\"amount\":N}' on purpose. PowerShell
@@ -60,16 +82,16 @@ try {
     kubectl --context $ctx -n shop exec $dbpod -- id 2>$null | Out-Null; $rcId = $LASTEXITCODE
     kubectl --context $ctx -n shop exec $dbpod -- sh -c "echo x" 2>$null | Out-Null; $rcSh = $LASTEXITCODE
     $killId = ($rcId -eq 137 -or $rcId -eq 143); $killSh = ($rcSh -eq 137 -or $rcSh -eq 143)
-    if ($ready -eq "true" -and $killId -and $killSh) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "zero-exec: all data-tier exec killed (id+sh)", "137", "$rcSh", "PASS" }
-    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "Tetragon zero-exec (ready=$ready id=$rcId sh=$rcSh)", "137", "$rcSh", "FAIL"; $script:fail = 1 }
+    if ($ready -eq "true" -and $killId -and $killSh) { Result "zero-exec: all data-tier exec killed (id+sh)" "137" "$rcSh" "PASS" }
+    else { Result "Tetragon zero-exec (ready=$ready id=$rcId sh=$rcSh)" "137" "$rcSh" "FAIL" }
 
     Write-Host "== Identity (B7): least-privilege RBAC + label<->SA admission =="
     # A tier SA has ZERO Kubernetes API rights (no RoleBinding), so a popped pod's
     # blast radius on the cluster API is nil even if a token were present.
     $caniPods = kubectl --context $ctx auth can-i create pods   --as="system:serviceaccount:shop:api-sa" -n shop 2>$null
     $caniSec  = kubectl --context $ctx auth can-i get secrets   --as="system:serviceaccount:shop:api-sa" -n shop 2>$null
-    if ("$caniPods$caniSec" -eq "nono") { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "api-sa: no create-pods / no read-secrets", "no", "no", "PASS" }
-    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "api-sa K8s API rights", "no", "$caniPods/$caniSec", "FAIL"; $script:fail = 1 }
+    if ("$caniPods$caniSec" -eq "nono") { Result "api-sa: no create-pods / no read-secrets" "no" "no" "PASS" }
+    else { Result "api-sa K8s API rights" "no" "$caniPods/$caniSec" "FAIL" }
 
     # Forged network identity: a pod LABELED app:api but running as web-sa. Server
     # dry-run runs the ValidatingAdmissionPolicy without persisting; expect DENY.
@@ -90,16 +112,16 @@ spec:
       resources: { requests: { cpu: "5m", memory: "8Mi" }, limits: { cpu: "50m", memory: "32Mi" } }
 "@
     $forge | kubectl --context $ctx create --dry-run=server -f - 2>$null | Out-Null
-    if ($LASTEXITCODE -ne 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "forged app:api on web-sa -> admission DENY", "DENY", "DENY", "PASS" }
-    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "forged app:api on web-sa", "DENY", "ADMIT", "FAIL"; $script:fail = 1 }
+    if ($LASTEXITCODE -ne 0) { Result "forged app:api on web-sa -> admission DENY" "DENY" "DENY" "PASS" }
+    else { Result "forged app:api on web-sa" "DENY" "ADMIT" "FAIL" }
 
     # A self-consistent pod (app:api + api-sa) created by an AUTHORIZED requester
     # (this script runs as admin) is admitted — the label<->SA policy is satisfied
     # and the SA-use gate allows authorized operators. This is the expected baseline.
     $consistent = ($forge -replace "web-sa", "api-sa") -replace "forge-mismatch", "forge-consistent"
     $consistent | kubectl --context $ctx create --dry-run=server -f - 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "self-consistent app:api+api-sa as admin -> ADMIT", "ADMIT", "ADMIT", "PASS" }
-    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "self-consistent app:api+api-sa as admin", "ADMIT", "DENY", "FAIL"; $script:fail = 1 }
+    if ($LASTEXITCODE -eq 0) { Result "self-consistent app:api+api-sa as admin -> ADMIT" "ADMIT" "ADMIT" "PASS" }
+    else { Result "self-consistent app:api+api-sa as admin" "ADMIT" "DENY" "FAIL" }
 
     # SA-use gate: the limited shop:deployers principal MAY create Deployments but may
     # NOT run one as a tier ServiceAccount. Impersonate that group; expect DENY. Then
@@ -129,12 +151,12 @@ spec:
     # SA-use gate* — assert the policy's distinctive message so an RBAC 403 / typo / down
     # apiserver can't false-pass (and so an absent/unbound policy is caught).
     $denyOut = ($saUse | kubectl --context $ctx --as="system:serviceaccount:shop:ci-deployer" --as-group=shop:deployers create --dry-run=server -f - 2>&1) -join "`n"
-    if ($LASTEXITCODE -ne 0 -and $denyOut -match "SA-use gate|shop-sa-use|authorized operator") { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "CI SA runs workload as api-sa -> SA-use DENY", "DENY", "DENY", "PASS" }
-    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "CI SA runs workload as api-sa (SA-use gate)", "DENY", "?", "FAIL"; $script:fail = 1 }
+    if ($LASTEXITCODE -ne 0 -and $denyOut -match "SA-use gate|shop-sa-use|authorized operator") { Result "CI SA runs workload as api-sa -> SA-use DENY" "DENY" "DENY" "PASS" }
+    else { Result "CI SA runs workload as api-sa (SA-use gate)" "DENY" "?" "FAIL" }
     # Authorized operator (admin here; shop:tier-operators in prod) deploys the same -> ADMIT.
     $saUse | kubectl --context $ctx create --dry-run=server -f - 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "authorized operator deploys api-sa workload -> ADMIT", "ADMIT", "ADMIT", "PASS" }
-    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "authorized operator deploys api-sa workload", "ADMIT", "DENY", "FAIL"; $script:fail = 1 }
+    if ($LASTEXITCODE -eq 0) { Result "authorized operator deploys api-sa workload -> ADMIT" "ADMIT" "ADMIT" "PASS" }
+    else { Result "authorized operator deploys api-sa workload" "ADMIT" "DENY" "FAIL" }
 
     # SA-use also covers the CronJob jobTemplate path: a CI SA scheduling a CronJob as api-sa is DENIED.
     $saUseCron = @"
@@ -160,8 +182,8 @@ spec:
               resources: { requests: { cpu: "5m", memory: "8Mi" }, limits: { cpu: "50m", memory: "32Mi" } }
 "@
     $cronOut = ($saUseCron | kubectl --context $ctx --as="system:serviceaccount:shop:ci-deployer" --as-group=shop:deployers create --dry-run=server -f - 2>&1) -join "`n"
-    if ($LASTEXITCODE -ne 0 -and $cronOut -match "SA-use gate|shop-sa-use|authorized operator") { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "CI SA schedules CronJob as api-sa -> SA-use DENY", "DENY", "DENY", "PASS" }
-    else { "{0,-46} expect {1,-4} got {2,-4} {3}" -f "CI SA schedules CronJob as api-sa (SA-use gate)", "DENY", "?", "FAIL"; $script:fail = 1 }
+    if ($LASTEXITCODE -ne 0 -and $cronOut -match "SA-use gate|shop-sa-use|authorized operator") { Result "CI SA schedules CronJob as api-sa -> SA-use DENY" "DENY" "DENY" "PASS" }
+    else { Result "CI SA schedules CronJob as api-sa (SA-use gate)" "DENY" "?" "FAIL" }
 
     Write-Host "== Data-in-transit (Cilium WireGuard, cross-node) =="
     # Real cross-node proof: WireGuard active AND api/db on DIFFERENT nodes (podAntiAffinity)
@@ -169,10 +191,11 @@ spec:
     $enc = (kubectl --context $ctx exec -n kube-system ds/cilium -c cilium-agent -- cilium-dbg encrypt status 2>$null) -join "`n"
     $apiNode = kubectl --context $ctx -n shop get pod -l tier=backend -o jsonpath="{.items[0].spec.nodeName}"
     $dbNode  = kubectl --context $ctx -n shop get pod -l tier=data -o jsonpath="{.items[0].spec.nodeName}"
-    if ($enc -match "Wireguard" -and $apiNode -and $dbNode -and $apiNode -ne $dbNode) { "{0,-46} expect {1,-8} got {2,-8} {3}" -f "api->db cross-node, WireGuard-encrypted", "WG+xnode", "WG+xnode", "PASS" }
-    else { "{0,-46} expect {1,-8} got {2,-8} {3}" -f "WireGuard cross-node (api=$apiNode db=$dbNode)", "WG+xnode", "?", "FAIL"; $script:fail = 1 }
+    if ($enc -match "Wireguard" -and $apiNode -and $dbNode -and $apiNode -ne $dbNode) { Result "api->db cross-node, WireGuard-encrypted" "WG+xnode" "WG+xnode" "PASS" }
+    else { Result "WireGuard cross-node (api=$apiNode db=$dbNode)" "WG+xnode" "?" "FAIL" }
 }
 finally {
     kubectl --context $ctx -n shop delete -f (Join-Path $Root "k8s\probes.yaml") --ignore-not-found | Out-Null
+    Write-Junit
 }
 if ($script:fail -ne 0) { Write-Host "`nFAILURES"; exit 1 } else { Write-Host "`nALL PASS" }

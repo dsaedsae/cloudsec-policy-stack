@@ -14,11 +14,38 @@ API=$(k -n shop get pod -l tier=backend -o jsonpath='{.items[0].status.podIP}')
 DB=$(k -n shop get pod -l tier=data -o jsonpath='{.items[0].status.podIP}')
 
 fail=0
+# Structured results: every check funnels through result(), which prints the same human
+# line AND records a JUnit <testcase> (outputs/verify/junit.xml, CI-uploadable). This makes
+# the suite a reportable test suite, not just stdout PASS/FAIL. Override path: VERIFY_JUNIT.
+JUNIT="${VERIFY_JUNIT:-$ROOT/outputs/verify/junit.xml}"
+_tc=""; _n=0; _nf=0
+_xesc() { printf '%s' "$1" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g'; }
+result() { # name expect got status
+  local name="$1" exp="$2" got="$3" status="$4" nm
+  printf '  %-48s expect %-4s got %-4s %s\n' "$name" "$exp" "$got" "$status"
+  _n=$((_n + 1)); nm=$(_xesc "$name")
+  if [ "$status" = PASS ]; then
+    _tc="${_tc}  <testcase classname=\"verify.sh\" name=\"${nm}\"/>
+"
+  else
+    _nf=$((_nf + 1)); fail=1
+    _tc="${_tc}  <testcase classname=\"verify.sh\" name=\"${nm}\"><failure message=\"expect $(_xesc "$exp") got $(_xesc "$got")\"/></testcase>
+"
+  fi
+}
+write_junit() {
+  mkdir -p "$(dirname "$JUNIT")"
+  { printf '<?xml version="1.0" encoding="UTF-8"?>\n'
+    printf '<testsuites><testsuite name="verify.sh" tests="%s" failures="%s">\n' "$_n" "$_nf"
+    printf '%s' "$_tc"
+    printf '</testsuite></testsuites>\n'; } > "$JUNIT"
+  echo "  (JUnit report: $JUNIT — ${_n} tests, ${_nf} failures)"
+}
 probe() { # src desc expect curl-args...
   local src="$1" desc="$2" exp="$3"; shift 3
   local code; code=$(k -n shop exec "$src" -- curl -s -o /dev/null -m 8 -w '%{http_code}' "$@" 2>/dev/null || true)
-  local ok="PASS"; [ "$code" = "$exp" ] || { ok="FAIL"; fail=1; }
-  printf '  %-48s expect %-4s got %-4s %s\n' "$desc" "$exp" "$code" "$ok"
+  local ok="PASS"; [ "$code" = "$exp" ] || ok="FAIL"
+  result "$desc" "$exp" "$code" "$ok"
 }
 
 echo "== Defense in depth: one asset (api), three layers =="
@@ -53,9 +80,9 @@ kubectl --context "$CTX" -n shop exec "$DBPOD" -- id >/dev/null 2>&1; rc_id=$?
 kubectl --context "$CTX" -n shop exec "$DBPOD" -- sh -c 'echo x' >/dev/null 2>&1; rc_sh=$?
 set -e
 if [ "$READY" = true ] && killed "$rc_id" && killed "$rc_sh"; then
-  printf '  %-48s expect %-4s got %-4s %s\n' "zero-exec: all data-tier exec killed (id+sh)" "137" "$rc_sh" "PASS"
+  result "zero-exec: all data-tier exec killed (id+sh)" "137" "$rc_sh" PASS
 else
-  printf '  %-48s expect %-4s got %-4s %s\n' "Tetragon zero-exec (ready=$READY id=$rc_id sh=$rc_sh)" "137" "$rc_sh" "FAIL"; fail=1
+  result "Tetragon zero-exec (ready=$READY id=$rc_id sh=$rc_sh)" "137" "$rc_sh" FAIL
 fi
 
 echo "== Identity (B7): least-privilege RBAC + label<->SA admission =="
@@ -64,9 +91,9 @@ echo "== Identity (B7): least-privilege RBAC + label<->SA admission =="
 CANI_PODS=$(kubectl --context "$CTX" auth can-i create pods --as=system:serviceaccount:shop:api-sa -n shop 2>/dev/null || true)
 CANI_SEC=$(kubectl --context "$CTX" auth can-i get secrets --as=system:serviceaccount:shop:api-sa -n shop 2>/dev/null || true)
 if [ "$CANI_PODS" = "no" ] && [ "$CANI_SEC" = "no" ]; then
-  printf '  %-48s expect %-4s got %-4s %s\n' "api-sa: no create-pods / no read-secrets" "no" "no" "PASS"
+  result "api-sa: no create-pods / no read-secrets" "no" "no" PASS
 else
-  printf '  %-48s expect %-4s got %-4s %s\n' "api-sa K8s API rights" "no" "$CANI_PODS/$CANI_SEC" "FAIL"; fail=1
+  result "api-sa K8s API rights" "no" "$CANI_PODS/$CANI_SEC" FAIL
 fi
 
 # Forged network identity: a pod LABELED app:api but running as web-sa. Server
@@ -90,17 +117,17 @@ spec:
 YAML
 }
 if forge_pod forge-mismatch web-sa | kubectl --context "$CTX" create --dry-run=server -f - >/dev/null 2>&1; then
-  printf '  %-48s expect %-4s got %-4s %s\n' "forged app:api on web-sa" "DENY" "ADMIT" "FAIL"; fail=1
+  result "forged app:api on web-sa" "DENY" "ADMIT" FAIL
 else
-  printf '  %-48s expect %-4s got %-4s %s\n' "forged app:api on web-sa -> admission DENY" "DENY" "DENY" "PASS"
+  result "forged app:api on web-sa -> admission DENY" "DENY" "DENY" PASS
 fi
 # A self-consistent pod (app:api + api-sa) created by an AUTHORIZED requester (this
 # script runs as admin) is admitted: label<->SA satisfied, SA-use gate allows
 # authorized operators. Expected baseline.
 if forge_pod forge-consistent api-sa | kubectl --context "$CTX" create --dry-run=server -f - >/dev/null 2>&1; then
-  printf '  %-48s expect %-4s got %-4s %s\n' "self-consistent app:api+api-sa as admin -> ADMIT" "ADMIT" "ADMIT" "PASS"
+  result "self-consistent app:api+api-sa as admin -> ADMIT" "ADMIT" "ADMIT" PASS
 else
-  printf '  %-48s expect %-4s got %-4s %s\n' "self-consistent app:api+api-sa as admin" "ADMIT" "DENY" "FAIL"; fail=1
+  result "self-consistent app:api+api-sa as admin" "ADMIT" "DENY" FAIL
 fi
 
 # SA-use gate: the limited shop:deployers principal MAY create Deployments but may NOT
@@ -134,14 +161,14 @@ YAML
 # apiserver can't false-pass (and an absent/unbound policy is caught).
 DENY_OUT=$(sa_use_deploy | kubectl --context "$CTX" --as=system:serviceaccount:shop:ci-deployer --as-group=shop:deployers create --dry-run=server -f - 2>&1 || true)
 if echo "$DENY_OUT" | grep -qE "SA-use gate|shop-sa-use|authorized operator"; then
-  printf '  %-48s expect %-4s got %-4s %s\n' "CI SA runs workload as api-sa -> SA-use DENY" "DENY" "DENY" "PASS"
+  result "CI SA runs workload as api-sa -> SA-use DENY" "DENY" "DENY" PASS
 else
-  printf '  %-48s expect %-4s got %-4s %s\n' "CI SA runs workload as api-sa (SA-use gate)" "DENY" "?" "FAIL"; fail=1
+  result "CI SA runs workload as api-sa (SA-use gate)" "DENY" "?" FAIL
 fi
 if sa_use_deploy | kubectl --context "$CTX" create --dry-run=server -f - >/dev/null 2>&1; then
-  printf '  %-48s expect %-4s got %-4s %s\n' "authorized operator deploys api-sa workload -> ADMIT" "ADMIT" "ADMIT" "PASS"
+  result "authorized operator deploys api-sa workload -> ADMIT" "ADMIT" "ADMIT" PASS
 else
-  printf '  %-48s expect %-4s got %-4s %s\n' "authorized operator deploys api-sa workload" "ADMIT" "DENY" "FAIL"; fail=1
+  result "authorized operator deploys api-sa workload" "ADMIT" "DENY" FAIL
 fi
 # SA-use also covers the CronJob jobTemplate path: a CI SA scheduling a CronJob as api-sa is DENIED.
 sa_use_cron() {
@@ -170,9 +197,9 @@ YAML
 }
 CRON_OUT=$(sa_use_cron | kubectl --context "$CTX" --as=system:serviceaccount:shop:ci-deployer --as-group=shop:deployers create --dry-run=server -f - 2>&1 || true)
 if echo "$CRON_OUT" | grep -qE "SA-use gate|shop-sa-use|authorized operator"; then
-  printf '  %-48s expect %-4s got %-4s %s\n' "CI SA schedules CronJob as api-sa -> SA-use DENY" "DENY" "DENY" "PASS"
+  result "CI SA schedules CronJob as api-sa -> SA-use DENY" "DENY" "DENY" PASS
 else
-  printf '  %-48s expect %-4s got %-4s %s\n' "CI SA schedules CronJob as api-sa (SA-use gate)" "DENY" "?" "FAIL"; fail=1
+  result "CI SA schedules CronJob as api-sa (SA-use gate)" "DENY" "?" FAIL
 fi
 
 echo "== Data-in-transit (Cilium WireGuard, cross-node) =="
@@ -184,10 +211,11 @@ ENC=$(kubectl --context "$CTX" exec -n kube-system ds/cilium -c cilium-agent -- 
 API_NODE=$(kubectl --context "$CTX" -n shop get pod -l tier=backend -o jsonpath='{.items[0].spec.nodeName}')
 DB_NODE=$(kubectl --context "$CTX" -n shop get pod -l tier=data -o jsonpath='{.items[0].spec.nodeName}')
 if echo "$ENC" | grep -qi "Wireguard" && [ -n "$API_NODE" ] && [ -n "$DB_NODE" ] && [ "$API_NODE" != "$DB_NODE" ]; then
-  printf '  %-48s expect %-7s got %-7s %s\n' "api->db cross-node, WireGuard-encrypted" "WG+xnode" "WG+xnode" "PASS"
+  result "api->db cross-node, WireGuard-encrypted" "WG+xnode" "WG+xnode" PASS
 else
-  printf '  %-48s expect %-7s got %-7s %s\n' "WireGuard cross-node (api=$API_NODE db=$DB_NODE)" "WG+xnode" "?" "FAIL"; fail=1
+  result "WireGuard cross-node (api=$API_NODE db=$DB_NODE)" "WG+xnode" "?" FAIL
 fi
 
+write_junit
 echo ""
 if [ "$fail" = 0 ]; then echo "ALL PASS"; else echo "FAILURES"; exit 1; fi

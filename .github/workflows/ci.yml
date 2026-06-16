@@ -140,3 +140,12 @@ jobs:
 
       - name: Verify enforcement (identity + L3 + L7 + Cedar + egress + runtime + encryption)
         run: bash scripts/verify.sh
+      # verify.sh emits a JUnit report (outputs/verify/junit.xml); keep it on pass AND fail.
+      # To surface per-check results inline in the run UI, feed this to a JUnit test-reporter.
+      - name: Upload verify.sh JUnit report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: verify-junit
+          path: outputs/verify/junit.xml
+          if-no-files-found: warn
