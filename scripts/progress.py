@@ -33,6 +33,7 @@ CLUSTER = [
     ("M4  Tetragon runtime",   "bash labs/m4/grade.sh"),
     ("M5  data encryption",    "bash labs/m5/grade.sh"),
     ("M8  kill-boundary",      "powershell -File scripts/verify-runtime-scope.ps1"),
+    ("M9  assume-breach",      "bash labs/m9/grade.sh"),
 ]
 
 

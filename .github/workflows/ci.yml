@@ -149,3 +149,7 @@ jobs:
           name: verify-junit
           path: outputs/verify/junit.xml
           if-no-files-found: warn
+      # M9 assume-breach lens: same proven probes, framed as attacker post-exploit
+      # containment. Asserts every blast-radius boundary HELD on the live stack.
+      - name: M9 assume-breach containment (blast-radius boundaries hold)
+        run: bash labs/m9/grade.sh

@@ -122,6 +122,7 @@ nav:
     - M6 · 에이전트 위임 (ABAC+ReBAC): labs/m6/README.md
     - M7 · 교차계층 일관성 (formal): formal/README.md
     - M8 · 런타임 kill 경계 (detection≠prevention): labs/m8/README.md
+    - M9 · 침해 가정 · 블래스트 반경 봉쇄 (제로데이 렌즈): labs/m9/README.md
     - 캡스톤 · 면접 노트: labs/capstone.md
   - 레퍼런스:
     - 위협 모델 (B1–B7): THREAT_MODEL.md
