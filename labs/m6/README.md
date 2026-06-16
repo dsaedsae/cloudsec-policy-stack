@@ -14,6 +14,8 @@
 
 **편집 파일:** `labs/m6/agent-policies.cedar` (Part A), `labs/m6/model.fga` (Part B).
 
+> **Cedar·fga 문법이 막막하면 → [배우기 모드: LEARN.md](LEARN.md).** 파트별 완성 예시 1개(주석)를 읽고 → 1칸을 채우고 → 나머지는 직접.
+
 > 선행: **M0**(Cedar 문법)을 먼저 졸업하라 — Part A는 M0의 연장이다.
 > 배경(읽기): [authorization-model §4–§5](../../docs/authorization-model.md) + [nhi.md](../../docs/nhi.md)
 > — 에이전트/NHI 위임을 ABAC 교집합·ReBAC 그래프로.

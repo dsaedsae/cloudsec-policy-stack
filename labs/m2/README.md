@@ -11,6 +11,8 @@
 
 **클러스터 필요.** **편집 파일:** `labs/m2/admission-policy.yaml` (validations의 expression/message만).
 
+> **CEL 문법이 막막하면 → [배우기 모드: LEARN.md](LEARN.md).** 완성 CEL 한 줄(주석)을 읽고 → 핵심 1칸을 채우고 → 나머지는 직접.
+
 > 선행: M0/M1 권장. 배경: [`THREAT_MODEL.md`](../../THREAT_MODEL.md) §B7,
 > [`docs/05-identity.md`](../../docs/05-identity.md).
 

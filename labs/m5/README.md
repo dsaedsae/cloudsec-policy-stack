@@ -133,11 +133,41 @@ resources:
   EncryptionConfiguration이 *존재*해도 순서가 틀리면 보호가 0이다. 고치기: `aescbc`를 다시 첫 줄로,
   `identity`를 마지막으로. (이래서 README가 `identity` last를 강조한다.)
 
+**M3. etcd를 직접 들여다본다 — 켜기 *전*에 Secret이 평문임을 네 눈으로 본다(가장 안전한 관찰).**
+> M1·M2는 통제를 *깨서* 본다. M3은 아무것도 안 깬다 — 암호화를 켜기 *전* etcd 바이트를 직접 읽고,
+> Step 2로 켠 *뒤* 같은 조회와 비교한다. 읽기 전용 + 던져버릴 데모 Secret이라 클러스터를 안 건드린다.
+> **순서 주의:** 이건 Step 2(암호화 켜기) *앞에서* 돌려야 "전" 상태가 나온다. 이미 켰다면 스크립트가
+> 멱등으로 빠져나가고(키 재생성 안 함) 이 관찰은 곧장 "후" 상태를 보여준다.
+- 예측: 기본 Kubernetes Secret은 etcd에 *암호화 없이* 저장된다. `kubectl get -o yaml`로 보면 값이
+  base64로 보이지만 그건 인코딩일 뿐 — etcd 안의 원시 바이트에는 카드번호 `4111...`이 **평문 ASCII**로
+  들어 있다. 그래서 켜기 전 raw etcd 값을 `grep 4111`하면 *맞고*, `k8s:enc:` 프리픽스는 없을 것이다.
+- 깨기/관찰: `enable-secrets-encryption.sh`를 *돌리기 전에* 데모 Secret을 하나 만들고 raw etcd에서
+  읽어라(스크립트가 PASS 증명에 쓰는 것과 동일한 etcdctl 경로 — `grep -a`로 바이너리 값을 텍스트 취급).
+  Git Bash에서:
+  ```bash
+  export MSYS_NO_PATHCONV=1            # MSYS 경로변환이 /registry/...를 망가뜨린다(스크립트도 동일)
+  kubectl -n default create secret generic before-proof --from-literal=card=4111111111111111
+  ETCD=etcd-cloudsec-control-plane
+  ETCDCTL="etcdctl --endpoints=https://127.0.0.1:2379 \
+    --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt \
+    --key /etc/kubernetes/pki/etcd/server.key get /registry/secrets/default/before-proof"
+  kubectl -n kube-system exec $ETCD -- $ETCDCTL 2>/dev/null | grep -a 4111   # ← 카드번호 평문 노출
+  kubectl -n default delete secret before-proof   # 던져버린다(멱등)
+  ```
+- 확인: `grep 4111`이 *맞는다* — etcd 디스크에 카드번호가 평문으로 누워 있다. 이제 Step 2의
+  `bash scripts/enable-secrets-encryption.sh`를 돌리면 스크립트의 끝 증명이 같은 etcd 조회로 `4111`을
+  *못 찾고* `k8s:enc:aescbc` 프리픽스만 본다(스크립트의 `enc=1 && leak=0`). 같은 명령, 켜기 전엔
+  누출·후엔 암호문 — 이 한 줄 차이가 "저장 암호화"의 전부다. 되돌릴 것 없음: `before-proof`는 이미
+  지웠고, 암호화 켜기는 apiserver 매니페스트를 `.bak`으로 백업해 둬 되돌릴 수 있다(스크립트 주석).
+- 안전 메모: 이건 *읽기 전용 관찰*이다 — 실 Secret을 건드리지 않고, 데모 Secret만 만들고 지운다.
+  apiserver를 재기동하지 않는다(M2와 달리). 그래서 셋 중 가장 안전한 break-and-fix다.
+
 ## 졸업 기준
 
 - [ ] `grade.sh` **ET1 PASS**
 - [ ] `capture-wg.sh`를 돌리고 Step 1의 질문 3개(eth0 이유, 평문0의 한계, 트래픽 게이트)를 답했다
 - [ ] `enable-secrets-encryption.sh`를 돌리고 etcd 암호문 관찰 + KMS 차이를 설명했다
+- [ ] Step 4 M3: 켜기 *전* raw etcd에서 `grep 4111`이 맞고, 켜기 *후* 같은 조회가 `k8s:enc:aescbc`만 보임을 직접 봤다
 - [ ] 세 데이터 상태와 통제(+ 안 한 것)를 매핑할 수 있다
 
 ---

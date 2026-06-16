@@ -111,7 +111,9 @@ nav:
       - labs/m0/README.md
       - 배우기 모드 (떠먹여주는 예시): labs/m0/LEARN.md
     - M1 · 쉬프트레프트 결함 사냥: labs/m1/README.md
-    - M2 · 신원 admission CEL: labs/m2/README.md
+    - M2 · 신원 admission CEL:
+      - labs/m2/README.md
+      - 배우기 모드 (떠먹여주는 예시): labs/m2/LEARN.md
     - M3 · Cilium 네트워크 정책:
       - labs/m3/README.md
       - 배우기 모드 (떠먹여주는 예시): labs/m3/LEARN.md
@@ -119,7 +121,9 @@ nav:
       - labs/m4/README.md
       - 배우기 모드 (떠먹여주는 예시): labs/m4/LEARN.md
     - M5 · 암호화 실행·해석: labs/m5/README.md
-    - M6 · 에이전트 위임 (ABAC+ReBAC): labs/m6/README.md
+    - M6 · 에이전트 위임 (ABAC+ReBAC):
+      - labs/m6/README.md
+      - 배우기 모드 (떠먹여주는 예시): labs/m6/LEARN.md
     - M7 · 교차계층 일관성 (formal): formal/README.md
     - M8 · 런타임 kill 경계 (detection≠prevention): labs/m8/README.md
     - M9 · 침해 가정 · 블래스트 반경 봉쇄 (제로데이 렌즈): labs/m9/README.md
