@@ -64,8 +64,8 @@ principal, 그리고 확장 스레드인 AI 에이전트(`cedar/agent/`). 그래
 AI 에이전트도 NHI다. 자세한 모델은 [`authorization-model.md` §4·§5](authorization-model.md)에 있고,
 요점만:
 
-- **위임은 본질적으로 관계다.** "에이전트 A가 사용자 U를 *대행*"은 [`rebac/`](../rebac/)의 관계
-  그래프(`delegate from owner`)로, 또는 [`cedar/agent/`](../cedar/agent/)의 **ABAC 교집합**
+- **위임은 본질적으로 관계다.** "에이전트 A가 사용자 U를 *대행*"은 [`rebac/`](https://github.com/dsaedsae/cloudsec-policy-stack/tree/master/rebac)의 관계
+  그래프(`delegate from owner`)로, 또는 [`cedar/agent/`](https://github.com/dsaedsae/cloudsec-policy-stack/tree/master/cedar/agent)의 **ABAC 교집합**
   (에이전트 천장 ∧ 대행 사용자 등급, *비소유* 데이터 한정 — 소유 데이터는 owner override로 천장까지)로
   표현된다 — 후자는 confused-deputy 차단 + ASI08 위임깊이 cap·홉별 클램프·출처 게이트를 17/17로 단위테스트하며 P2·P3·P5·P6·P7 mutation으로 반증가능하다.
 - **`api` PDP = AI/Agent Gateway가 호스팅할 PEP의 축소판.** 단, 이 repo는 에이전트 런타임·위임

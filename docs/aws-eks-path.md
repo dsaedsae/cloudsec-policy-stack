@@ -33,7 +33,7 @@
 > 포인트: **Cedar → Amazon Verified Permissions**, **etcd암호화 → KMS 봉투암호화**가 가장 깔끔한
 > "코드 그대로, 관리형으로" 전환이다. 발표(특히 Summit)에서 이 두 개를 강조하라.
 >
-> 🛡️ **메타데이터 차단(ZT2)의 클라우드 등가물 — SSRF 자격증명 탈취 방어.** 이 repo는 워크로드 egress를
+> **메타데이터 차단(ZT2)의 클라우드 등가물 — SSRF 자격증명 탈취 방어.** 이 repo는 워크로드 egress를
 > `169.254.169.254`로 default-deny한다. 클라우드에선 같은 위협(앱 **SSRF**로 인스턴스 메타데이터의 임시
 > 자격증명 탈취)을 **IMDSv2**(요청에 세션 토큰 필수 → 단순 SSRF GET 무력화)와 **hop-limit=1**(프록시/컨테이너
 > 한 홉 너머의 메타데이터 도달 차단)로 막고, Azure는 **Metadata Security Protocol**로 대응한다. 최근 사례:
@@ -47,7 +47,7 @@
 요구하는데(sigstore/cosign#3832) `cloudsec-api:local`이 kind에 로드된 *레지스트리 없는* 이미지였다는
 점이다. 이를 **로컬 OCI 레지스트리**(`registry:2`, kind 네트워크)로 우회한다 —
 `scripts/verify-image-signing.ps1`이 이미지를 로컬 레지스트리에 푸시 → **키풀 cosign** 서명 → **Kyverno
-`verifyImages` ClusterPolicy**(공개키 바인딩, [`k8s/kyverno-image-verify.yaml`](https://github.com/dsaedsae/cloudsec-policy-stack/blob/main/k8s/kyverno-image-verify.yaml))
+`verifyImages` ClusterPolicy**(공개키 바인딩, [`k8s/kyverno-image-verify.yaml`](https://github.com/dsaedsae/cloudsec-policy-stack/blob/master/k8s/kyverno-image-verify.yaml))
 적용 → 서버 dry-run으로 **서명됨→ADMIT / 미서명→DENY**를 증명한다(coverage **SL6 VERIFIED**, 로컬-키 경로).
 
 ```bash

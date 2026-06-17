@@ -66,8 +66,8 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
 권한을 도출한다(Google Zanzibar 계열: OpenFGA, SpiceDB). 이 repo는 그것을 **실행 가능한 데모**로
 구현했다 — `cedar/authz.py`의 OpenFGA 쌍둥이:
 
-- **무엇:** [`rebac/model.fga`](../rebac/model.fga) 의 관계 모델 +
-  [`rebac/store.fga.yaml`](../rebac/store.fga.yaml) 의 단언(assertion)을 `fga model test`로 검증(서버
+- **무엇:** [`rebac/model.fga`](https://github.com/dsaedsae/cloudsec-policy-stack/blob/master/rebac/model.fga) 의 관계 모델 +
+  [`rebac/store.fga.yaml`](https://github.com/dsaedsae/cloudsec-policy-stack/blob/master/rebac/store.fga.yaml) 의 단언(assertion)을 `fga model test`로 검증(서버
   불필요, **11/11**), 그리고 docker로 실제 OpenFGA `/check` API에 재검증하는 opt-in 경로(`rebac/check_live.py`).
 - **핵심 관계(ABAC가 깔끔히 못 푸는 것):** 에이전트가 계정을 보려면
   `account.owner = alice` **AND** `alice.delegate = assistant` 두 관계의 **그래프 조인**
@@ -78,7 +78,7 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
   있지 않다(과대주장 금지 — CLAUDE.md). 두 데모의 tuple은 Cedar와 **같은 alice/account 엔티티**를
   써서 한 세계로 합쳐진다.
 
-같은 위임 아이디어를 **ABAC 교집합**으로 표현한 것이 [`cedar/agent/`](../cedar/agent/)다(§5).
+같은 위임 아이디어를 **ABAC 교집합**으로 표현한 것이 [`cedar/agent/`](https://github.com/dsaedsae/cloudsec-policy-stack/tree/master/cedar/agent)다(§5).
 
 ---
 
@@ -87,7 +87,7 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
 - **NHI(Non-Human Identity):** 이 스택의 신원은 전부 NHI다 — ServiceAccount, SPIFFE SVID, 워크로드
   신원, 토큰 미마운트, 자격증명 위조 차단. NHI 보안 = 2024–2026 핵심 토픽이고, 이 repo는 그
   *워크로드 NHI* 통제의 레퍼런스다.
-- **AI 에이전트 인가 (실행 데모 — [`cedar/agent/`](../cedar/agent/)):** 에이전트도 NHI다. 에이전트를
+- **AI 에이전트 인가 (실행 데모 — [`cedar/agent/`](https://github.com/dsaedsae/cloudsec-policy-stack/tree/master/cedar/agent)):** 에이전트도 NHI다. 에이전트를
   principal로, 도구호출/데이터읽기를 action으로, 데이터를 resource(등급 C/S/O)로 둔 Cedar 번들을
   `python cedar/agent_authz.py`로 단위테스트한다(**17/17**). 핵심은 **위임 교집합**(delegation
   intersection)으로 **confused-deputy 차단**이다 — *비소유* 데이터 인가 = (에이전트 자신의 천장
@@ -104,7 +104,7 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
   **P6**: 스폰 시 control plane이 기록한 **스칼라 `delegated_by_max_classification`**(스폰 에이전트의 천장)으로
   읽기를 클램프 — 서브 자신의 천장이 높아도 부모의 낮은 천장이 막는다. **P7(fail-closed)**: 그 스칼라는 optional이라,
   depth≥1인데 스칼라가 없는 서브에이전트를 모든 action에서 거부해 부모 천장 기록을 강제한다.
-  > 🛠 **fail-closed by construction (실제 버그 수정):** 초기 버전은 `delegated_by`를 **Agent 엔티티**로 두고 천장을
+  > **fail-closed by construction (실제 버그 수정):** 초기 버전은 `delegated_by`를 **Agent 엔티티**로 두고 천장을
   > *역참조*했는데, 참조가 **dangling**(엔티티 부재)이면 정책이 **에러**나고 Cedar는 *에러난 forbid를 건너뛴다* →
   > 클램프가 **fail-OPEN**되어 서브가 자기 천장까지 증폭했다(전문가 리뷰가 라이브 확인). 스칼라는 dangle할 수 없어
   > fail-open이 불가능하다. 회귀 테스트: 스칼라 누락 depth-1 서브의 기밀 읽기 → Deny(`requests.json` P7 케이스).
@@ -131,7 +131,7 @@ ReBAC는 "문서 D의 *소유자*인 사용자", "프로젝트 P의 *멤버*가 
 
   > 과대주장 금지: 이 데모는 **인가 결정**(누가 무엇을)을 다룬다. ASI06(메모리 오염)·ASI07(에이전트 간
   > 프로토콜)은 별도 계층이라 여기서 **충족했다고 주장하지 않는다** — 경계만 표시한다.
-- **요청자 인증 / OAuth 2.1 (PDP 엣지, [`app/api/auth.py`](../app/api/auth.py)):** PDP는 `Authorization:
+- **요청자 인증 / OAuth 2.1 (PDP 엣지, [`app/api/auth.py`](https://github.com/dsaedsae/cloudsec-policy-stack/blob/master/app/api/auth.py)):** PDP는 `Authorization:
   Bearer` 토큰이 제시되면 **서명 + audience**(이 리소스용으로 발급됐는지, **RFC 8707** resource indicator)
   를 검증한 뒤에야 그 `sub`를 principal로 삼고, 검증 실패·미지원 스킴은 **fail-closed(401)** 한다 — 다른
   서비스용 토큰의 재생(replay)을 막는다(`auth_test.py` 18/18). **기본 배포는** Authorization이 없으면
