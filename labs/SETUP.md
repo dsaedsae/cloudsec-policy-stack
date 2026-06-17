@@ -15,7 +15,7 @@
 > ```bash
 > git clone https://github.com/dsaedsae/cloudsec-policy-stack && cd cloudsec-policy-stack
 > make setup     # .venv 생성 + 의존성 설치 (cedarpy, checkov ...)
-> make m0        # M0 첫 채점 (처음엔 5/8)
+> make m0        # M0 첫 채점 (처음엔 6/11; m0 타깃은 --ext 포함)
 > ```
 > GitHub Codespaces(Code ▸ Codespaces)면 위가 브라우저에서 그대로 돈다. **아래는 Windows(PowerShell) 기준.**
 

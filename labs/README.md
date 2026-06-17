@@ -109,7 +109,7 @@ flowchart LR
 - [ ] **M4** — `bash labs/m4/grade.sh` → **id=0 + sh=137** (클러스터)
 - [ ] **M5** — `bash labs/m5/grade.sh` → **ET1 PASS** + capture-wg/etcd 해석 (클러스터)
 - [ ] **M6** — `python labs/m6/grade.py` → **17/17 + 11/11**
-- [ ] **M7** (심화) — `python formal/cross_layer.py` → SHADOW 탐지 + `--ungate-transfer` 반증
+- [ ] **M7** (심화) — `python formal/cross_layer.py` → SHADOW 탐지(`--open-auditlogs`로 shadow 소멸=반증) + `--ungate-transfer`로 UNGATED FAIL 확인
 - [ ] **M8** (심화) — `powershell -File scripts\verify-runtime-scope.ps1` → 선택적→zero-exec 델타(id 0→137) + detection≠prevention 설명
 - [ ] **M9** (심화) — `bash labs/m9/grade.sh` → 모든 봉쇄 경계 HELD + assume-breach 한계 설명 (클러스터)
 
