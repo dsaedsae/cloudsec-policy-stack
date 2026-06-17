@@ -124,14 +124,20 @@ resources:
   잡을 선상 홉이 없으므로 거짓 PASS를 만들지 않는다. 되돌리면 다시 PASS. 교훈: "기능 켜짐"과
   "이 앱 홉이 선상에서 암호화됨"은 다른 주장이고, 채점기는 후자를 본다.
 
-**M2. `identity`를 첫 줄로 옮겨 저장암호화를 무력화한다.**
-- 예측: provider 순서에서 쓰기는 항상 첫 provider. `identity`를 1순위로 두면 새 Secret이 평문으로
-  쓰여 `Test-AtRest`가 FAIL이어야 한다(프리픽스가 `k8s:enc:aescbc`가 아니라 평문).
-- 망가뜨리기: 회전 흉내로 `terraform/.enc/enc.yaml`을 손으로 편집해 `- identity: {}`를 `aescbc`
-  *위*로 올리고 노드에 push + apiserver 재기동, 그다음 새 Secret 생성 → raw etcd 조회.
-- 확인: etcd 값에 카드번호 `4111...`이 그대로 보이고 `k8s:enc:aescbc` 프리픽스가 없다. 즉
-  EncryptionConfiguration이 *존재*해도 순서가 틀리면 보호가 0이다. 고치기: `aescbc`를 다시 첫 줄로,
-  `identity`를 마지막으로. (이래서 README가 `identity` last를 강조한다.)
+**M2. (사고실험 — *실제로는 하지 마라*) `identity`를 첫 줄로 올리면 저장암호화가 무력화된다.**
+> 이건 손으로 *깨는* 단계가 아니다. apiserver의 EncryptionConfiguration을 바꾸고 apiserver를
+> 재기동하는 건 **control-plane 장애 + Secret 복호불가**로 이어질 수 있는 운영 작업이고, 초심자가
+> 잘못 되돌리면 클러스터 전체가 죽는다. 그래서 여기선 깨지 말고 **예측만** 한다.
+- 예측해 보라: provider 순서에서 *쓰기*는 항상 첫 provider다(Step 2 + Q10). `identity`를 1순위로
+  두면 새 Secret은 어떤 프리픽스로 etcd에 쓰일까? `enable-secrets-encryption.sh`의 끝 증명은 PASS일까?
+- 답: 새 쓰기가 `identity`(평문 패스스루)로 나가 `k8s:enc:aescbc` 프리픽스가 *안* 붙는다 → 증명이
+  FAIL. 즉 EncryptionConfiguration이 *존재해도* 순서 하나로 보호가 0이 된다. 이래서 README가
+  `identity` last를, 런북 02가 "반드시 2-키 과도기"를 못 박는다(Q10·Q11).
+- 굳이 라이브로 확인해야겠다면 — **production 아닌 일회용 kind에서만**, 그리고 *되돌리는 법을 먼저*
+  확인한 뒤에: `enable-secrets-encryption.sh`는 변경 전 apiserver 매니페스트를
+  `terraform/.enc/kube-apiserver.yaml.bak`로 백업하므로, 망가지면 그 `.bak`를 노드에 `docker cp`로
+  복원하고 apiserver가 다시 Ready인지(`kubectl get pod -n kube-system`) 확인해야 한다. 이 복구를
+  *손에 익히기 전엔* M2를 라이브로 돌리지 마라. (안전한 관찰은 아래 M3.)
 
 **M3. etcd를 직접 들여다본다 — 켜기 *전*에 Secret이 평문임을 네 눈으로 본다(가장 안전한 관찰).**
 > M1·M2는 통제를 *깨서* 본다. M3은 아무것도 안 깬다 — 암호화를 켜기 *전* etcd 바이트를 직접 읽고,

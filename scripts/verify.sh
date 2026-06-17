@@ -7,19 +7,28 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CTX="kind-$(terraform -chdir="$ROOT/terraform" output -raw cluster_name 2>/dev/null || echo cloudsec)"
 k() { kubectl --context "$CTX" "$@"; }
 
+# JUnit reporting is defined UP FRONT so the EXIT trap can always emit a report — even if an
+# early preflight step (probe apply/wait) fails under set -e before any check runs.
+fail=0
+JUNIT="${VERIFY_JUNIT:-$ROOT/outputs/verify/junit.xml}"
+_tc=""; _n=0; _nf=0
+_xesc() { printf '%s' "$1" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g'; }
+write_junit() {
+  mkdir -p "$(dirname "$JUNIT")"
+  { printf '<?xml version="1.0" encoding="UTF-8"?>\n'
+    printf '<testsuites><testsuite name="verify.sh" tests="%s" failures="%s">\n' "$_n" "$_nf"
+    printf '%s' "$_tc"
+    printf '</testsuite></testsuites>\n'; } > "$JUNIT"
+  echo "  (JUnit report: $JUNIT — ${_n} tests, ${_nf} failures)"
+}
+
 k apply -f "$ROOT/k8s/probes.yaml" >/dev/null
-trap 'k -n shop delete -f "$ROOT/k8s/probes.yaml" --ignore-not-found >/dev/null 2>&1 || true' EXIT
+trap 'write_junit; k -n shop delete -f "$ROOT/k8s/probes.yaml" --ignore-not-found >/dev/null 2>&1 || true' EXIT
 k -n shop wait --for=condition=Ready pod/probe-web pod/probe-api --timeout=120s >/dev/null
 API=$(k -n shop get pod -l tier=backend -o jsonpath='{.items[0].status.podIP}')
 DB=$(k -n shop get pod -l tier=data -o jsonpath='{.items[0].status.podIP}')
 
-fail=0
-# Structured results: every check funnels through result(), which prints the same human
-# line AND records a JUnit <testcase> (outputs/verify/junit.xml, CI-uploadable). This makes
-# the suite a reportable test suite, not just stdout PASS/FAIL. Override path: VERIFY_JUNIT.
-JUNIT="${VERIFY_JUNIT:-$ROOT/outputs/verify/junit.xml}"
-_tc=""; _n=0; _nf=0
-_xesc() { printf '%s' "$1" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g'; }
+# result() funnels each check -> the human line + a JUnit <testcase> (infra defined above).
 result() { # name expect got status
   local name="$1" exp="$2" got="$3" status="$4" nm
   printf '  %-48s expect %-4s got %-4s %s\n' "$name" "$exp" "$got" "$status"
@@ -32,14 +41,6 @@ result() { # name expect got status
     _tc="${_tc}  <testcase classname=\"verify.sh\" name=\"${nm}\"><failure message=\"expect $(_xesc "$exp") got $(_xesc "$got")\"/></testcase>
 "
   fi
-}
-write_junit() {
-  mkdir -p "$(dirname "$JUNIT")"
-  { printf '<?xml version="1.0" encoding="UTF-8"?>\n'
-    printf '<testsuites><testsuite name="verify.sh" tests="%s" failures="%s">\n' "$_n" "$_nf"
-    printf '%s' "$_tc"
-    printf '</testsuite></testsuites>\n'; } > "$JUNIT"
-  echo "  (JUnit report: $JUNIT — ${_n} tests, ${_nf} failures)"
 }
 probe() { # src desc expect curl-args...
   local src="$1" desc="$2" exp="$3"; shift 3
@@ -71,7 +72,8 @@ DBPOD=$(kubectl --context "$CTX" -n shop get pod -l tier=data -o jsonpath='{.ite
 # earlier selective shell-name rule was bypassable; see docs/decisions/0001-data-tier-zero-exec.md.
 # The selective rule + its "over-blocking is also a defect" lesson live on in the M4 lab.)
 # Robustness against false-pass: the pod must be Ready (not dead/unreachable), AND both exec
-# attempts must be EXACTLY 137/143 (in-kernel SIGKILL) — a not-ready / RBAC / wrong-context
+# attempts must be a kill code — 137 (SIGKILL, Tetragon's in-kernel Sigkill action) or 143
+# (SIGTERM, accepted as a fallback "process was killed") — a not-ready / RBAC / wrong-context
 # failure yields a generic non-137 rc, not 137.
 READY=$(kubectl --context "$CTX" -n shop get pod "$DBPOD" -o jsonpath='{.status.containerStatuses[0].ready}')
 killed() { [ "$1" = 137 ] || [ "$1" = 143 ]; }
@@ -216,6 +218,5 @@ else
   result "WireGuard cross-node (api=$API_NODE db=$DB_NODE)" "WG+xnode" "?" FAIL
 fi
 
-write_junit
 echo ""
 if [ "$fail" = 0 ]; then echo "ALL PASS"; else echo "FAILURES"; exit 1; fi

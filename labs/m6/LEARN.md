@@ -6,8 +6,9 @@ M6은 *같은 위임* 문제를 두 모델로 푼다 — **(A) Cedar ABAC 교집
 그래서 worked example도 둘이다. 각 파트에서 **완성된 한 줄을 읽고 이해** → **핵심 개념 하나를 빈칸으로
 채우고** → **나머지는 직접 작성**한다. 정답 통째 베끼기가 아니라 문법을 한 계단씩 올라가는 게 목적이다.
 
-> **핵심 규칙:** 각 파트마다 worked example **하나**, 빈칸 **하나**만 떠먹인다. 나머지 TODO(Part A의
-> P1·P3·P4·P6·P7, Part B의 `can_transfer`)는 **당신이** 채워야 grade.py가 통과한다. 정답지(`cedar/agent/
+> **핵심 규칙:** 각 파트마다 worked example **하나**(Part A는 P5), 빈칸 **하나**(Part A는 P2)만
+> 떠먹인다 — 이 둘도 skeleton(`agent-policies.cedar`)에선 TODO 자리이니 *옮겨 적용*하라. 나머지
+> TODO(Part A의 P1·P3·P4·P6·P7, Part B의 `can_transfer`)는 **당신이** 채워야 grade.py가 통과한다. 정답지(`cedar/agent/
 > policies.cedar`, `rebac/model.fga`)는 **졸업 전 열람 금지** — 작업 파일은 `labs/m6/agent-policies.cedar`,
 > `labs/m6/model.fga`다.
 

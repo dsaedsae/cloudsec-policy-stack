@@ -42,6 +42,14 @@ def grade_rebac() -> int:
     if shutil.which("docker") is None:
         print("== Part B: ReBAC == SKIP: docker 미설치 — Part B(11/11)는 채점되지 않았다.")
         return 2  # sentinel: skipped (not passed) — graduation gate must see this
+    # docker 바이너리가 있어도 데몬이 안 떠 있거나 소켓 권한이 없으면(Docker Desktop 미실행·rootless 등)
+    # 'docker run'이 실패한다 — 그건 학습자 model.fga의 결함이 아니므로 FAIL이 아니라 SKIP으로 분기한다.
+    info = subprocess.run(["docker", "info"], capture_output=True, text=True,
+                          encoding="utf-8", errors="replace")
+    if info.returncode != 0:
+        print("== Part B: ReBAC == SKIP: docker 데몬 미응답/권한 — Docker Desktop을 켜거나 소켓 권한을 "
+              "확인하라(labs/SETUP.md). Part B(11/11)는 채점되지 않았다.")
+        return 2  # sentinel: skipped (daemon down / permission), not a model FAIL
     print("== Part B: ReBAC (OpenFGA fga model test) ==")
     with tempfile.TemporaryDirectory() as td:
         base = Path(td)

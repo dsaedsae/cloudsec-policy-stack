@@ -44,8 +44,8 @@ bash labs/m9/grade.sh
 봉쇄를 *제거하면* 블래스트 반경이 어떻게 커지나 손으로 확인한다. **먼저 예측하라:** egress 차단을 풀면 grade.sh의 *어느 줄*이 BREACH로 뒤집힐까?
 
 ```bash
-kubectl apply -f labs/m9/break/allow-web-egress.yaml    # web egress를 인터넷으로 개방 (한 줄 오설정 시뮬)
-bash labs/m9/grade.sh                                    # 예측 확인: web -> 인터넷 이 000 HELD -> 200 BREACH
+kubectl apply -f labs/m9/break/allow-web-egress.yaml    # web egress를 world(클러스터 밖 전부)로 개방 (한 줄 오설정 시뮬)
+bash labs/m9/grade.sh                                    # web -> 인터넷이 000 HELD -> 200 BREACH (world라 메타데이터도 열릴 수 있음; apiserver는 in-cluster라 그대로 000)
 kubectl delete -f labs/m9/break/allow-web-egress.yaml    # 복원 → 다시 000 HELD
 ```
 
