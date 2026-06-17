@@ -4,7 +4,7 @@
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dsaedsae/cloudsec-policy-stack)
 
-> **EN (TL;DR):** A free, local-`kind` **defense-in-depth Kubernetes security stack** + a **self-grading re-implementation track** (M0–M8): you rebuild each control — Cedar authz, Cilium L3/L7, Tetragon runtime, identity admission, encryption, agent-ABAC — from a stripped skeleton, and the existing test/verify harness auto-grades it. An **education/portfolio reference** (not production; not legal/compliance advice). **Content is in Korean.** Start (no cluster, ~5 min): `make setup && make m0`, or open in Codespaces.
+> **EN (TL;DR):** A free, local-`kind` **defense-in-depth Kubernetes security stack** + a **self-grading re-implementation track** (M0–M9): you rebuild each control — Cedar authz, Cilium L3/L7, Tetragon runtime, identity admission, encryption, agent-ABAC — from a stripped skeleton, and the existing test/verify harness auto-grades it. An **education/portfolio reference** (not production; not legal/compliance advice). **Content is in Korean.** Start (no cluster, ~5 min): `make setup && make m0`, or open in Codespaces.
 
 > 의사결정자·도입 검토용: [원페이저 PDF](presentation/cloudsec-onepager.pdf)(GitHub에서 바로 열림) · [HTML](presentation/cloudsec-onepager.html)(브라우저·이메일·인쇄). 아래는 개발자/학습자용.
 
@@ -124,7 +124,7 @@ python formal/cross_layer.py --open-auditlogs  # 반증: L7 경로를 열면 sha
 ```
 terraform/   kind + Cilium + Tetragon (helm)     app/api/    FastAPI Cedar PDP (api 이미지)
 cedar/       schema + policies + 단위테스트       k8s/        app, netpol, tracingpolicy, probes
-labs/        재구현 트랙 (M0–M6)                   docs/       개념 랩 + 매핑
+labs/        재구현 트랙 (M0–M9)                   docs/       개념 랩 + 매핑
 scripts/     up / verify / scan / down (.ps1+.sh) .github/    CI 워크플로 + kind 설정
 ```
 

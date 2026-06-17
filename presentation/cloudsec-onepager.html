@@ -41,7 +41,7 @@ hr{border:0;border-top:1px solid var(--line);margin:44px 0}
 .ledger .bar i{display:block;height:100%;background:var(--acc);border-radius:3px}
 .ledger .v{color:var(--acc);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
 .ledger .d{color:var(--mut);font-size:13px;font-family:var(--sans)}
-.note{color:var(--faint);font-size:12.5px;font-family:var(--mono);margin:16px 0 0}
+.note{color:var(--mut);font-size:12.5px;font-family:var(--mono);margin:16px 0 0}
 
 /* flow — one mono line, not boxes */
 .flow{font-family:var(--mono);font-size:15px;color:var(--fg);line-height:2.1}
@@ -66,7 +66,7 @@ hr{border:0;border-top:1px solid var(--line);margin:44px 0}
 .btn.p{border-color:var(--acc);color:var(--acc)}
 .cta .x{font-family:var(--mono);font-size:12px;color:var(--faint)}
 
-footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--faint)}
+footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--mut)}
 
 @media print{
   @page{size:A4;margin:15mm}
@@ -75,6 +75,18 @@ footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--faint)}
   h1{font-size:27px}.deck{font-size:12px}hr{margin:18px 0}
   .ledger,.why dl,.flow,.proof{break-inside:avoid}
   .scr{display:none}            /* screen-only: a relative link becomes a dead local file:// path in the PDF */
+}
+/* screen-only mobile: fixed ledger tracks + the single-line flow overflow on phones; desktop/print untouched */
+@media screen and (max-width:560px){
+  .wrap{padding:40px 18px 56px}
+  body{font-size:14px}
+  h1{margin-top:28px}
+  .deck{font-size:15px}
+  .ledger{grid-template-columns:auto minmax(24px,1fr) auto minmax(0,1.25fr);gap:10px;font-size:12px}
+  .ledger .d{font-size:11.5px}
+  .flow{font-size:12.5px;line-height:1.9;word-break:keep-all;overflow-wrap:anywhere}
+  .why dl{grid-template-columns:1fr;gap:4px 0}
+  .why dt{margin-top:12px}
 }
 </style>
 </head>
@@ -123,7 +135,7 @@ footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--faint)}
     <dl>
       <dt>시작점</dt><dd><b>M0 · Cedar 인가</b> — 빈 파일에서 정책을 재구현해 채점기 11/11. 클러스터 불필요, 노트북에서 <b>python만</b>.</dd>
       <dt>첫 채점</dt><dd>클론 후 한 번만 <code style="font-family:var(--mono);color:var(--fg)">python -m venv .venv</code> → <code style="font-family:var(--mono);color:var(--fg)">.venv\Scripts\python.exe -m pip install -r requirements-dev.txt</code>. 그 뒤 <code style="font-family:var(--mono);color:var(--fg)">.venv\Scripts\python.exe labs\m0\grade.py</code> → 빈 정책도 <b>5/8</b>(default-deny로 Deny가 공짜)에서 출발하는 게 첫 교훈. <b>첫 PASS ~5분.</b></dd>
-      <dt>트랙</dt><dd>무클러스터 <b>M0·M1·M6·M7</b>은 <b>Codespaces 0설치</b>로 즉시 채점 · 클러스터 <b>M2–M5·M8</b>은 한 세션(RAM 6–8GB). 코어 7 + 심화 2.</dd>
+      <dt>트랙</dt><dd>무클러스터 <b>M0·M1·M6·M7</b>은 <b>Codespaces 0설치</b>로 즉시 채점 · 클러스터 <b>M2–M5·M8·M9</b>은 한 세션(RAM 6–8GB). 코어 7 + 심화 3.</dd>
     </dl>
   </div>
 

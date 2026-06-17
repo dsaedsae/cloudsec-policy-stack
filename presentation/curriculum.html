@@ -104,7 +104,7 @@ footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--faint)}
 
   <h2>학습 루프 (모듈마다)</h2>
   <p class="loop">개념 읽기<span class="a">→</span>골격에 직접 작성<span class="x">(정답 안 봄)</span><span class="a">→</span>자동채점<span class="a">→</span>일부러 부수기<span class="x">(예측→확인)</span><span class="a">→</span>구두문답<span class="a">→</span>졸업과제</p>
-  <p class="loop x">학습자는 <code style="font-family:var(--mono);color:var(--fg)">labs/&lt;모듈&gt;/</code> 만 수정 · 원본은 정답지(졸업 후 diff) · 진도 카운터 <span class="x">N / 7</span>(코어 M0–M6), M7·M8은 졸업 후 심화</p>
+  <p class="loop x">학습자는 <code style="font-family:var(--mono);color:var(--fg)">labs/&lt;모듈&gt;/</code> 만 수정 · 원본은 정답지(졸업 후 diff) · 진도 카운터 <span class="x">N / 7</span>(코어 M0–M6), M7·M8·M9은 졸업 후 심화</p>
 
   <hr>
 
@@ -122,6 +122,7 @@ footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--faint)}
       <tr class="sect"><td colspan="5">심화 — 졸업 후 선택 (진도 카운터에 미포함)</td></tr>
       <tr><td class="m">M7</td><td class="d">계층이 <b>합성될 때</b>의 모순 — Cilium L7 × Cedar PDP의 shadow/ungated 규칙 탐지(JSON/SARIF/HTML)</td><td class="s">z3 (SMT)</td><td class="t">~1–2h</td><td class="e">무클러스터</td></tr>
       <tr><td class="m">M8</td><td class="d"><b>탐지 ≠ 차단</b> 경계 — M4 규칙이 어디까지 막고 어디서 새는지 정직하게 측정</td><td class="s">Tetragon</td><td class="t">~30–45m</td><td class="e cl">클러스터</td></tr>
+      <tr><td class="m">M9</td><td class="d"><b>침해 가정</b> — 공격자가 한 파드를 장악했다 치고, 6계층이 <b>블래스트 반경</b>을 어디까지 봉쇄하는지 측정(제로데이 렌즈)</td><td class="s">Tetragon · 전 계층</td><td class="t">~25–40m</td><td class="e cl">클러스터</td></tr>
     </tbody>
   </table>
   <p class="loop x" style="margin-top:14px">모두 <b style="color:var(--fg);font-weight:500">비용 $0</b>(로컬 kind) · 무클러스터 랩(M0·M1·M6·M7)은 <b style="color:var(--acc);font-weight:500">Codespaces에서 0설치</b>로 즉시 채점</p>
@@ -133,7 +134,7 @@ footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--faint)}
     <div class="step"><div><div class="h">워밍업 — 클러스터 없이 기본기 <span class="mono">M0 → M1</span></div><p class="sub">인가(authz-as-code)와 스캔 triage. Codespaces 0설치 또는 Python만으로. <b style="color:var(--fg)">M0 첫 PASS ~5분.</b></p></div></div>
     <div class="step"><div><div class="h">클러스터 세션 — 한 번 띄워 한 번에 <span class="mono">M2 → M3 → M4 → M5</span></div><p class="sub">신원·네트워크·런타임·암호화. kind를 <code>up</code> → 네 모듈 진행 → <code>down</code>. RAM ~6–8GB.</p></div></div>
     <div class="step"><div><div class="h">인가 심화 — 다시 무클러스터 <span class="mono">M6</span></div><p class="sub">에이전트 위임 ABAC + ReBAC 그래프. Part B(OpenFGA)만 Docker.</p></div></div>
-    <div class="step"><div><div class="h">심화 선택 <span class="mono">M7 / M8</span></div><p class="sub">M7 교차계층 형식검증(무클러스터) · M8 런타임 탐지≠차단 측정(클러스터).</p></div></div>
+    <div class="step"><div><div class="h">심화 선택 <span class="mono">M7 / M8 / M9</span></div><p class="sub">M7 교차계층 형식검증(무클러스터) · M8 런타임 탐지≠차단 측정(클러스터) · M9 침해 가정 블래스트 반경 봉쇄(클러스터).</p></div></div>
   </div>
 
   <dl class="pre" style="margin-top:24px">
