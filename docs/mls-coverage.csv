@@ -22,7 +22,7 @@ LP3,least-privilege,Cedar frozen-account forbid,A,VERIFIED,verify:frozen 403
 LP4,least-privilege,Cedar positive-amount guard,A,VERIFIED,verify:-100 403
 LP5,least-privilege,Cedar role hierarchy (auditlog),A,VERIFIED,authz.py:auditor allow / customer deny
 LP6,least-privilege,input charset validation (X-User),A,VERIFIED,verify:malformed X-User 400
-LP7,least-privilege,deployer minimal RBAC (no pods/secrets/SA),A,VERIFIED,scripts/check-deployer-rbac.py (CI policy gate + make test): shop-deployer Role holds no pods/secrets/serviceaccounts/roles + no '*' wildcard + namespaced-only (no ClusterRoleBinding); PASS on current rbac.yaml / FAIL on injected secrets
+LP7,least-privilege,deployer minimal RBAC (no pods/secrets/SA),A,VERIFIED,LIVE kubectl auth can-i (CI integration job on kind): shop:deployers + shop:tier-operators groups cannot create pods / get secrets / mint serviceaccounts / create rolebindings + CAN create deployments - effective RBAC across ALL bindings (scripts/check-deployer-rbac.py --live); plus the same script as a no-cluster static drift-guard in the policy gate
 ET1,encryption-transit,WireGuard cross-node encryption,B,VERIFIED,verify:api/db on diff nodes + wg active (api->db crosses wire)
 ET2,encryption-transit,packet-captured ciphertext (tcpdump),B,VERIFIED,capture-wg:WG UDP/51871 pkts over 25s window + 0 plaintext on eth0 (cross-node)
 ER1,encryption-rest,etcd Secret AES-CBC,B,VERIFIED,enable-secrets-encryption: k8s:enc:aescbc / no plaintext

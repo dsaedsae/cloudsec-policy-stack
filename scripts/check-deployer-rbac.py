@@ -14,6 +14,8 @@ regressing least-privilege. Static policy assertion, like the cross-layer/SA-con
 from __future__ import annotations
 
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -22,6 +24,8 @@ ROLE = "shop-deployer"
 # resources a least-privilege app-deployer must never hold:
 FORBIDDEN = {"pods", "pods/exec", "pods/attach", "secrets", "serviceaccounts",
              "roles", "rolebindings", "clusterroles", "clusterrolebindings"}
+# the placeholder deploy groups bound to shop-deployer (k8s/rbac.yaml RoleBindings):
+GROUPS = ["shop:deployers", "shop:tier-operators"]
 
 
 def _docs(text: str) -> list[str]:
@@ -82,5 +86,43 @@ def main() -> int:
     return fail
 
 
+def _can_i(verb: str, resource: str, group: str, ns: str = "shop") -> bool:
+    r = subprocess.run(["kubectl", "auth", "can-i", verb, resource, "-n", ns,
+                        "--as", "lp7-probe", "--as-group", group],
+                       capture_output=True, text=True)
+    return r.stdout.strip() == "yes"
+
+
+def live_check() -> int:
+    """Effective-RBAC proof on the running cluster: what the deployer groups can ACTUALLY do
+    (aggregates EVERY binding, not just this file's text — answers the 'static text-check is
+    necessary-not-sufficient' critique). Needs a reachable cluster; SKIPs (not FAILs) without one."""
+    print("\n== LP7 LIVE: kubectl auth can-i — effective RBAC of the deployer groups ==")
+    if shutil.which("kubectl") is None or subprocess.run(
+            ["kubectl", "cluster-info"], capture_output=True).returncode != 0:
+        print("  SKIP  no reachable cluster — the live proof runs in the CI integration job "
+              "(after `kubectl apply -f k8s/rbac.yaml`: python scripts/check-deployer-rbac.py --live)")
+        return 0
+    fail = 0
+    deny = [("create", "pods"), ("get", "secrets"), ("create", "serviceaccounts"),
+            ("create", "rolebindings")]
+    for g in GROUPS:
+        for verb, res in deny:
+            allowed = _can_i(verb, res, g)
+            print(f"  {'PASS' if not allowed else 'FAIL'}  {g}: cannot {verb} {res}  (can-i={'yes' if allowed else 'no'})")
+            if allowed:
+                fail = 1
+        works = _can_i("create", "deployments", g)
+        print(f"  {'PASS' if works else 'FAIL'}  {g}: CAN create deployments (Role bound + effective)  (can-i={'yes' if works else 'no'})")
+        if not works:
+            fail = 1
+    print("\nLP7 LIVE " + ("PASS — deployer groups hold no pods/secrets/SA/rolebindings, only deploy verbs (effective RBAC)."
+                           if not fail else "FAIL — a deployer group has more effective RBAC than least-privilege permits."))
+    return fail
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    rc = main()
+    if "--live" in sys.argv:
+        rc = rc or live_check()
+    raise SystemExit(rc)

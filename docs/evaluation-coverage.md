@@ -42,7 +42,7 @@
 | micro-segmentation | 4 / 5 | 교차네임스페이스 격리 미테스트 |
 | zero-trust (egress) | 4 / 4 | — |
 | credential-forgery (B7) | 7 / 8 | SPIFFE 시행 테스트(ID4)만 남음. 요청자 JWT 라이브 강제(ID8)·토큰 미마운트(ID6)·타 ns SA-use(ID7) 모두 라이브 VERIFIED |
-| least-privilege | 6 / 7 | deployer RBAC 부분 |
+| least-privilege | 7 / 7 | deployer RBAC = 라이브 `kubectl auth can-i` 실효-RBAC 증명(LP7) |
 | encryption-in-transit | 2 / 2 | 크로스노드 암호화 + tcpdump 패킷캡처(WG UDP/51871 (25s 윈도우) 존재, eth0 평문 0) — scripts/capture-wg.sh |
 | encryption-at-rest | 1 / 3 | 키회전·KMS는 수동/문서 |
 | detection (EDR) | 1 / 3 | 프로세스감사·광역룰 미assert |

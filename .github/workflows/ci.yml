@@ -152,6 +152,12 @@ jobs:
           name: verify-junit
           path: outputs/verify/junit.xml
           if-no-files-found: warn
+
+      # LP7 least-privilege, LIVE effective-RBAC proof (not just the static file check in the
+      # policy job): asks the running apiserver what the deployer groups can ACTUALLY do.
+      - name: "LP7 deployer least-privilege (LIVE: kubectl auth can-i, effective RBAC)"
+        run: python scripts/check-deployer-rbac.py --live
+
       # M9 assume-breach lens: same proven probes, framed as attacker post-exploit
       # containment. Asserts every blast-radius boundary HELD on the live stack.
       - name: M9 assume-breach containment (blast-radius boundaries hold)
