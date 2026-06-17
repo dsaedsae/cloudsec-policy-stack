@@ -18,10 +18,15 @@ flowchart LR
       M2 --> M3[M3 · 네트워크] --> M4[M4 · 런타임] --> M5[M5 · 암호화]
     end
     M5 --> M6[M6 · 에이전트]
+    M6 -. 졸업 후 .-> M7
+    subgraph ADV["심화 · 졸업 후 선택 (M7–M9)"]
+      direction LR
+      M7[M7 · 형식검증] ~~~ M8[M8 · 런타임 경계] ~~~ M9[M9 · 침해 가정]
+    end
     classDef nc fill:#e8eaf6,stroke:#3f51b5,color:#1a237e;
     classDef cl fill:#fff3e0,stroke:#c2410c,color:#7c2d12;
-    class M0,M1,M6 nc;
-    class M2,M3,M4,M5 cl;
+    class M0,M1,M6,M7 nc;
+    class M2,M3,M4,M5,M8,M9 cl;
 ```
 
 **각 모듈의 학습 루프 (strip → rebuild → 채점 → 복원):**
