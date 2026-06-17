@@ -8,9 +8,9 @@
   <g font-family="'JetBrains Mono',Consolas,monospace" font-size="22">
     <text x="72" y="424" fill="#8b9099">coverage</text>
     <rect x="210" y="410" width="220" height="7" rx="3" fill="#1b1f25"/>
-    <rect x="210" y="410" width="165" height="7" rx="3" fill="#34d399"/>
-    <text x="452" y="424" fill="#34d399" font-weight="700">75%</text>
-    <text x="540" y="424" fill="#8b9099">30/40 검증가능-as-code</text>
+    <rect x="210" y="410" width="171" height="7" rx="3" fill="#34d399"/>
+    <text x="452" y="424" fill="#34d399" font-weight="700">77.5%</text>
+    <text x="540" y="424" fill="#8b9099">31/40 검증가능-as-code</text>
     <text x="72" y="468" fill="#8b9099">verify</text>
     <rect x="210" y="454" width="220" height="7" rx="3" fill="#1b1f25"/>
     <rect x="210" y="454" width="220" height="7" rx="3" fill="#34d399"/>

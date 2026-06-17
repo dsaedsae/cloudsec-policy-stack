@@ -102,13 +102,13 @@ footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--mut)}
   <hr>
 
   <div class="ledger">
-    <span class="k">coverage</span><span class="bar"><i style="width:75%"></i></span><span class="v">75%</span><span class="d">30/40 — 검증가능-as-code</span>
+    <span class="k">coverage</span><span class="bar"><i style="width:77.5%"></i></span><span class="v">77.5%</span><span class="d">31/40 — 검증가능-as-code</span>
     <span class="k">verify</span><span class="bar"><i style="width:100%"></i></span><span class="v">21/21</span><span class="d">라이브, 전 계층 enforcement</span>
     <span class="k">cedar</span><span class="bar"><i style="width:100%"></i></span><span class="v">8/8·17/17</span><span class="d">인가 + 에이전트 위임 (반증가능)</span>
     <span class="k">rebac</span><span class="bar"><i style="width:100%"></i></span><span class="v">11/11</span><span class="d">OpenFGA 관계 테스트</span>
     <span class="k">checkov</span><span class="bar"><i style="width:100%"></i></span><span class="v">452/0</span><span class="d">shift-left · 실 CVE 1건 포착→수정</span>
   </div>
-  <p class="note">// 21/21은 기능 회귀 스위트(분모 없는 측정 아님) · 갭 25%(CONFIGURED 6·GOVERNANCE 2·NOT-COVERED 4)는 행 단위 공개.</p>
+  <p class="note">// 21/21은 기능 회귀 스위트(분모 없는 측정 아님) · 갭 22.5%(CONFIGURED 5·GOVERNANCE 2·NOT-COVERED 4)는 행 단위 공개.</p>
 
   <hr>
 
@@ -123,7 +123,7 @@ footer{margin-top:52px;font:400 11.5px/1.7 var(--mono);color:var(--mut)}
     <p class="lead">"안전하다"가 아니라 — <span style="color:var(--acc)">갭을 공개한다.</span></p>
     <dl>
       <dt>재현 증거</dt><dd>감사자가 부작용 없는 dry-run으로 <b>직접</b> 거부/허용을 확인.</dd>
-      <dt>명시된 갭</dt><dd>미검증 25%를 행 단위로 공개 — 두루뭉술하지 않다.</dd>
+      <dt>명시된 갭</dt><dd>미검증 22.5%를 행 단위로 공개 — 두루뭉술하지 않다.</dd>
       <dt>정직성</dt><dd>요청자 JWT 행을 <b>증명 전엔 CONFIGURED로 낮춰 뒀다</b>가 라이브로 강제를 증명해 VERIFIED로 올렸다 — 편한 숫자가 아니라 참값.</dd>
     </dl>
   </div>

@@ -115,7 +115,7 @@ python formal/cross_layer.py --open-auditlogs  # 반증: L7 경로를 열면 sha
 - `scripts/verify.sh` — kind + Cilium + Tetragon에서 라이브 검증 21/21 (로컬·CI 공통).
 - Cedar — 코어 인가 8/8, 에이전트 위임 17/17 (confused-deputy + ASI08 위임깊이 cap·홉별 클램프·출처 게이트). ReBAC — 11/11 (`fga model test`).
 - checkov — 452 pass / 0 fail / 5건 문서화된 skip.
-- MLS 검증가능성 커버리지 — 75% (30/40); 갭은 [`docs/mls-coverage.csv`](docs/mls-coverage.csv)에 공개.
+- MLS 검증가능성 커버리지 — 77.5% (31/40); 갭은 [`docs/mls-coverage.csv`](docs/mls-coverage.csv)에 공개.
 
 계층별 상세·검증 노트·로드맵은 [`docs/`](docs/)에 있습니다(로컬에서 `pip install -r requirements-docs.txt && mkdocs serve`로 사이트로도 볼 수 있음).
 

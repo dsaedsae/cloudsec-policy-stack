@@ -41,7 +41,9 @@ def summarize(rows: list[dict]) -> None:
     print(f"= MLS verifiability-coverage analysis ({total} decomposed sub-requirements) =")
     for c in CATS:
         print(f"  {c:14s}: {by_cat[c]:2d}")
-    print(f"\n  HEADLINE: {verifiable}/{workload_applicable} = {pct_app:.0f}% of "
+    # exact, not rounded up: 31/40 = 77.5% must print "77.5%", not "78%" (anti-inflation).
+    pct_app_s = f"{pct_app:.1f}".rstrip("0").rstrip(".")
+    print(f"\n  HEADLINE: {verifiable}/{workload_applicable} = {pct_app_s}% of "
           f"workload-applicable sub-requirements are VERIFIED-AS-CODE")
     print(f"           ({verifiable}/{total} = {pct_all:.0f}% incl. governance-only)\n")
 

@@ -5,7 +5,7 @@
 > 추가하지 않는다.** 이미 검증된 통제를 **NHI 생애주기 6단계**(provision → authenticate →
 > authorize → rotate → detect → decommission)로 재조명하고, 각 항목을
 > [`mls-coverage.csv`](mls-coverage.csv)의 **기존 id와 그 라벨**(VERIFIED/CONFIGURED/NOT_COVERED)에
-> 그대로 연결한다. 헤드라인 75%(30/40)는 **이 문서로 인해 바뀌지 않는다** — 이 문서는 메트릭을 더하지 않고,
+> 그대로 연결한다. 헤드라인 77.5%(31/40)는 **이 문서로 인해 바뀌지 않는다** — 이 문서는 메트릭을 더하지 않고,
 > 같은 증거를 다른 렌즈로 본다.
 
 ## NHI란, 그리고 왜 2024–2026의 핵심인가
@@ -73,7 +73,7 @@ AI 에이전트도 NHI다. 자세한 모델은 [`authorization-model.md` §4·§
 
 ## 평가 분석과의 연결 (새 메트릭 없음)
 
-이 문서는 **CSV에 행을 더하지 않고, 헤드라인 75%(30/40)를 이 문서로 인해 바꾸지 않는다.** 위 표의 모든 id
+이 문서는 **CSV에 행을 더하지 않고, 헤드라인 77.5%(31/40)를 이 문서로 인해 바꾸지 않는다.** 위 표의 모든 id
 (ID1–ID6, NS3·NS4, ZT1–ZT3, LP1–LP6, ED1–ED3, ER2)는 이미 [`mls-coverage.csv`](mls-coverage.csv)에
 *그 범주 그대로* 존재한다. NHI 렌즈는 **이미 검증된 증거 위에 올라탄다** — 증거를 부풀리지 않는다.
 이 불변성 자체가 정직성의 보증이다(`python scripts/coverage.py` 출력은 이 문서로 인해 변하지 않는다).
