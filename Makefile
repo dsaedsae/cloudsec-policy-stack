@@ -13,7 +13,7 @@ venv:  ## create the project .venv (Python 3.12)
 	python3 -m venv .venv
 
 setup: ## create .venv if missing, then install the no-cluster deps (cedarpy, checkov, pyjwt, z3)
-	@test -d .venv || python3 -m venv .venv
+	@test -x .venv/bin/python || python3 -m venv .venv   # regen if missing (e.g. a Windows-only .venv/Scripts in a shared worktree)
 	.venv/bin/python -m pip install -r requirements-dev.txt
 
 doctor:  ## what is installed / missing

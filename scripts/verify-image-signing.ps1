@@ -9,7 +9,14 @@
 # into the (in-memory) policy. Twin/reference: k8s\kyverno-image-verify.yaml.
 $ErrorActionPreference = "Continue"
 $ctx = "kind-cloudsec"; $reg = "kind-registry"; $port = 5001
-$bin = "C:\Users\wngus\bin"; $cs = Join-Path $bin "cosign.exe"
+# cosign: prefer PATH, then common install locations, else a per-user bin (created on download below).
+$cs = (Get-Command cosign -ErrorAction SilentlyContinue).Source
+if (-not $cs) {
+    foreach ($p in @("$env:USERPROFILE\bin\cosign.exe", "$env:LOCALAPPDATA\Microsoft\WinGet\Links\cosign.exe")) {
+        if (Test-Path $p) { $cs = $p; break }
+    }
+}
+if (-not $cs) { $cs = Join-Path "$env:USERPROFILE\bin" "cosign.exe" }
 $cdir = Join-Path $env:TEMP "cosign-sl6"; $pw = "demo-cosign-pw-not-real"
 $fail = 0
 function Step($label, [scriptblock]$cmd) { Write-Host "==> $label"; & $cmd; if ($LASTEXITCODE -ne 0) { Write-Host "FAILED ($LASTEXITCODE): $label"; exit 1 } }

@@ -47,7 +47,7 @@ else printf '  BREACH  %-44s (create-pods=%s get-secrets=%s)\n' "web-sa K8s API 
 echo "-- 데이터 티어 최후 방어 (어찌어찌 도달했다면) --"
 total=$((total + 1))
 k -n shop exec "$DBPOD" -- id >/dev/null 2>&1; rci=$?
-if [ "$rci" = 137 ] || [ "$rci" = 143 ]; then printf '  HELD    %-44s (id -> rc=%s SIGKILL)\n' "data-tier zero-exec" "$rci"; held=$((held + 1))
+if [ "$rci" = 137 ] || [ "$rci" = 143 ]; then printf '  HELD    %-44s (id -> rc=%s; 137=SIGKILL, 143=SIGTERM fallback)\n' "data-tier zero-exec" "$rci"; held=$((held + 1))
 else printf '  BREACH  %-44s (id rc=%s)\n' "data-tier exec survived" "$rci"; fi
 
 echo "----------------------------------------------------------------"
