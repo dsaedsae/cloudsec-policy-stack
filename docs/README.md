@@ -29,7 +29,7 @@ payoff *before* asking you to install more. Defensive/infra only.
 | [4 — Identity (B7)](05-identity.md) | who gets to *be* `web`/`api`: least-priv SAs, label↔SA admission, mutual auth — and the honest residual | Docker+kind | 15 min |
 | [5 — Data protection](06-data-protection.md) | the data itself: WireGuard in-transit, Secret encryption at-rest, PDP minimization in-use | Docker+kind | 15 min |
 
-> ⏱ **Read time** = reading the concept page. *Rebuilding* the control from an empty file is much longer — see the [reimplementation track](../labs/README.md) (e.g. M0 ~3–6h, M2 ~30–45m).
+> **Read time** = reading the concept page. *Rebuilding* the control from an empty file is much longer — see the [reimplementation track](../labs/README.md) (e.g. M0 ~3–6h, M2 ~30–45m).
 
 ## The idea in one picture
 
