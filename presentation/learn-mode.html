@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cloudsec — Cedar 레퍼런스 + 직접짜보기 (M0)</title>
+<!-- 근거: docs.cedarpolicy.com (syntax-policy / syntax-operators) + 이 repo의 검증된 정책(cedar/). 형식: 보기 좋은 HTML. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+:root{
+  --bg:#0b0d10; --panel:#0e1014; --fg:#e7e9ee; --mut:#8b9099; --faint:#4b515b; --line:#1b1f25;
+  --acc:#34d399; --warn:#e0a341; --no:#f06f6f;
+  --mono:"JetBrains Mono","Cascadia Code",Consolas,monospace;
+  --sans:"Noto Sans KR",-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;letter-spacing:.1px}
+.wrap{max-width:900px;margin:0 auto;padding:54px 28px 80px}
+a{color:var(--acc);text-decoration:none} a:hover{text-decoration:underline}
+code{font-family:var(--mono)}
+
+.mark{font:500 13px/1 var(--mono);color:var(--mut);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.mark .dot{width:9px;height:9px;border-radius:2px;background:var(--acc)}
+.mark b{color:var(--fg);font-weight:700}.mark .sep{color:var(--faint)}
+.pilot{font:500 11px var(--mono);color:var(--warn);border:1px solid var(--warn);border-radius:5px;padding:3px 8px;letter-spacing:.04em}
+
+h1{font:900 clamp(26px,4.5vw,38px)/1.15 var(--sans);letter-spacing:-.02em;margin:26px 0 0}
+.deck{font-size:15.5px;color:var(--mut);max-width:44em;margin:12px 0 0}
+.deck b{color:var(--fg);font-weight:500}
+.rule{border:0;border-top:1px solid var(--line);margin:34px 0}
+h2.sec{font:700 12px/1 var(--mono);letter-spacing:.08em;color:var(--mut);text-transform:uppercase;margin:0 0 16px}
+
+/* mental model — the must-internalize box */
+.model{background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--acc);border-radius:9px;padding:16px 20px}
+.model p{margin:0 0 9px;font-size:14.5px;color:var(--fg)}.model p:last-child{margin:0}
+.model b{color:var(--acc);font-weight:700}.model .k{font-family:var(--mono);color:var(--fg);background:#14171c;padding:.05em .35em;border-radius:4px;font-size:.9em}
+
+/* reference table */
+table.ref{border-collapse:collapse;width:100%;font-size:13.5px;margin:0}
+.ref th{text-align:left;color:var(--mut);font:500 12px var(--mono);padding:0 12px 9px 0;border-bottom:1px solid var(--line)}
+.ref td{padding:9px 12px 9px 0;border-bottom:1px solid var(--line);vertical-align:top;color:var(--mut)}
+.ref td:first-child{white-space:nowrap}
+.ref code{font-family:var(--mono);color:var(--acc);font-size:.95em}
+.ref b{color:var(--fg);font-weight:500}
+
+/* gotchas */
+.gotcha{margin:12px 0 0;padding:14px 18px;border:1px solid var(--line);border-radius:9px;background:#0c0e12}
+.gotcha .t{font-weight:700;color:var(--fg);font-size:14.5px;margin:0 0 6px}
+.gotcha p{margin:0;color:var(--mut);font-size:14px}.gotcha p+p{margin-top:7px}
+.gotcha code{color:var(--fg);background:#14171c;padding:.05em .35em;border-radius:4px;font-size:.9em}
+.gotcha.war{border-left:2px solid var(--no)}
+.gotcha.war .t{color:var(--no)}
+.gotcha .src{font:400 11.5px var(--mono);color:var(--faint)}
+
+/* steps */
+.step{margin:26px 0 0;padding:2px 0 2px 20px;border-left:2px solid var(--line)}
+.step.s1{border-color:var(--acc)} .step.s2{border-color:var(--warn)} .step.s3{border-color:var(--mut)}
+.step h3{display:flex;align-items:center;gap:11px;font:700 17px/1.3 var(--sans);margin:0 0 4px}
+.step .n{flex:none;width:25px;height:25px;border-radius:7px;display:grid;place-items:center;font:700 12px var(--mono);color:var(--bg)}
+.s1 .n{background:var(--acc)} .s2 .n{background:var(--warn)} .s3 .n{background:var(--mut)}
+.step .lead{color:var(--mut);font-size:14px;margin:0 0 12px}.step .lead b{color:var(--fg);font-weight:500}
+
+pre{margin:13px 0;border:1px solid var(--line);border-radius:9px;overflow:auto;background:var(--panel)}
+pre code.hljs{background:transparent;padding:15px 18px;font-size:13px;line-height:1.7;display:block}
+.blank{color:var(--warn);font-weight:700}
+
+.anno{margin:6px 0 0;padding:0;list-style:none;font-size:14px}
+.anno>li{margin:8px 0;padding-left:15px;position:relative;color:var(--mut)}
+.anno>li::before{content:"–";position:absolute;left:0;color:var(--faint)}
+.anno code{color:var(--fg);background:#14171c;padding:.05em .35em;border-radius:4px;font-size:.9em}
+.anno b{color:var(--fg);font-weight:500}
+
+.hint{font-size:14px;color:var(--mut);margin:11px 0 0}.hint b{color:var(--fg);font-weight:500}
+details{margin:12px 0 0;border:1px solid var(--line);border-radius:9px;background:#0c0e12}
+details summary{cursor:pointer;padding:11px 16px;font:500 13px var(--mono);color:var(--acc);list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸ ";color:var(--faint)} details[open] summary::before{content:"▾ "}
+details .body{padding:0 16px 13px}details .body p{color:var(--mut);font-size:14px;margin:9px 0 0}
+.do ol{margin:6px 0 0;padding-left:20px}.do ol li{margin:8px 0;color:var(--mut);font-size:14px}.do ol li b{color:var(--fg);font-weight:500}
+.do code{color:var(--fg);background:#14171c;padding:.05em .35em;border-radius:4px;font-size:.9em}
+
+.links{font-size:14px;color:var(--mut)}.links li{margin:7px 0}
+.note{color:var(--faint);font:400 12px/1.7 var(--mono);border-top:1px solid var(--line);margin-top:42px;padding-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="mark"><span class="dot"></span><b>cloudsec</b><span class="sep">/</span>Cedar 레퍼런스 + 직접짜보기<span class="sep">·</span>M0<span class="pilot">형식·깊이 파일럿</span></div>
+
+  <h1>Cedar — 옆에 켜두는 레퍼런스, 그리고 직접 짜보기</h1>
+  <p class="deck">읽기용 강의가 아니라 <b>실무에서 참고하는 레퍼런스</b>다. 평가 모델 → 연산자 표 → 실무에서 무는 함정 →
+    이 repo의 검증된 정책 → 직접 손으로 짜보기. 1차 출처는 <a href="https://docs.cedarpolicy.com/">공식 Cedar 문서</a>.</p>
+
+  <hr class="rule">
+
+  <h2 class="sec">30초 멘탈 모델 — 이것만은 외운다</h2>
+  <div class="model">
+    <p><b>default-deny.</b> 매칭되는 <span class="k">permit</span>이 하나 이상이고 <span class="k">forbid</span>가 0개면 Allow. 그 외 전부 Deny.</p>
+    <p><b>forbid는 어떤 permit도 이긴다.</b> permit 여러 개는 OR로 결합되지만, forbid 하나가 매칭되면 끝(Deny).</p>
+    <p>정책 = <span class="k">effect</span>(permit|forbid) + <span class="k">scope</span>(principal, action, resource — 필수) + 선택 <span class="k">when</span>/<span class="k">unless</span>. <span class="k">;</span>로 끝.</p>
+    <p>scope에는 <span class="k">==</span> · <span class="k">in</span> · <span class="k">is</span> · 무제약만. 나머지 비교·로직은 전부 when/unless 안에서.</p>
+  </div>
+
+  <hr class="rule">
+
+  <h2 class="sec">연산자 레퍼런스</h2>
+  <table class="ref">
+    <tr><th>범주</th><th>연산자</th><th>의미 / 주의</th></tr>
+    <tr><td>scope 전용</td><td><code>==</code> <code>in</code> <code>is</code></td><td><code>in</code>=엔티티 계층(그룹) 멤버십, <code>is</code>=타입. scope엔 이 셋(+무제약)만.</td></tr>
+    <tr><td>비교</td><td><code>==</code> <code>!=</code> <code>&lt;</code> <code>&lt;=</code> <code>&gt;</code> <code>&gt;=</code></td><td>대소비교는 long/datetime/duration. <b><code>!=</code>는 when/unless에서만</b>(scope 불가). decimal은 <code>.lessThan()</code> 등.</td></tr>
+    <tr><td>로직</td><td><code>&amp;&amp;</code> <code>||</code> <code>!</code> <code>if…then…else</code></td><td><b>단락 평가</b>(short-circuit) — 왼쪽이 결정나면 오른쪽 평가 안 함. 에러 가드에 활용.</td></tr>
+    <tr><td>계층·타입</td><td><code>in</code> <code>is</code> <code>is T in P</code></td><td><code>in</code>은 <b>전이적·반사적</b>: <code>A in A</code>는 A가 store에 없어도 true.</td></tr>
+    <tr><td>속성·문자열</td><td><code>.attr</code> <code>has</code> <code>like</code></td><td><code>has</code>=속성 존재 확인(missing 에러 방지). <code>like "a*c"</code> 와일드카드(<code>\*</code>=리터럴).</td></tr>
+    <tr><td>집합</td><td><code>.contains()</code> <code>.containsAll()</code> <code>.containsAny()</code> <code>.isEmpty()</code></td><td>set 멤버십/포함/공집합.</td></tr>
+  </table>
+
+  <hr class="rule">
+
+  <h2 class="sec">실무에서 무는 함정</h2>
+
+  <div class="gotcha war">
+    <p class="t">① 에러나는 정책은 *조용히 스킵*된다 → forbid가 에러나면 fail-OPEN</p>
+    <p>없는 속성 접근·타입 불일치는 그 정책을 ERROR로 만들고, Cedar는 그 정책을 무시한다. <b>막아야 할 forbid가 에러나면, 막혀야 할 게 통과한다.</b>
+    가드: <code>principal has limit &amp;&amp; principal.limit &gt; 0</code> 처럼 <code>has</code>로 먼저 막아라(단락 평가).</p>
+    <p class="src">// 실화: 이 repo의 에이전트 위임 정책에서 dangling 엔티티가 P6 forbid를 ERROR로 만들어 권한이 증폭됐다. 자체 적대 감사가 잡아 entity→scalar로 고침. THREAT_MODEL / cedar/agent 참고.</p>
+  </div>
+
+  <div class="gotcha">
+    <p class="t">② 경계값 — "한도 이하"는 <code>&lt;=</code></p>
+    <p><code>&lt;</code>로 쓰면 정확히 한도(1000)인 이체가 거부된다. off-by-one은 인가에서 사고로 직결.</p>
+  </div>
+  <div class="gotcha">
+    <p class="t">③ 엔티티 ID 재사용은 권한 누수다</p>
+    <p>떠난 <code>User::"jane"</code>의 이름을 새 사용자에게 재발급하면, 옛 정책이 참조하던 권한이 자동 승계된다. 실무에선 <b>UUID</b>를 쓰고 <code>// jane</code> 주석으로 가독성만 보완.</p>
+  </div>
+  <div class="gotcha">
+    <p class="t">④ validator는 evaluator보다 엄격하다</p>
+    <p>평가(런타임)는 통과해도 schema validate에서 막힐 수 있다. 둘 다 돌려라 — 이 repo는 <code>cedar/authz.py</code>가 schema validate + 8 시나리오를 함께 본다.</p>
+  </div>
+
+  <hr class="rule">
+
+  <h2 class="sec">이 repo의 검증된 정책 (베끼지 말고 읽어라)</h2>
+  <ul class="links">
+    <li><a href="https://github.com/dsaedsae/cloudsec-policy-stack/blob/master/cedar/policies.cedar">cedar/policies.cedar</a> — 핵심 인가 8/8 (소유자·한도·역할·동결). 정답지이자 실전 레퍼런스.</li>
+    <li><a href="https://github.com/dsaedsae/cloudsec-policy-stack/tree/master/cedar/agent">cedar/agent/</a> — AI-에이전트 위임 17/17 (confused-deputy 차단 + 위임깊이 cap). ①의 fail-open 버그가 났던 곳.</li>
+    <li>이식: 이 문법 그대로 <a href="https://aws.amazon.com/verified-permissions/">Amazon Verified Permissions</a>로 간다.</li>
+  </ul>
+
+  <hr class="rule">
+
+  <h2 class="sec">직접 짜보기 — 읽기만으로는 안 는다</h2>
+  <p class="deck" style="margin-top:0">위 모델·함정을 손에 익힌다. <code>labs/m0/policies.cedar</code>를 채우고 <code>python labs/m0/grade.py</code>로 채점.</p>
+
+  <section class="step s1">
+    <h3><span class="n">1</span> 완성 예시 — 소유자 검증 (R1)</h3>
+    <p class="lead">가장 단순한 permit. scope + 한 줄 when.</p>
+<pre><code class="language-cedar">permit (
+    principal,
+    action == Action::"ViewAccount",
+    resource
+)
+when { resource.owner == principal };</code></pre>
+    <ul class="anno">
+      <li>scope의 <code>principal</code>·<code>resource</code>는 무제약(누구/무엇이든) → 실제 제약은 when에서.</li>
+      <li><code>action == Action::"ViewAccount"</code>: 이 액션에만 적용. 다른 액션 요청엔 이 정책이 안 걸린다(=이 정책으론 Allow 안 줌).</li>
+      <li><code>resource.owner == principal</code>: 호출자가 그 리소스의 owner일 때만. 양쪽이 같은 엔티티 타입(User)이어야 한다.</li>
+    </ul>
+  </section>
+
+  <section class="step s2">
+    <h3><span class="n">2</span> 빈칸 — 이체 한도 (R2)</h3>
+    <p class="lead">함정 ①(에러 가드)과 ②(경계값)가 둘 다 걸린다. 연산자를 채워라.</p>
+<pre><code class="language-cedar">permit (
+    principal,
+    action == Action::"Transfer",
+    resource
+)
+when {
+    resource.owner == principal
+    &amp;&amp; context.amount &gt; 0
+    &amp;&amp; context.amount <span class="blank">__?__</span> principal.transferLimit
+};</code></pre>
+    <p class="hint"><b>힌트</b> — 정확히 한도만큼(1000) 이체도 <b>허용</b>해야 한다(함정 ②). 그리고 <code>context.amount &gt; 0</code>를 앞에 둔 건 단락 평가로 음수/0을 먼저 쳐내려는 것.</p>
+    <details><summary>정답 (직접 써 본 뒤)</summary><div class="body">
+<pre><code class="language-cedar">&amp;&amp; context.amount &lt;= principal.transferLimit</code></pre>
+      <p><code>&lt;</code>가 아니라 <code>&lt;=</code>. <code>principal</code>에 <code>transferLimit</code>이 항상 있다고 가정 중인데, 없을 수 있다면 <code>principal has transferLimit &amp;&amp; …</code>로 가드(함정 ①).</p>
+    </div></details>
+  </section>
+
+  <section class="step s3">
+    <h3><span class="n">3</span> 혼자 — R3 · R4 · E1</h3>
+    <div class="do"><ol>
+      <li><b>R3 감사역 조회:</b> <code>ViewAuditLog</code>는 <code>Role::"auditor"</code>만. 계층 멤버십은 <code>principal in Role::"auditor"</code> — when 조건 불필요.</li>
+      <li><b>R4 동결 계좌:</b> <code>forbid</code>의 첫 등장. forbid는 permit을 이긴다(멘탈 모델). 이체를 <b>절대</b> 막을 조건 → <code>resource.frozen == true</code>. <code>frozen</code>이 optional이면 <code>resource has frozen</code> 가드.</li>
+      <li><b>E1 확장:</b> 감사역이 <b>모든 일반 계좌 조회</b>(이체는 불가). R1·R2·R4 건드리지 말 것 — permit은 독립 평가·OR 결합이니 새 permit 하나 추가. R3 문법 기반, <code>ViewAccount</code>만.</li>
+    </ol></div>
+<pre><code class="language-bash">python labs/m0/grade.py          # R1–R4 → 8/8
+python labs/m0/grade.py --ext    # E1 포함 → 11/11
+python labs/m0/grade.py --hint   # FAIL 행마다 요건 넛지</code></pre>
+  </section>
+
+  <hr class="rule">
+
+  <h2 class="sec">1차 출처</h2>
+  <ul class="links">
+    <li><a href="https://docs.cedarpolicy.com/policies/syntax-policy.html">기본 구문</a> · <a href="https://docs.cedarpolicy.com/policies/syntax-operators.html">연산자</a> · <a href="https://docs.cedarpolicy.com/auth/authorization.html">인가 결정 알고리즘</a> · <a href="https://docs.cedarpolicy.com/policies/syntax-grammar.html">정식 문법</a></li>
+  </ul>
+
+  <p class="note">// 사실은 공식 Cedar 문서 + 이 repo의 검증된 정책에 근거. "실무 숙련"은 이 레퍼런스 + 직접 reps(grade.py)에서 나온다 — 읽기만으로 되지 않는다.</p>
+
+</div>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script>
+  if (window.hljs) {
+    hljs.registerLanguage('cedar', function(hl){
+      return { case_insensitive:false,
+        keywords:'permit forbid when unless principal action resource context in has like is if then else true false',
+        contains:[ hl.QUOTE_STRING_MODE, hl.HASH_COMMENT_MODE,
+          { className:'type', begin:/[A-Z][A-Za-z0-9_]*::/ }, { className:'number', begin:/\b\d+\b/ } ] };
+    });
+    document.querySelectorAll('pre code').forEach(function(el){ if (!el.querySelector('.blank')) hljs.highlightElement(el); });
+  }
+</script>
+</body>
+</html>

@@ -58,6 +58,7 @@ site:  ## build the all-HTML deployable bundle into site/ (landing = root; docs 
 	DISABLE_MKDOCS_2_WARNING=true NO_MKDOCS_2_WARNING=true $(PY) -m mkdocs build
 	cp presentation/cloudsec-onepager.html site/cloudsec-onepager.html
 	cp presentation/curriculum.html site/curriculum.html
+	cp presentation/learn-mode.html site/learn-mode.html
 	@cp presentation/cloudsec-onepager.pdf site/cloudsec-onepager.pdf 2>/dev/null || true
 	cp presentation/cloudsec-onepager.html site/index.html
 	@# in the DEPLOYED root copy only, upgrade the practice button's href from the GitHub labs URL
