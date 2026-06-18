@@ -1,4 +1,4 @@
 # Docs site (MkDocs Material). Build: python -m mkdocs build ; preview: mkdocs serve
 mkdocs-material==9.7.6
 mkdocs-same-dir==0.1.5
-matplotlib>=3.8   # scripts/coverage.py — regenerates docs/assets/coverage.png
+matplotlib>=3.11.0   # scripts/coverage.py — regenerates docs/assets/coverage.png
