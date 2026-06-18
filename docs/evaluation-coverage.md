@@ -75,12 +75,20 @@
 - **GOVERNANCE 2 / NOT-COVERED 4** — 남은 NOT_COVERED는 관리형 KMS/HSM(ER3)·광역 런타임룰(ED3)·
   DLP(GV3)·SIEM(GV4)으로 *이 레퍼런스의 범위 밖*이거나 전사 통제다. (직전까지 NOT_COVERED였던 ID7 SA-use
   타 ns·SL6 이미지 서명은 이번 라이브 세션에 VERIFIED로 승격.)
+- **VERIFIED 등급의 정직한 결 — always-on CI-게이트 vs opt-in 재현.** 31개 VERIFIED 중 다수는 매 CI 푸시마다 도는
+  always-on 게이트(verify.sh 21/21·정적 가드·단위테스트, + integration job의 LP7-live·ID6·M9 라이브)지만, 일부는
+  클러스터에서 **opt-in으로 재현**하는 스크립트다(ET2 capture-wg·ID7 verify-kyverno·SL6 verify-image-signing·ID8
+  enforce 모드). 둘 다 *재실행 가능*이나 후자는 *상시 CI-게이트는 아니다* — "77.5%"는 **검증가능성**의 분율이지
+  매 푸시 연속보장의 분율이 아니다.
 
 ## 한계
 - 분해·분류는 저자 수행 → 주관 개입. 1차 출처(FSC·국정원 MLS·금융보안원 가이드) 대조와
   복수 평가자 합의가 다음 단계.
 - 42개 sub-requirement는 *이 데모 워크로드* 기준. 전사 요구집합은 더 크고 분모가 달라진다.
 - 오버헤드(지연·자원) 측정은 미수행 — 시스템 논문이면 별도 평가 필요(여기선 *커버리지*가 헤드라인).
+- **범위 밖(플랫폼-엔지니어링이지 MLS 보상통제 아님 — 그래서 분모에 넣지 않는다):** HA/PDB/HPA·멀티노드 스케일·
+  관측성(메트릭/대시보드)·SIEM 중앙수집·DR/백업·GitOps 플릿 배포는 *이 단일-워크로드·단일-replica 데모*에 없다.
+  GitOps 각도만 학습 모듈로 다룬다([M10](../labs/m10/README.md) · [ADR 0002](decisions/0002-argocd-gitops-relocates-identity-tcb.md)).
 
 ## 발표/논문 타깃 (정직)
 - **발표(토크): 지금 가능** — BoB / 금융보안 세미나 / AWS Summit 커뮤니티.
