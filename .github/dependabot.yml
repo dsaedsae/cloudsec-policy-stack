@@ -1,0 +1,16 @@
+# Keep the SHA-pinned GitHub Actions and pip deps current, so pins do not silently rot and new
+# CVEs surface. The workflows pin every `uses:` to a commit SHA (with a `# vX` comment) to close
+# the mutable-tag supply-chain risk (tj-actions/changed-files class); Dependabot bumps the SHA and
+# the comment together. pip covers requirements*.txt at the repo root.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule: { interval: weekly }
+    commit-message: { prefix: "chore(ci)" }
+    groups:
+      actions: { patterns: ["*"] }
+  - package-ecosystem: pip
+    directory: "/"
+    schedule: { interval: weekly }
+    commit-message: { prefix: "chore(deps)" }
