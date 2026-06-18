@@ -34,7 +34,7 @@
 
 ## 정직한 한계 (과장 금지)
 
-- **kind/Docker Desktop은 대개 BPF-LSM이 없다.** `cat /sys/kernel/security/lsm`에 `bpf`가 없으면(흔함) grade.sh는 **SKIP**한다 — 그 환경에선 이 통제를 *증명할 수 없다*. (kind 이슈 #4883류; M8의 SKIP 선례.)
+- **kind/Docker Desktop/GitHub Actions 러너 모두 BPF-LSM이 없다 (라이브 확정).** `cat /sys/kernel/security/lsm`에 `bpf`가 없으면 grade.sh는 **SKIP**한다 — 그 환경에선 이 통제를 *증명할 수 없다*. CI integration 잡이 grade.sh를 돌려 **라이브로 SKIP**함을 확인했다(러너 `lsm = lockdown,capability,landlock,yama,apparmor,ima,evm` — bpf 없음 → disallowed 셸이 rc=0로 생존). (kind 이슈 #4883류; M8의 SKIP 선례.)
 - **그래서 ED3는 여전히 NOT_COVERED다.** M11은 LSM *메커니즘*을 제공·설명하지만, kind에서 라이브로 안정 증명이 안 되므로 **헤드라인 82.5%는 안 바뀐다** — 단발 행운의 PASS로 ED3를 VERIFIED로 올리지 않는다(정직성 철칙).
 - **"io_uring-proof / 우회 불가" 주장 금지.** 이 랩의 주장은 딱 *"LSM 훅이 syscall-arg0/caller가 못 보던 적재-이미지 연산을 본다"* 뿐이다. LSM도 전능하지 않다(정책 미적용 경로·다른 LSM 충돌 등).
 - **Sigkill은 탐지-후-kill.** prevention-grade는 LSM `bprm`에서 **`Override`(-EPERM 반환)**로 exec 자체를 거부하는 것 — 룰에 옵션으로 표기. (Tetragon의 정확한 LSM arg-resolve/Sigkill 문법은 버전 의존 — 정책 헤더 주석 참고.)
