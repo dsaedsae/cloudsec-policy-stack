@@ -1,0 +1,31 @@
+# M10 L2 — forged-identity artifact (NOT shipped; the lab points a THROWAWAY ArgoCD Application here).
+#
+# A Pod that CLAIMS `app: api` but runs as `web-sa` — the label<->ServiceAccount mismatch that the
+# ValidatingAdmissionPolicy (k8s/admission-policy.yaml, B7) DENIES at admission. labs/m10/grade.sh
+# creates a temp Application sourcing this file: the reconciler tries to apply it, admission rejects
+# it, and the Application sits OutOfSync forever (the "fighting controllers" livelock) — proving
+# GitOps does NOT bypass admission and is NOT a way around B7. The Pod is never created; the temp
+# Application is removed by the grader's EXIT trap.
+#
+# The securityContext only exists so Pod Security Admission (restricted) is satisfied and the VAP is
+# the OPERATIVE denial — grade.sh asserts the VAP-specific rejection message, not just "denied".
+apiVersion: v1
+kind: Pod
+metadata:
+  name: forge-via-git
+  namespace: shop
+  labels: { app: api }                 # claims api identity...
+spec:
+  serviceAccountName: web-sa           # ...but runs as web-sa  -> VAP DENY (label<->SA mismatch)
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile: { type: RuntimeDefault }
+  containers:
+    - name: pause
+      image: registry.k8s.io/pause:3.9
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        capabilities: { drop: ["ALL"] }
+        seccompProfile: { type: RuntimeDefault }

@@ -41,6 +41,8 @@ m6:  ## grade M6 (agent-ABAC + ReBAC)
 	$(PY) labs/m6/grade.py
 m7:  ## run M7 (formal cross-layer consistency)
 	$(PY) formal/cross_layer.py
+m10:  ## grade M10 (GitOps integrity, no-cluster static; live = scripts/enable-gitops.sh + labs/m10/grade.sh)
+	$(PY) labs/m10/grade.py
 
 report:  ## cross-layer-lint -> outputs/cross-layer/report.{json,sarif,html} (HTML for humans, SARIF for code-scanning)
 	$(PY) formal/cross_layer.py --out outputs/cross-layer
@@ -81,4 +83,4 @@ verify:  ## live enforcement suite (needs the cluster)
 down:  ## tear the cluster down (frees RAM)
 	bash scripts/down.sh
 
-.PHONY: help venv setup doctor progress test m0 m1 m6 m7 report brief docs site serve up verify down
+.PHONY: help venv setup doctor progress test m0 m1 m6 m7 m10 report brief docs site serve up verify down

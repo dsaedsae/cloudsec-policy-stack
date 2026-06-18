@@ -129,12 +129,22 @@ M2식 *"한 줄이 통제다"*. 떠먹여주는 모드는 [LEARN.md](LEARN.md). 
 > 방향). L2~L5는 기존 ID1/SL6/B7의 property를 새 actor로 재측정 — evidence 강화지 새 행 아님. **모듈의 가치는
 > coverage가 아니라 깊이다.** 행 추가/승격은 오너 결정 → [ADR 0002](../../docs/decisions/0002-argocd-gitops-relocates-identity-tcb.md).
 
-## ArgoCD 대시보드 (정직: 라이브 UI는 ship 못 함)
+## ArgoCD 대시보드 (정직: 라이브 UI는 ship 못 하고, 스크린샷도 위조 안 함)
 
-이 랩은 정적 사이트라 살아있는 ArgoCD 패널을 임베드하지 않는다. `docs/assets/argocd-{synced,outofsync,syncfailed}.png`
-주석 figure로 sync-wave DAG·OutOfSync·SyncFailed 상태를 *보여주되*, 각 figure는 `argocd app get <name>` CLI 출력으로
-**재현 가능**하다(정적 픽셀 ≠ 라이브 패널 — 절대 라이브인 척하지 않는다). 왜 Flux 아닌 ArgoCD인지(대시보드가 곧
-이 랩 주제의 *그림*이지만, ArgoCD 자체가 net-new 공격표면)는 [ADR 0002](../../docs/decisions/0002-argocd-gitops-relocates-identity-tcb.md).
+정적 사이트라 살아있는 ArgoCD 패널을 임베드하지 않고 **스크린샷도 위조하지 않는다.** 대신 대시보드가 *렌더하는
+원천*인 CLI 출력을 보여준다(직접 재현 가능):
+
+```text
+$ argocd app get shop-network-runtime     # L1 drift 중
+Sync Status:  OutOfSync (drift)   Health: Healthy
+cilium.io  CiliumNetworkPolicy  allow-web-to-api  OutOfSync   # reconciler가 곧 revert
+$ argocd app get m10-forge                # L2 fighting-controllers
+Sync Status:  OutOfSync          Health: Missing
+Condition: SyncError — admission webhook denied: forged identity (app:api on web-sa)
+```
+
+시각적 before/after(신뢰 경계 이전·3-posture·정직한 한계)는 → [발표 페이지](../../presentation/gitops-trust-shift.html).
+왜 Flux 아닌 ArgoCD인지(대시보드가 곧 이 랩 주제의 *그림*이지만, ArgoCD 자체가 net-new 공격표면)는 [ADR 0002](../../docs/decisions/0002-argocd-gitops-relocates-identity-tcb.md).
 
 ## 범위 밖 / 못 막는 것 (정직)
 

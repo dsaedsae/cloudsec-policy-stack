@@ -1,0 +1,25 @@
+# M10 L1 — DRIFT artifact (NOT the shipped policy; do not `kubectl apply` outside the lab).
+#
+# This is k8s/netpol.yaml's `allow-web-to-api` CNP with ONE extra L7 rule that OPENS
+# `GET /auditlogs` at the network edge — the very route verify.sh proves is dropped (403).
+# labs/m10/grade.sh applies this to simulate a live attacker `kubectl apply`/`patch`, then asserts
+# the GitOps reconciler (selfHeal) REVERTS it within the sync interval, and re-runs the /auditlogs
+# probe to prove SEMANTIC re-closure — object restored != boundary re-enforced. The grader's EXIT
+# trap restores canonical (k8s/netpol.yaml) so a half-run never leaves the route open.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: allow-web-to-api, namespace: shop }
+spec:
+  endpointSelector: { matchLabels: { app: api } }
+  ingress:
+    - fromEndpoints: [{ matchLabels: { app: web } }]
+      toPorts:
+        - ports: [{ port: "8080", protocol: TCP }]
+          rules:
+            http:
+              - method: "GET"
+                path: "/accounts/[^/]+$"
+              - method: "POST"
+                path: "/accounts/[^/]+/transfer$"
+              - method: "GET"
+                path: "/auditlogs.*"      # <-- DRIFT: opens the route the edge is supposed to drop

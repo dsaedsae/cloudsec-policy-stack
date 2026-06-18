@@ -1,0 +1,37 @@
+# M10 학습자 스켈레톤 — 이 파일의 빈칸(__TODO__)을 채워라.
+# 정답지(졸업 후 diff): gitops/apps/network-runtime.yaml + gitops/projects/shop-project.yaml.
+# 채점: python labs/m10/grade.py   (무클러스터 정적, 졸업-critical)
+#       bash   labs/m10/grade.sh   (라이브 — enable-gitops 후)
+# 읽기 도움: labs/m10/LEARN.md (떠먹여주는 모드).
+#
+# 이건 network-runtime child App이다. 세 가지를 채우면 L1(drift 자동교정)·L5(sync-wave 순서)가 켜진다.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shop-network-runtime
+  namespace: argocd
+  annotations:
+    # identity App=-1, workload App=0. network/runtime은 가장 나중에 reconcile돼야
+    # 정책이 *이미 존재하는* pod에 붙는다. 이 App의 wave는?
+    argocd.argoproj.io/sync-wave: "__TODO_wave__"
+spec:
+  # reconciler blast-radius를 최소화하는 AppProject 이름 (cluster-admin 금지!).
+  project: __TODO_project__
+  source:
+    repoURL: https://github.com/dsaedsae/cloudsec-policy-stack
+    targetRevision: master
+    path: k8s
+    directory:
+      include: "{netpol.yaml,tracingpolicy.yaml}"
+  destination:
+    server: https://kubernetes.default.svc
+    # 이 App이 쓰는 namespace (AppProject destinations에 allowlist된 곳).
+    namespace: __TODO_namespace__
+  syncPolicy:
+    automated:
+      # git에서 *지운* 객체를 cluster에서도 지운다 (orphan 방지).
+      prune: __TODO_prune__
+      # cluster가 git과 *달라지면* git으로 되돌린다 = drift 자동교정 (L1의 on/off 스위치).
+      # false면 공격자의 kubectl patch가 살아남는다.
+      selfHeal: __TODO_selfHeal__
+    syncOptions: [CreateNamespace=false, ServerSideApply=true]

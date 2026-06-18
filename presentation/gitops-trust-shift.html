@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cloudsec — GitOps는 신뢰를 이전한다 (B7 → B8)</title>
+<!-- M10 발표 보조. 신뢰 경계의 *이전*을 한 장으로. self-contained, zero JS. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+:root{
+  --bg:#0b0d10; --panel:#0e1014; --fg:#e7e9ee; --mut:#8b9099; --faint:#4b515b; --line:#1b1f25;
+  --acc:#34d399; --warn:#e0a341; --no:#f06f6f;
+  --mono:"JetBrains Mono","Cascadia Code",Consolas,monospace;
+  --sans:"Noto Sans KR",-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.62;
+  -webkit-font-smoothing:antialiased;letter-spacing:.1px}
+.wrap{max-width:880px;margin:0 auto;padding:56px 30px 76px}
+a{color:var(--acc);text-decoration:none} a:hover{text-decoration:underline}
+.mark{font:500 13px/1 var(--mono);color:var(--mut);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.mark .dot{width:9px;height:9px;border-radius:2px;background:var(--acc)}
+.mark b{color:var(--fg);font-weight:700}.mark .sep{color:var(--faint)}
+h1{font:900 clamp(28px,4.6vw,40px)/1.14 var(--sans);letter-spacing:-.02em;margin:26px 0 0}
+.deck{font-size:16px;color:var(--mut);max-width:42em;margin:14px 0 0}.deck b{color:var(--fg);font-weight:500}
+.rule{border:0;border-top:1px solid var(--line);margin:36px 0}
+h2{font:700 12px/1 var(--mono);letter-spacing:.07em;color:var(--mut);text-transform:uppercase;margin:0 0 16px}
+
+/* before/after TCB ledger */
+.shift{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:stretch}
+.box{border:1px solid var(--line);border-radius:11px;padding:16px 18px;background:var(--panel)}
+.box.b7{border-left:2px solid var(--mut)} .box.b8{border-left:2px solid var(--acc)}
+.box .t{font:700 13px var(--mono);margin:0 0 10px}.box.b7 .t{color:var(--mut)}.box.b8 .t{color:var(--acc)}
+.box p{margin:0 0 8px;font-size:14px;color:var(--mut)}.box p:last-child{margin:0}
+.box code{font-family:var(--mono);color:var(--fg);background:#14171c;padding:.05em .35em;border-radius:4px;font-size:.88em}
+.arrow{display:flex;align-items:center;font:700 22px/1 var(--mono);color:var(--acc)}
+.shift .note{grid-column:1/-1;font:400 13px/1.6 var(--mono);color:var(--faint);margin-top:4px}
+
+/* 3 posture strip */
+.posture{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;font-size:14px}
+.posture .p{border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.posture .k{font:700 12px var(--mono);letter-spacing:.04em}
+.posture .det .k{color:var(--warn)} .posture .pre .k{color:var(--acc)} .posture .cor .k{color:#7aa2f7}
+.posture .d{color:var(--mut);margin:7px 0 0;font-size:13.5px}.posture .d b{color:var(--fg);font-weight:500}
+
+dl.facts{display:grid;grid-template-columns:max-content 1fr;gap:10px 18px;margin:0;font-size:14px}
+dl.facts dt{font-family:var(--mono);font-size:12.5px;color:var(--acc);white-space:nowrap}
+dl.facts dd{margin:0;color:var(--mut)}dl.facts dd b{color:var(--fg);font-weight:500}
+
+pre{margin:0;border:1px solid var(--line);border-radius:10px;background:#0c0e12;overflow:auto}
+pre code{font-family:var(--mono);font-size:12.5px;line-height:1.7;display:block;padding:14px 16px;color:var(--mut)}
+pre .oos{color:var(--warn)} pre .no{color:var(--no)} pre .ok{color:var(--acc)} pre .c{color:var(--faint)}
+.cap{font:400 12px var(--mono);color:var(--faint);margin:8px 0 0}
+
+.limits li{margin:8px 0;color:var(--mut);font-size:14px}.limits li b{color:var(--fg);font-weight:500}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0 0}
+.btn{font:500 13px/1 var(--mono);padding:12px 18px;border:1px solid var(--line);border-radius:8px;color:var(--fg)}
+.btn:hover{border-color:var(--acc);color:var(--acc);text-decoration:none}.btn.p{border-color:var(--acc);color:var(--acc)}
+footer{margin-top:48px;font:400 11.5px/1.7 var(--mono);color:var(--mut)}
+@media print{ @page{size:A4;margin:14mm} :root{--bg:#fff;--panel:#fff;--fg:#15171c;--mut:#555b66;--faint:#9aa0ab;--line:#e2e5ea;--acc:#0f9e74}
+  body{font-size:10.5px}.wrap{max-width:none;padding:0} .shift,.posture,dl.facts,pre{break-inside:avoid}}
+@media screen and (max-width:640px){.shift{grid-template-columns:1fr}.arrow{transform:rotate(90deg);justify-content:center}.posture{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="mark"><span class="dot"></span><b>cloudsec</b><span class="sep">/</span>M10 · GitOps 무결성 통제판<span class="sep">·</span>B7 → B8</div>
+
+  <h1>GitOps는 통제를 *추가*하지 않는다 —<br>신뢰를 *이전*한다.</h1>
+  <p class="deck">주니어: "Git이 진실원천." 시니어: GitOps는 B7의 신원-TCB를 <b>재배치</b>한다. <b>"누가 <code>app:api</code> 파드를 만드나"</b>가
+    <b>"누가 repo에 머지하나 + reconciler가 무엇을 적용/사칭하나"</b>가 된다. M10은 그 이전을 — drift 자동교정의 윈도우·admission과의 교착·
+    reconciler 권한 경계를 — <b>라이브로 측정</b>한다.</p>
+
+  <hr class="rule">
+  <h2>신뢰 경계의 이전</h2>
+  <div class="shift">
+    <div class="box b7"><p class="t">B7 — imperative (kubectl)</p>
+      <p>TCB = <code>RBAC</code>: 누가 <code>app:api</code> 라벨 파드를 만드나.</p>
+      <p>분산된 사람·운영자 + <code>kubectl</code>. 추적은 audit log/감사에 의존.</p></div>
+    <div class="arrow">→</div>
+    <div class="box b8"><p class="t">B8 — GitOps (relocated)</p>
+      <p>TCB = <code>repo merge 권한</code>(code-review·signed commit) <b>∪</b> <code>reconciler SA</code>가 사칭/적용할 수 있는 범위.</p>
+      <p>capability가 <b>재중앙화</b>(하나의 봇 + 모든 권한 + git log)되어 추적성을 산다 → AppProject로 <b>최소화 필수</b>(LP7 analogue).</p></div>
+    <p class="note">// GitOps는 root kubectl trust를 *제거*하지 않고 *사용 빈도*만 줄인다. reconciler를 cluster-admin으로 두면 B7이 분산시킨 권한이 통째로 되돌아온다.</p>
+  </div>
+
+  <hr class="rule">
+  <h2>세 번째 자세 — correction</h2>
+  <div class="posture">
+    <div class="p det"><div class="k">DETECTION</div><div class="d"><b>M8</b> · Tetragon이 *본다*(탐지). 막진 않음 — write-window 잔존.</div></div>
+    <div class="p pre"><div class="k">PREVENTION</div><div class="d"><b>M2/admission</b> · VAP가 *막는다*(거부). 위조 신원은 절대 admit 안 됨.</div></div>
+    <div class="p cor"><div class="k">CORRECTION</div><div class="d"><b>M10</b> · reconciler가 *되돌린다*. drift를 <code>≤ sync interval</code>로 경계짓고 자동교정.</div></div>
+  </div>
+  <p class="cap">// detection ≠ prevention ≠ correction. M10이 더하는 *유일한* 새 통제는 런타임 무결성(correction)이다 — 그래서 coverage 신규 후보는 단 1행(IN1).</p>
+
+  <hr class="rule">
+  <h2>라이브로 측정 — 그리고 정직한 대시보드</h2>
+  <dl class="facts">
+    <dt>L1 drift</dt><dd><b>공격자 <code>kubectl patch</code>가 <code>≤ interval</code>에 revert</b> + <code>/auditlogs</code> 403 <b>재폐쇄</b>(spec-equality ≠ 의미적 재폐쇄)</dd>
+    <dt>L2 교착</dt><dd>위조 manifest를 Git에 머지 → admission DENY → Application <b>OutOfSync ∞</b>(fighting controllers, GitOps는 admission 우회 못 함)</dd>
+    <dt>L3 경계</dt><dd>reconciler는 <code>clusterrolebinding</code>·kube-system <code>secret</code> 못 만듦, <code>ciliumnetworkpolicy</code>는 patch 가능(tight ≠ broken)</dd>
+  </dl>
+  <p class="cap" style="margin:14px 0 8px">대시보드는 *위조하지 않는다* — 살아있는 패널 대신, 그것이 렌더하는 CLI 원천(재현 가능):</p>
+<pre><code>$ argocd app get shop-network-runtime
+Sync Status:  <span class="oos">OutOfSync (drift)</span>     Health: Healthy
+cilium.io  CiliumNetworkPolicy  allow-web-to-api  <span class="oos">OutOfSync</span>  <span class="c"># L1: reconciler가 곧 revert</span>
+$ argocd app get m10-forge
+Sync Status:  <span class="oos">OutOfSync</span>            Health: <span class="no">Missing</span>
+Condition: <span class="no">SyncError</span> — admission webhook denied: <span class="c">forged identity (app:api on web-sa)</span>
+           <span class="c"># L2: admission이 막아 영원히 Synced에 못 닿는다</span></code></pre>
+
+  <hr class="rule">
+  <h2>못 막는 것 (정직)</h2>
+  <ul class="limits">
+    <li><b>bootstrap 역설:</b> GitOps는 자기 자신을 못 띄운다 — ArgoCD+root는 push-model(terraform/admin kubectl)이 설치. trust-root는 여전히 push.</li>
+    <li><b>compromised Git / 악성이지만 valid한 PR:</b> 설계상 in-scope-of-trust. GitOps는 trust를 *이전*하지 *생성*하지 않는다.</li>
+    <li><b>un-tracked 객체:</b> reconciler는 OWN하지 않은 걸 못 되돌린다(음성 통제로 실측, NS5 연결).</li>
+    <li><b>ArgoCD 자체가 net-new 공격표면:</b> <code>argocd-server</code> 침해 = 모든 synced ns write. "가르치는 UI가 곧 위협모델 대상"(ADR 0002).</li>
+  </ul>
+
+  <hr class="rule">
+  <div class="cta">
+    <a class="btn p" href="cloudsec-onepager.html">← 한 장 소개</a>
+    <a class="btn" href="curriculum.html">커리큘럼</a>
+  </div>
+  <footer>교육·포트폴리오 — 법률/금융 자문도 공식 FSC 매핑도 아님 · M10 상세는 labs/m10 · 설계 근거 ADR 0002 · MIT</footer>
+
+</div>
+</body>
+</html>
