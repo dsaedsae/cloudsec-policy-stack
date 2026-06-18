@@ -1,0 +1,43 @@
+# M11 — BPF-LSM exec ALLOWLIST (reference artifact; NOT shipped, NOT applied to web/api/db).
+#
+# Scoped to a DEDICATED test pod (label lab=m11-lsm) so it never touches the shipped tiers —
+# the same "dedicated selector" safety pattern as labs/m8/tracingpolicy-write-window.yaml.
+#
+# WHAT IT SHOWS: an exec allowlist keyed on the LOADED IMAGE (linux_binprm->file), not on arg0
+# (M4, bypassed by rename) and not on the caller (matchBinaries, which is backwards for exec — see
+# ADR 0001). The LSM hook `bprm_creds_for_exec` (= security_bprm_creds_for_exec, named in ADR 0001
+# and THREAT_MODEL) fires on the binary about to be loaded, so a renamed/execveat'd shell is still
+# caught by its real path/inode.
+#
+# HONEST CAVEATS (read before judging):
+#  * Needs a BPF-LSM kernel: CONFIG_BPF_LSM=y AND `bpf` in /sys/kernel/security/lsm. Most kind /
+#    Docker Desktop kernels DON'T have bpf in lsm= -> Tetragon won't attach the LSM program and
+#    labs/m11/grade.sh SKIPs (FAIL 아님). Linux 5.7+ for LSM BPF.
+#  * Tetragon's exact LSM arg-resolution for linux_binprm (and Sigkill-on-LSM-hook) is VERSION-
+#    DEPENDENT; this is a documented reference of the bprm_creds_for_exec approach, grounded in the
+#    Tetragon LSM-hooks schema (lsmhooks/hook/args/selectors), not a guaranteed-firing policy on
+#    every build. The grader proves behavior where the hook actually attaches.
+#  * Claim only "the LSM hook observes the loaded-image exec the syscall/arg0 path can't gate" —
+#    NOT "io_uring-proof / unbypassable".
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: m11-lsm-exec-allowlist
+spec:
+  podSelector:
+    matchLabels: { lab: m11-lsm }       # the M11 TEST pod ONLY — never web/api/db
+  lsmhooks:
+    - hook: "bprm_creds_for_exec"        # LSM exec hook: sees the binary being LOADED
+      args:
+        - index: 0
+          type: "linux_binprm"           # the program image (NOT the caller, NOT argv[0])
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "NotPrefix"       # loaded-image path NOT in the allowlist...
+              values:
+                - "/usr/sbin/nginx"
+                - "/usr/bin/nginx"
+                - "/docker-entrypoint.sh"
+          matchActions:
+            - action: Sigkill             # ...kill it. (prevention-grade alt: action Override -> EPERM, refuses the exec)
