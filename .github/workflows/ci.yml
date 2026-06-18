@@ -77,10 +77,19 @@ jobs:
           terraform init -backend=false -input=false
           terraform validate -no-color
 
-      - name: Secret scan (gitleaks)
+      - name: Secret scan (gitleaks) — repo-wide gate (honors .gitleaks.toml)
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Secret-scan gate PROOF (SL2: gitleaks actually catches a planted secret)"
+        run: |
+          # pinned to the version the proof was demonstrated on (no moving latest).
+          ver=8.30.1
+          curl -sfL "https://github.com/gitleaks/gitleaks/releases/download/v${ver}/gitleaks_${ver}_linux_x64.tar.gz" | tar -xz gitleaks
+          ./gitleaks version
+          GITLEAKS="$PWD/gitleaks" bash scripts/verify-gitleaks.sh
+          rm -f gitleaks
 
   # Stand up kind + Cilium and prove enforcement end to end (the real demo, in CI).
   integration:

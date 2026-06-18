@@ -31,7 +31,7 @@
 
 **헤드라인 메트릭:**
 
-> ✅ **검증가능-as-code 커버리지:** **워크로드 적용가능 sub-requirement의 77.5% (31/40)** 가 코드로 검증된다. (거버넌스 포함 전체로는 31/42 = 74%.) 범주 분포: **VERIFIED 31 · CONFIGURED 5 · GOVERNANCE 2 · NOT-COVERED 4.**
+> ✅ **검증가능-as-code 커버리지:** **워크로드 적용가능 sub-requirement의 80% (32/40)** 가 코드로 검증된다. (거버넌스 포함 전체로는 32/42 = 76%.) 범주 분포: **VERIFIED 32 · CONFIGURED 4 · GOVERNANCE 2 · NOT-COVERED 4.**
 
 ![MLS verifiability coverage per family](assets/coverage.png)
 
@@ -52,10 +52,10 @@
 → 전체 Table 1(42행, sub-requirement→출처→범주→verify 라인/갭)은 [`mls-coverage.csv`](mls-coverage.csv).
 
 ## 논의 (정직한 갭이 곧 기여)
-- **VERIFIED 77.5%** 는 "워크로드 보상통제를 *어디까지 코드로 증명할 수 있는가*"의 정직한 상한에
+- **VERIFIED 80%** 는 "워크로드 보상통제를 *어디까지 코드로 증명할 수 있는가*"의 정직한 상한에
   가깝다 — 망·인가·런타임·암호화(전송 tcpdump 캡처 포함)는 증명되고, **데이터 거버넌스(C/S/O
   분류·DLP·SIEM)는 워크로드 계층 밖**이다. 이 경계를 수치로 보이는 것이 핵심.
-- **라이브 클러스터 세션 — ID6·ID7·SL6 승격으로 헤드라인 65%→72%; 이후 ID8(JWT enforce 라이브, scripts/verify-jwt-enforce)로 72%→75%; 이후 정적 최소권한 가드(LP7 — `scripts/check-deployer-rbac.py`가 deployer Role에 pods/secrets/SA·`*`와일드카드 없음 + 네임스페이스 한정을 CI에서 단언)로 75%→77.5%.** kind+Cilium+Tetragon+Kyverno를
+- **라이브 클러스터 세션 — ID6·ID7·SL6 승격으로 헤드라인 65%→72%; 이후 ID8(JWT enforce 라이브, scripts/verify-jwt-enforce)로 72%→75%; 이후 정적 최소권한 가드(LP7 — `scripts/check-deployer-rbac.py`가 deployer Role에 pods/secrets/SA·`*`와일드카드 없음 + 네임스페이스 한정을 CI에서 단언)로 75%→77.5% (이후 라이브 kubectl auth can-i로 보강); 이후 SL2(gitleaks 시연 게이트 — scripts/verify-gitleaks.sh가 심은 시크릿을 잡고 깨끗한 트리는 통과)로 77.5%→80%.** kind+Cilium+Tetragon+Kyverno를
   띄워 세 통제를 라이브로 증명했다: **ID6**(SA 토큰 미마운트 — web/api 토큰 경로 ABSENT + 3티어
   automount=false), **ID7**(Kyverno SA-use ClusterPolicy가 *다른* 네임스페이스에서 cross-ns DENY —
   `scripts/verify-kyverno`), **SL6**(Kyverno verifyImages가 cosign-signed→ADMIT / unsigned→DENY —
@@ -70,15 +70,15 @@
   `AUTH_REQUIRE_JWT=1` enforce 모드를 라이브로 증명(`scripts/verify-jwt-enforce.ps1`: unauth→401·Bearer→200,
   `auth_test.py` **18/18**) → **ID8 = VERIFIED**(enforce는 opt-in; 기본 배포는 데모 X-User). 프로덕션
   OAuth 2.1 RS/JWKS·RFC 8693 OBO는 [authorization-model](authorization-model.md) 문서 매핑(doc-only).
-- **CONFIGURED 5** 는 "있지만 (라이브로) 증명 안 됨" — 가장 위험한 범주(감사 시 "있다"고 주장하나
+- **CONFIGURED 4** 는 "있지만 (라이브로) 증명 안 됨" — 가장 위험한 범주(감사 시 "있다"고 주장하나
   시행 미증명). 남은 타깃은 SPIFFE 시행 테스트(ID4)·etcd 키회전 자동화(ER2).
 - **GOVERNANCE 2 / NOT-COVERED 4** — 남은 NOT_COVERED는 관리형 KMS/HSM(ER3)·광역 런타임룰(ED3)·
   DLP(GV3)·SIEM(GV4)으로 *이 레퍼런스의 범위 밖*이거나 전사 통제다. (직전까지 NOT_COVERED였던 ID7 SA-use
   타 ns·SL6 이미지 서명은 이번 라이브 세션에 VERIFIED로 승격.)
-- **VERIFIED 등급의 정직한 결 — always-on CI-게이트 vs opt-in 재현.** 31개 VERIFIED 중 다수는 매 CI 푸시마다 도는
+- **VERIFIED 등급의 정직한 결 — always-on CI-게이트 vs opt-in 재현.** 32개 VERIFIED 중 다수는 매 CI 푸시마다 도는
   always-on 게이트(verify.sh 21/21·정적 가드·단위테스트, + integration job의 LP7-live·ID6·M9 라이브)지만, 일부는
   클러스터에서 **opt-in으로 재현**하는 스크립트다(ET2 capture-wg·ID7 verify-kyverno·SL6 verify-image-signing·ID8
-  enforce 모드). 둘 다 *재실행 가능*이나 후자는 *상시 CI-게이트는 아니다* — "77.5%"는 **검증가능성**의 분율이지
+  enforce 모드). 둘 다 *재실행 가능*이나 후자는 *상시 CI-게이트는 아니다* — "80%"는 **검증가능성**의 분율이지
   매 푸시 연속보장의 분율이 아니다.
 
 ## 한계

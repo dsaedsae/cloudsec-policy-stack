@@ -51,7 +51,7 @@ M7–M9는 *심화*다: 새 통제가 아니라 기존 스택을 형식검증(M7
 - **못 막는 것(정직):** _앵커 — 도메인이 action 3개라 z3는 파이썬 컴프리헨션과 *바이트 동일*(기법 시연이지 unbounded 검증 아님 — 진짜 심볼릭은 cedar-policy-symcc). per-action 일관성만 봄 → L7정규식↔FastAPI 라우트 불일치·context의존 permit(amount=−1)은 범위 밖. SHADOWED는 버그가 아니라 명시화(warning/exit 0); 판정은 사람 몫._
 
 ## M8 · 런타임 kill 경계 (detection ≠ prevention)
-- **재구현:** _M4 선택적 셸-kill의 경계를 *라이브로 측정* — `verify-runtime-scope`로 Phase1 선택적(id=0/sh=137) → Phase2 zero-exec(id=137, 이름·arg0 무관·execveat 포함)의 델타를 보이고 shipped 기본으로 복원. 메트릭은 불변(77.5%): 통제 가감이 아니라 증거를 정직하게 진화._
+- **재구현:** _M4 선택적 셸-kill의 경계를 *라이브로 측정* — `verify-runtime-scope`로 Phase1 선택적(id=0/sh=137) → Phase2 zero-exec(id=137, 이름·arg0 무관·execveat 포함)의 델타를 보이고 shipped 기본으로 복원. 메트릭은 불변(80%): 통제 가감이 아니라 증거를 정직하게 진화._
 - **막는 것:** _execve+Sigkill은 **pre-image-load**(셸이 첫 명령 전에 죽음)라 prevention-grade. zero-exec는 데이터 티어의 *모든* exec를 두 진입점(`sys_execve`+`sys_execveat`) 후킹으로 죽여 renamed-binary·fd-exec까지 닫음._
 - **못 막는 것(정직):** _앵커 — write()는 동기 process-kill이어도 커널이 이미 바이트를 씀(detection-grade, prevention엔 Sigkill+Override 필요). io_uring(`IORING_OP_READ`)은 *기본 syscall 정책*에 blind — "Tetragon이 우회됐다"가 아니라 LSM/KRSI가 해법. zero-exec는 `tier: data` 한정(web/api는 정상 exec 있어 NOT_COVERED, 과잉차단도 결함). restart-tolerance는 이미지가 아니라 Tetragon 부착-창 덕(fragile)._
 

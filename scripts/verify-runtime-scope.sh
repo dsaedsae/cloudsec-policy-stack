@@ -6,7 +6,7 @@
 #   Phase 1  selective (M4)   -> a non-shell exec (id) SURVIVES, a shell exec dies (137)
 #   Phase 2  zero-exec (ship) -> id ALSO dies (137): the name-independent gap is closed
 # The renamed/execveat/fd-exec bypasses that defeat the selective rule are documented below -
-# they are WHY shipped = zero-exec (ADR 0001). Does NOT change ED1 (VERIFIED) or the 77.5% metric.
+# they are WHY shipped = zero-exec (ADR 0001). Does NOT change ED1 (VERIFIED) or the 80% metric.
 # NOTE: this temporarily swaps the data-tier TracingPolicy on the running db; the trap restores
 # the shipped zero-exec. Run it standalone (not alongside verify.sh).
 set -u

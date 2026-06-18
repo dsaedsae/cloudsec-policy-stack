@@ -1,0 +1,17 @@
+# gitleaks config — extends the built-in default ruleset (useDefault = true) and adds
+# ONE narrow path allowlist: scripts/verify-gitleaks.sh intentionally embeds SYNTHETIC
+# secret fixtures (a fake AWS key id + a fake PRIVATE KEY block) that the SL2 gate-proof
+# plants into a temp dir to demonstrate the detector actually fires. Allowlisting that
+# proof script BY PATH keeps the repo-wide gate green without weakening detection
+# anywhere else — the temp-dir scan inside the script runs with the default config, so a
+# planted secret is still caught. See docs/02-scan.md (SL2) and scripts/verify-gitleaks.sh.
+title = "cloudsec-policy-stack"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "synthetic secret fixtures in the SL2 gate-proof (not real credentials)"
+paths = [
+  '''^scripts/verify-gitleaks\.sh$''',
+]

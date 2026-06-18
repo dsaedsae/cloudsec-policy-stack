@@ -32,7 +32,7 @@ ED1,detection-edr,runtime exec kill (data tier),A,VERIFIED,verify:ALL data-tier 
 ED2,detection-edr,process-exec audit trail,B,CONFIGURED,Tetragon logs present; not asserted in suite
 ED3,detection-edr,broader runtime policies (other tiers / non-exec),B,NOT_COVERED,data-tier exec fully blocked (zero-exec); web/api tiers + network-tool/non-exec coverage out of scope. M11 provides the BPF-LSM exec-allowlist mechanism (loaded-image identity via bprm_creds_for_exec) for non-zero-exec tiers but is SKIP-prone on kind (no BPF-LSM in lsm=), so ED3 stays NOT_COVERED - no headline move off a one-shot PASS
 SL1,shift-left,IaC + K8s manifest scan (checkov),B,VERIFIED,checkov 452 pass / 0 fail
-SL2,shift-left,secret scan (gitleaks),B,CONFIGURED,CI step; not in verify suite
+SL2,shift-left,secret scan (gitleaks),B,VERIFIED,gitleaks gate PROVEN (scripts/verify-gitleaks.sh — CI pinned gitleaks 8.30.1 + local): plants a synthetic AWS key id + private-key block in a temp dir -> caught (exit!=0 / leaks found:1) and a clean tree passes (exit 0) — the secret-scan analogue of the SL4 catch-known-bad/pass-known-good proof; repo-wide gitleaks-action (SHA-pinned) honors .gitleaks.toml (useDefault=true; only the proof script's synthetic fixtures allowlisted by path)
 SL3,shift-left,CI enforcement gate,B,VERIFIED,CI runs verify.sh on push
 SL4,shift-left,image vuln+secret scan (trivy),B,VERIFIED,scan gate:exit1 on CVE-2025-62727 / exit0 after starlette bump
 SL5,shift-left,SBOM generation (CycloneDX),B,VERIFIED,scan gate:trivy cyclonedx 103 components
