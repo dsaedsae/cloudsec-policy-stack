@@ -59,6 +59,11 @@ syscall-kprobe 룰은 `io_uring`으로 우회될 수 있다** —
 io_uring에 blind이지 Tetragon 자체가 아니다 — LSM 훅은 본다). 이 데모의 단일 `execve` 룰은 *의도적으로 좁은*
 예시이지 일반 런타임-회피 방어가 아니다(잔여위험 — `THREAT_MODEL.md`).
 
+> **프로덕션 런타임 보안 도구:** **[KubeArmor](https://kubearmor.io/)**(LSM 기반 인라인 *시행*) ·
+> **[Falco](https://falco.org/)**(eBPF *탐지*) · **Tetragon**(이 repo가 쓰는 관측+시행). 손으로 쓴 이
+> `execve` 룰은 *메커니즘 학습용*이고 robust 시행은 위 LSM 경로다 — 계층별 매핑은
+> [프로덕션 도구·선행](prior-art.md).
+
 **kill 타이밍 — execve엔 prevention, I/O엔 detection:** execve+Sigkill은 *이미지 load 이전*에 죽여 셸이 첫
 명령도 못 한다(prevention-grade). 반면 Tetragon 문서는 *write() 중 SIGKILL이 바이트 미기록을 보장하지 않는다*
 고 명시 — 프로세스는 동기적으로 죽어도 커널이 이미 I/O를 했을 수 있다(detection-point ≠ prevention-point).

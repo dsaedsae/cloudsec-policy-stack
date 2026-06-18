@@ -132,4 +132,6 @@ scripts/     up / verify / scan / down (.ps1+.sh) .github/    CI 워크플로 + 
 
 로컬 `kind` 클러스터라 클라우드 비용이 없습니다. Cedar 정책은 Amazon Verified Permissions로, Cilium 정책은 임의의 Cilium 클러스터(EKS / GKE / AKS)로 이식됩니다. `X-User` 신원은 미인증 데모 입력(인젝션 방지용 charset 검증)이며, 실제 시스템은 검증된 JWT `sub`에서 principal을 도출합니다. 엔티티는 이미지에 구운 정적 픽스처입니다. 라이선스: [MIT](LICENSE).
 
+> **성숙한 도구들의 경쟁자가 아닙니다.** 상당수(Cilium·Tetragon·OpenFGA·Kyverno·checkov·trivy·cosign·SPIFFE)는 프로덕션 그대로 쓰고, 직접 짠 부분(Cedar 정책·zero-exec 룰)은 학습 데모로 각각 AVP·KubeArmor/LSM으로 이식됩니다. 계층별 매핑과 "왜 직접 짰나(예: KubeArmor 두고)" → [프로덕션 도구·선행 매핑](docs/prior-art.md).
+
 상표 고지: Cilium·Hubble·Tetragon(Isovalent/CNCF), Cedar·Amazon Verified Permissions·AWS(Amazon), Kyverno·OpenFGA·SPIFFE(CNCF), WireGuard(Jason A. Donenfeld) 등 본 문서의 제3자 제품·상표는 각 소유자의 자산입니다. 본 프로젝트는 학습용 포트폴리오로 이들과 무관하며 어떤 보증·후원 관계도 없습니다.
