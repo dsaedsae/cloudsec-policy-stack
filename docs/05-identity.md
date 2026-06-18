@@ -116,7 +116,7 @@ YAML
 ## 통제 4 — 암호 신원 (mutual auth / SPIFFE)
 
 `terraform/main.tf`는 Cilium mutual authentication을 켜고(클러스터 내 SPIRE가 각 워크로드에
-ServiceAccount에서 파생한 SPIFFE SVID를 발급), `k8s/netpol-mutual.yaml`은 `web→api` 엣지를
+**라벨 기반 Cilium identity**로 SPIFFE SVID를 발급), `k8s/netpol-mutual.yaml`은 `web→api` 엣지를
 그것을 요구하도록 올린다:
 
 ```bash
@@ -129,8 +129,14 @@ API=$(kubectl -n shop get pod -l app=api -o jsonpath='{.items[0].status.podIP}')
 kubectl -n shop exec "$WEB" -- curl -s -o /dev/null -w '%{http_code}\n' -H 'X-User: alice' "http://$API:8080/accounts/acct-alice"   # 200
 ```
 
-이제 위조된 *라벨*은 필요조건이지 충분조건이 아니다: 피어는 유효한 SVID도 제시해야 하고,
-그건 SA의 암호 신원 없이는 찍어낼 수 없다. 전체 체인은 이제: **누가 배포할 수 있나**(RBAC) →
+정직한 메커니즘(Cilium 1.16.5): SVID는 **라벨 기반 Cilium identity**(`spiffe://spiffe.cilium/identity/<id>`,
+selector `cilium:mutual-auth`)로 발급되고 cilium-agent가 delegated identity로 대신 가져온다 — SA는 그
+identity에 접히는 라벨 하나일 뿐 독립된 비밀이 아니다. 따라서 mutual auth는 **라벨만 위조**한 것은 막지만
+(이건 라벨↔SA VAP가 이미 대부분 막았다) **self-consistent 위조(app:api + api-sa)는 못 막는다** — 같은
+identity로 같은 api SVID를 받아 핸드셰이크를 통과한다. 그 위조를 닫는 것은 **SA-use 게이트**(통제 3 / ID2 —
+누가 티어 SA로 *실행*할 수 있나)이지 SVID 핸드셰이크가 아니다. mutual auth가 더하는 것은 엣지의 암호적
+identity-쌍 증명(agent-to-agent, `{local_id,remote_id,node}` 단위, ~30분 만료, 키는 폐기; 기밀성은 별도
+WireGuard)이다. 전체 체인은 이제: **누가 배포할 수 있나**(RBAC) →
 **라벨이 SA와 일치**(통제 2) → **누가 티어 SA로 실행할 수 있나**(통제 3) → **SVID를 보유해야
 함**(통제 4). 남는 것은 위협모델에 정직하게 명시돼 있다 — SA-use 게이트는 admission 계층과
 이름 붙은 operator들을 신뢰하고, 매칭 집합 밖의 리소스 종류(이 게이트는 `shop`의

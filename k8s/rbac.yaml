@@ -16,8 +16,10 @@
 #      template still carries `labels` and `serviceAccountName`, and modern k8s has
 #      no `serviceaccounts/use` gate (PSP was removed in 1.25). So whoever holds
 #      this Role can still mint a self-consistent forged `api` via a Deployment.
-#      The forgery is constrained by trust in the deployer + closed cryptographically
-#      by mutual auth (k8s/netpol-mutual.yaml), NOT by these verb omissions alone.
+#      The forgery is constrained by trust in the deployer + closed by the SA-USE
+#      gate (k8s/admission-sa-use.yaml / ID2: who may RUN AS the tier SA), NOT by
+#      these verb omissions and NOT by mutual auth (the SVID is label/identity-derived,
+#      so a self-consistent forge gets a valid SVID — see k8s/netpol-mutual.yaml).
 
 # The namespace lives HERE (the identity layer), not in app.yaml, because rbac.yaml
 # is applied first: a ServiceAccount cannot be created in a namespace that does not

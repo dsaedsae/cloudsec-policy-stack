@@ -8,11 +8,19 @@
 # admission and IS `api` to Cilium, because Cilium derives identity from labels.
 # (THREAT_MODEL.md B7 residual.)
 #
-# Mutual auth removes labels from the trust equation: Cilium's SPIRE issues every
-# workload a SPIFFE SVID derived from its ServiceAccount, and `mode: required`
-# makes the api endpoint refuse any peer that cannot complete the mTLS handshake.
-# A forged label is then necessary-but-insufficient — the peer must also hold a
-# valid SVID it cannot mint without the SA's cryptographic identity.
+# Mutual auth adds cryptographic identity-pair attestation to this edge: Cilium's
+# SPIRE issues each workload an SVID keyed to its LABEL-DERIVED Cilium security
+# identity (spiffe://spiffe.cilium/identity/<id>, selector cilium:mutual-auth),
+# fetched by the cilium-agent via delegated identity; `mode: required` drops traffic
+# on this edge until the agent-to-agent mTLS handshake completes.
+# HONEST LIMIT: this defeats a LABEL-ONLY forge (which the label<->SA VAP already
+# largely did), but does NOT close a SELF-CONSISTENT forge (app:api + api-sa) — that
+# pod resolves to the SAME Cilium identity, is issued the SAME api SVID, and passes
+# the handshake (the SA is one identity-relevant label, NOT an independent secret the
+# forger lacks). The self-consistent forge is closed by the SA-USE gate
+# (admission-sa-use.yaml / ID2 — who may RUN AS api-sa), not by this handshake.
+# (1.16.5 agent-to-agent model: per {local_id,remote_id,node}, ~30-min expiry, keys
+# discarded; data confidentiality is separate WireGuard.)
 #
 # This re-declares the SAME-named policy as k8s/netpol.yaml (allow-web-to-api) so
 # `kubectl apply -f k8s/netpol-mutual.yaml` UPGRADES that edge in place (rather

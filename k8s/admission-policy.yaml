@@ -9,9 +9,11 @@
 # persisted. It is a CONSISTENCY GUARD, not a full closure: it kills the trivial
 # forgery (`kubectl run --labels app=api` defaults to the `default` SA -> label!=SA
 # -> denied), but a self-consistent pod (app:api + api-sa) still passes — that
-# residual is closed cryptographically by mutual auth (k8s/netpol-mutual.yaml),
-# since SPIFFE/SVID identities are derived from the SA. The value here: label, SA,
-# and (with mutual auth) the cryptographic identity all line up.
+# residual is closed by the SA-USE gate (k8s/admission-sa-use.yaml / ID2: who may
+# RUN AS api-sa), NOT by mutual auth: Cilium's SVID is keyed to the label-derived
+# identity (the SA is just one of those labels), so a self-consistent forge gets a
+# valid api SVID and passes the handshake. The value here: label and SA must agree,
+# and (with mutual auth) the edge also requires a SPIRE identity-pair handshake.
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicy
 metadata:

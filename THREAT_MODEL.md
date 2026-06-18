@@ -142,11 +142,21 @@ portfolios, and it is exactly where this stack now adds controls.
    authentication** is enabled in this repo (`terraform/main.tf`:
    `authentication.mutual.spire.{enabled,install.enabled}=true` stands up an
    in-cluster SPIRE), and `k8s/netpol-mutual.yaml` upgrades the `web→api` edge to
-   `authentication.mode: required`. Each workload gets a SPIFFE SVID derived from
-   its **ServiceAccount**, and the api endpoint refuses any peer that cannot
-   complete the mTLS handshake — so a forged *label* alone is necessary-but-
-   insufficient. The chain — RBAC (who may deploy) → label/SA consistency → SA-use
-   gate (who may run as a tier SA) → SVID handshake — raises the bar at every step.
+   `authentication.mode: required`. **Honest mechanism (Cilium 1.16.5):**
+   the in-cluster SPIRE issues each workload an SVID keyed to its **label-derived
+   Cilium security identity** (`spiffe://spiffe.cilium/identity/<id>`, selector
+   `cilium:mutual-auth`), fetched by the cilium-agent via delegated identity — the
+   ServiceAccount enters only as one identity-relevant label folded into that
+   identity. So mutual auth defeats a **label-only** forge (which the label↔SA VAP
+   already largely did) but does **NOT** close a **self-consistent** forge
+   (`app:api` + `api-sa`): that pod resolves to the same Cilium identity, is issued
+   the same `api` SVID, and completes the handshake. The self-consistent forge is
+   closed by the **SA-use gate** (#3, who may *run as* a tier SA — ID2, live-VERIFIED),
+   not by the SVID. What mutual auth adds is cryptographic identity-pair attestation
+   on the edge (agent-to-agent, per `{local_id, remote_id, node}`, ~30-min expiry,
+   keys discarded; confidentiality is separate WireGuard). The chain — RBAC (who may
+   deploy) → label/SA consistency → SA-use gate (who may run as a tier SA) → SVID
+   identity-pair attestation — raises the bar at every step.
    **What remains, stated plainly:** the SA-use gate trusts the admission layer and
    the named operators; a compromised admin, resource kinds outside the matched set
    (other namespaces; a future API kind), or a root-on-node attacker are out of scope
