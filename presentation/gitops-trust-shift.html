@@ -15,6 +15,10 @@
   --sans:"Noto Sans KR",-apple-system,"Segoe UI",sans-serif;
 }
 *{box-sizing:border-box}
+/* StyleSeed-informed craft polish (a11y + motion + selection), single-accent, layout-safe */
+a:focus-visible,.btn:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:5px}
+::selection{background:var(--acc);color:var(--bg)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.62;
   -webkit-font-smoothing:antialiased;letter-spacing:.1px}
