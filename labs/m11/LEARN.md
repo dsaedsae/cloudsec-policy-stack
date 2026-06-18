@@ -1,7 +1,7 @@
 # M11 배우기 모드 — 왜 LSM `bprm` 훅인가
 
 > [M11 README](README.md)를 먼저. 핵심 한 줄: **exec 허용목록은 *적재되는 이미지*의 신원을 봐야 하는데,
-> 그건 syscall 표면(arg0·caller)엔 없고 LSM `bprm_creds_for_exec`에만 있다.**
+> 그건 syscall 표면(arg0·caller)엔 없고 LSM `bprm_check_security`에만 있다.**
 
 ## 1단계 — 세 후보를 손에 익힌다 (무엇을 보나)
 
@@ -9,14 +9,14 @@
 |---|---|---|
 | `sys_execve` + `matchArgs` arg0 (M4) | `argv[0]` 문자열 | rename으로 우회(`/tmp/x sh`) — 이름은 신원이 아님 |
 | `matchBinaries` (어느 훅이든) | exec를 *호출한* 바이너리(caller) | 거꾸로 — `nginx -v`는 죽고 nginx-RCE 셸은 통과(ADR 0001) |
-| **LSM `bprm_creds_for_exec`** | **적재될 `linux_binprm->file`** | 실제 inode/path — 정직한 허용목록의 유일한 훅 |
+| **LSM `bprm_check_security`** | **적재될 `linux_binprm->file`** | 실제 inode/path — 정직한 허용목록의 유일한 훅 |
 
 ## 2단계 — 한 칸 채우기 (정책에서 무엇이 load-bearing인가)
 
 `tracingpolicy-lsm-exec-allowlist.yaml`에서:
 ```yaml
 lsmhooks:
-  - hook: "bprm_creds_for_exec"
+  - hook: "bprm_check_security"
     args: [{ index: 0, type: "linux_binprm" }]   # 적재 이미지
     selectors:
       - matchArgs: [{ index: 0, operator: "NotPrefix", values: ["/usr/sbin/nginx", ...] }]

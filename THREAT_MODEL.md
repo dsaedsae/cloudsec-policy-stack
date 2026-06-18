@@ -195,7 +195,7 @@ portfolios, and it is exactly where this stack now adds controls.
   NO `/bin/sh` and NO busybox (validated: `/bin/sh` → "no such file" before the policy applies), so it
   removes the shell entirely while this runtime rule still kills any binary an attacker WRITES into a
   writable mount — use both. An allowlist (some exec permitted) would need **BPF-LSM**
-  (`security_bprm_creds_for_exec`) for binary identity, not arg0 strings. Surfaced by expert review,
+  (`bprm_check_security`) for binary identity, not arg0 strings. Surfaced by expert review,
   live-validated in Lab M8.
 - **Runtime detection watches the *syscall* surface — which has a known evasion class.**
   `execve` has no io_uring opcode, so io_uring does not route around the exec rule — a *narrow* fact

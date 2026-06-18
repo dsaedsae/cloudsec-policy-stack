@@ -33,7 +33,7 @@
 #   - This kills legitimate `kubectl exec` and exec-based liveness/readiness probes (that
 #     is the point — zero interactive exec in the datastore). Use httpGet probes.
 #   - For an allowlist (some exec permitted) rather than zero-exec, you need binary
-#     identity from BPF-LSM (security_bprm_creds_for_exec), not arg0 strings.
+#     identity from BPF-LSM (bprm_check_security), not arg0 strings.
 apiVersion: cilium.io/v1alpha1
 kind: TracingPolicy
 metadata:

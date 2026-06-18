@@ -86,7 +86,7 @@ flowchart LR
 - **[M8 · 심화 (런타임 kill 경계)](m8/README.md)** — Tetragon shell-kill의 정직한 경계: detection≠prevention, execve vs I/O, io_uring 클래스. 채점 `powershell -File scripts\verify-runtime-scope.ps1` · *클러스터 필요*
 - **[M9 · 심화 (침해 가정·블래스트 반경)](m9/README.md)** — 제로데이 RCE를 *가정*하고 횡이동·유출·권한상승이 어디서 막히나(+ 못 막는 것)를 추적. 기존 통제를 공격자 사후 렌즈로 재구성. 채점 `bash labs/m9/grade.sh` · *클러스터 필요*
 - **[M10 · 심화 (GitOps 무결성 통제판)](m10/README.md)** — GitOps가 신원-TCB를 *이전*한다(B7→B8): drift 자동교정의 윈도우·admission과의 교착(fighting controllers)·reconciler 권한 경계를 라이브로 측정. 채점 `bash labs/m10/grade.sh` · *클러스터 필요* · 무클러스터 절반은 항상 CI-게이트(`check-reconciler-rbac.py`·`check-sync-wave-order.py`)
-- **[M11 · 심화 (BPF-LSM exec 허용목록)](m11/README.md)** — exec 허용목록은 *적재 이미지* 신원을 봐야 한다(arg0=rename우회·matchBinaries=caller거꾸로). LSM `bprm_creds_for_exec`로 건다. **kind는 BPF-LSM 없어 SKIP-prone → ED3·헤드라인 불변.** 채점 `bash labs/m11/grade.sh`(SKIP-first) + `python labs/m11/grade.py`(무클러스터) · *클러스터 필요*
+- **[M11 · 심화 (BPF-LSM exec 허용목록)](m11/README.md)** — exec 허용목록은 *적재 이미지* 신원을 봐야 한다(arg0=rename우회·matchBinaries=caller거꾸로). LSM `bprm_check_security`로 건다. **kind는 BPF-LSM 없어 SKIP-prone → ED3·헤드라인 불변.** 채점 `bash labs/m11/grade.sh`(SKIP-first) + `python labs/m11/grade.py`(무클러스터) · *클러스터 필요*
 
 ## 형식 (모든 모듈 공통)
 

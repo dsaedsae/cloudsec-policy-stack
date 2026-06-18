@@ -34,8 +34,8 @@ def main() -> int:
     check(re.search(r"(?m)^kind:\s*TracingPolicy", t) is not None, "kind: TracingPolicy")
     check(re.search(r"(?m)^\s*lsmhooks:", t) is not None,
           "lsmhooks 사용 (syscall kprobe가 아니라 LSM 레이어)")
-    check(re.search(r"hook:\s*['\"]?bprm_creds_for_exec", t) is not None,
-          "hook = bprm_creds_for_exec (적재되는 이미지를 보는 LSM exec 훅)")
+    check(re.search(r"hook:\s*['\"]?bprm_check_security", t) is not None,
+          "hook = bprm_check_security (적재되는 이미지를 보는 LSM exec 훅)")
     check(re.search(r"type:\s*['\"]?linux_binprm", t) is not None,
           "arg type = linux_binprm (호출자 아닌 *적재 이미지*)")
     # the senior point: the allowlist keys on the LOADED-image path (matchArgs), NOT the caller

@@ -5,18 +5,23 @@
 #
 # WHAT IT SHOWS: an exec allowlist keyed on the LOADED IMAGE (linux_binprm->file), not on arg0
 # (M4, bypassed by rename) and not on the caller (matchBinaries, which is backwards for exec — see
-# ADR 0001). The LSM hook `bprm_creds_for_exec` (= security_bprm_creds_for_exec, named in ADR 0001
-# and THREAT_MODEL) fires on the binary about to be loaded, so a renamed/execveat'd shell is still
-# caught by its real path/inode.
+# ADR 0001). The LSM hook `bprm_check_security` — Tetragon's DOCUMENTED exec LSM hook (its lsmhooks
+# example), the kernel's check on the program about to run — receives `linux_binprm` (the LOADED
+# image; the binary-identity surface named in ADR 0001 and THREAT_MODEL), so a renamed/execveat'd
+# shell is still caught by its real path/inode. (Both bprm_check_security and the earlier
+# bprm_creds_for_exec receive linux_binprm and see the loaded image — AppArmor even uses
+# bprm_creds_for_exec for exec transitions — but Tetragon documents bprm_check_security, so the
+# reference uses that one.)
 #
 # HONEST CAVEATS (read before judging):
 #  * Needs a BPF-LSM kernel: CONFIG_BPF_LSM=y AND `bpf` in /sys/kernel/security/lsm. Most kind /
 #    Docker Desktop kernels DON'T have bpf in lsm= -> Tetragon won't attach the LSM program and
 #    labs/m11/grade.sh SKIPs (FAIL 아님). Linux 5.7+ for LSM BPF.
-#  * Tetragon's exact LSM arg-resolution for linux_binprm (and Sigkill-on-LSM-hook) is VERSION-
-#    DEPENDENT; this is a documented reference of the bprm_creds_for_exec approach, grounded in the
-#    Tetragon LSM-hooks schema (lsmhooks/hook/args/selectors), not a guaranteed-firing policy on
-#    every build. The grader proves behavior where the hook actually attaches.
+#  * Tetragon's exact LSM arg-resolution for linux_binprm (matching the loaded-image PATH below, and
+#    Sigkill-on-LSM-hook) is VERSION-DEPENDENT — Tetragon's bprm example resolves struct fields via a
+#    `resolve:` selector, so this matchArgs/NotPrefix-on-linux_binprm form is a structurally-grounded
+#    reference (lsmhooks/hook/args/selectors schema), NOT a guaranteed-firing policy on every build.
+#    The grader proves behavior only where the hook actually attaches; otherwise it SKIPs (never PASS).
 #  * Claim only "the LSM hook observes the loaded-image exec the syscall/arg0 path can't gate" —
 #    NOT "io_uring-proof / unbypassable".
 apiVersion: cilium.io/v1alpha1
@@ -27,7 +32,7 @@ spec:
   podSelector:
     matchLabels: { lab: m11-lsm }       # the M11 TEST pod ONLY — never web/api/db
   lsmhooks:
-    - hook: "bprm_creds_for_exec"        # LSM exec hook: sees the binary being LOADED
+    - hook: "bprm_check_security"        # Tetragon's documented exec LSM hook: sees the binary being LOADED
       args:
         - index: 0
           type: "linux_binprm"           # the program image (NOT the caller, NOT argv[0])

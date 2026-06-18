@@ -33,7 +33,7 @@
 - zero-exec는 `kubectl exec`·exec 기반 프로브도 죽인다 — db는 httpGet이라 무관(의도된 "datastore엔 인터랙티브 exec 0").
 - restart-tolerance는 *이미지가 아니라 Tetragon 부착-창* 덕분(이미지 무관·fragile; 더 빠른 attach는 entrypoint를
   죽여 CrashLoop 가능). **distroless의 이점은 *이미지층*(셸 부재) = 2중 방어**이지 restart-safety가 아니다.
-- 일부 exec 허용(allowlist)이 필요하면 arg0 문자열이 아니라 **BPF-LSM**(`security_bprm_creds_for_exec`)의
+- 일부 exec 허용(allowlist)이 필요하면 arg0 문자열이 아니라 **BPF-LSM**(`bprm_check_security`)의
   바이너리 신원이 필요하다.
 
 **근거(라이브):** [`labs/m8/tracingpolicy-data-tier-no-exec.yaml`](../../labs/m8/tracingpolicy-data-tier-no-exec.yaml) 헤더의

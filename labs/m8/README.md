@@ -157,7 +157,7 @@ kubectl exec db -n shop -- id                     # -> rc=137 (정책 kill)
 둘 다 정책 활성 상태로 올라왔다(PID1 entrypoint execve가 창을 빠져나감; fragile·이미지 무관). (2) 이건 채점
 스택의 *drop-in 교체가 아니다* — verify.sh 21/21과 api→db L7 홉은 alpine db(8080) 기준이고 chainguard/nginx의
 포트·root-FS는 다를 수 있다(`app-db-distroless.yaml` 주석 참조). (3) allowlist(일부 exec 허용)가 필요하면 arg0
-문자열이 아니라 **BPF-LSM**(`security_bprm_creds_for_exec`)의 바이너리 신원이 필요하다.
+문자열이 아니라 **BPF-LSM**(`bprm_check_security`)의 바이너리 신원이 필요하다.
 
 ---
 
@@ -213,7 +213,7 @@ kubectl exec db -n shop -- id                     # -> rc=137 (정책 kill)
 2. <details><summary>여기서 커버리지 %를 내리는 게 왜 틀린 선택인가?</summary>아무것도 반증되지 않았다(ED1의 셸-kill은 여전히 참). M8은 통제를 더/덜 만들지 않고 *경계를 측정*한다. 내리면 false-underclaim, 올리면 inflation. 안 변하는 게 정직.</details>
 3. <details><summary>io_uring 클래스를 닫는 훅은? 왜?</summary>BPF-LSM/KRSI — syscall 표면이 아니라 커널 *연산*을 관측하므로 호출 방식(syscall vs io_uring)과 무관. Tetragon은 LSM 훅도 지원하므로 io_uring을 "볼 수 있다"; blind한 건 *기본 syscall 정책*일 뿐.</details>
 4. <details><summary>Tetragon은 io_uring에 "blind"한가? 정확히.</summary>아니다(전부는). ARMO는 "기본 syscall 후킹 기반 탐지가 blind"라 했고, Tetragon은 kprobe+LSM 훅도 지원해 io_uring을 잡을 수 있다. "기본 정책 blind / LSM이 해법"이 정확.</details>
-5. <details><summary>matchBinaries로 "nginx만 허용"하는 allowlist를 왜 못 쓰나? 그럼 무엇으로?</summary>`sys_execve`에서 matchBinaries는 적재될 *새 이미지*가 아니라 execve를 *호출한 부모*를 매칭한다. `NotIn [/usr/sbin/nginx]`는 `nginx -v`(호출자=exec shim)를 죽이고 nginx-RCE 셸(호출자=nginx)은 통과시켜 정확히 거꾸로 동작한다. execve 진입 시점엔 caller 정보뿐이라 이름 기반 allowlist가 원리적으로 불가. 진짜 신원이 필요하면 BPF-LSM `security_bprm_creds_for_exec`(적재될 바이너리의 creds를 본다).</details>
+5. <details><summary>matchBinaries로 "nginx만 허용"하는 allowlist를 왜 못 쓰나? 그럼 무엇으로?</summary>`sys_execve`에서 matchBinaries는 적재될 *새 이미지*가 아니라 execve를 *호출한 부모*를 매칭한다. `NotIn [/usr/sbin/nginx]`는 `nginx -v`(호출자=exec shim)를 죽이고 nginx-RCE 셸(호출자=nginx)은 통과시켜 정확히 거꾸로 동작한다. execve 진입 시점엔 caller 정보뿐이라 이름 기반 allowlist가 원리적으로 불가. 진짜 신원이 필요하면 BPF-LSM `bprm_check_security`(적재될 바이너리 `linux_binprm`을 보는 exec 검사 훅 — Tetragon 문서 훅).</details>
 6. <details><summary>zero-exec가 selective보다 "더 강한 통제"라서 커버리지가 올라가야 하지 않나?</summary>아니다 — selector를 *추가*한 게 아니라 *줄여* 매칭 표면을 없앤 것이다. ED1의 주장("데이터 티어 셸 exec를 죽인다")은 selective에서도 zero-exec에서도 참이라 개수가 불변(82.5%). (#2가 하향을, 이건 상향을 막는 같은 정직성의 두 방향.)</details>
 7. <details><summary>execve 룰을 web/api 티어엔 왜 안 거나? (ED3 NOT_COVERED)</summary>데이터 티어는 정당한 exec가 0(프로브=httpGet, 본체=PID1)이라 "전부 금지"가 가용성을 안 깬다. web/api는 정상 운영 중 exec할 수 있어(예: 진입스크립트·sidecar) 전면 금지가 곧 가용성 사고. 그래서 zero-exec는 `tier: data`(ⓐ)에 한정되고, 다른 티어는 NOT_COVERED로 정직히 남긴다 — 과잉차단도 결함이라는 M4 교훈의 연장.</details>
 
@@ -223,7 +223,7 @@ kubectl exec db -n shop -- id                     # -> rc=137 (정책 kill)
 - **kind/LinuxKit kprobe 미부착 이슈(Station C SKIP 근거)** — cilium/tetragon#4883: <https://github.com/cilium/tetragon/issues/4883>
 - **io_uring 회피 클래스("Curing", ARMO 2025)** — 기본 syscall 정책 blind / LSM이 해법: <https://www.armosec.io/blog/io_uring-rootkit-bypasses-linux-security/>
 - **execveat(2) ABI** — execve와 별개 syscall, `AT_EMPTY_PATH`/fd-exec: <https://man7.org/linux/man-pages/man2/execveat.2.html>
-- **LSM `bprm_creds_for_exec` 훅(allowlist의 올바른 표면)** — 적재될 바이너리의 creds 시점: <https://www.kernel.org/doc/html/latest/security/lsm.html>
+- **LSM `bprm_check_security` 훅(allowlist의 올바른 표면)** — 적재될 바이너리(`linux_binprm`)를 보는 exec 검사 시점: <https://www.kernel.org/doc/html/latest/security/lsm.html>
 - **이 레포 결정 기록** — [ADR 0001 selective→zero-exec](../../docs/decisions/0001-data-tier-zero-exec.md) · [THREAT_MODEL](../../THREAT_MODEL.md)
 
 > 정직 메모: **라이브 측정은 rc뿐** — Phase1 선택적(id=0/sh=137/cat=0)·Phase2 zero-exec(id=137/sh=137)(`verify-runtime-scope.ps1`). Phase1의 *pre-image-load
