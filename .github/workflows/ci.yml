@@ -175,6 +175,9 @@ jobs:
       - name: "ID6 SA token not mounted (LIVE, re-runnable: token path absent on tier pods)"
         run: bash scripts/verify-token-not-mounted.sh
 
+      - name: "NS5 cross-namespace isolation (LIVE: db+api unreachable from a foreign ns)"
+        run: bash scripts/verify-cross-ns.sh
+
       # M9 assume-breach lens: same proven probes, framed as attacker post-exploit
       # containment. Asserts every blast-radius boundary HELD on the live stack.
       - name: M9 assume-breach containment (blast-radius boundaries hold)
