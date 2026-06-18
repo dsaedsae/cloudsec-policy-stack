@@ -13,7 +13,7 @@ ID2,credential-forgery,requester<->SA binding (SA-use gate),A,VERIFIED,verify:CI
 ID3,credential-forgery,SA-use covers CronJob path,A,VERIFIED,verify:CronJob as api-sa DENY
 ID4,credential-forgery,SPIFFE SVID mutual-auth on edge,A,CONFIGURED,opt-in netpol-mutual; Lab4 manual; not in suite
 ID5,credential-forgery,tier SA has zero K8s API rights,A,VERIFIED,verify:api-sa no create-pods/secrets
-ID6,credential-forgery,SA token not mounted,A,VERIFIED,LIVE re-runnable: scripts/verify-token-not-mounted.sh (CI integration) asserts /var/run/secrets/.../token ABSENT on web/api/db + 3 tiers automountServiceAccountToken=false (static) / no kube-api-access volume
+ID6,credential-forgery,SA token not mounted,A,VERIFIED,LIVE re-runnable scripts/verify-token-not-mounted.sh (CI integration): /var/run/secrets/.../token ABSENT on web/api (network-reachable tiers) + 3 tiers automountServiceAccountToken=false static incl. db (db is static-only: readOnlyRootFS+emptyDir at /var/run makes a live path-probe ambiguous; automount=false guarantees no token regardless)
 ID7,credential-forgery,SA-use other namespaces,A,VERIFIED,verify-kyverno: Kyverno SA-use ClusterPolicy DENY in 2nd ns (kyv-demo) - cluster-wide proven (opt-in capstone)
 ID8,credential-forgery,requester Bearer-JWT signature+audience verification (RFC 8707),A,VERIFIED,auth_test.py 18/18 (unit) + scripts/verify-jwt-enforce.ps1 LIVE on kind (AUTH_REQUIRE_JWT=1): X-User-only 401 / no-cred 401 / valid aud-bound Bearer 200, demo restored. Enforce is opt-in: default deploy keeps X-User demo input so verify.sh 21/21 is unaffected
 LP1,least-privilege,Cedar owner check,A,VERIFIED,verify:bob GET alice 403

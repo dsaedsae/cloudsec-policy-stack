@@ -17,7 +17,12 @@ k -n shop get deploy/web >/dev/null 2>&1 || { echo "SKIP: shop 스택 미배포"
 
 fail=0
 echo "== ID6: SA token not mounted on tier pods (live, re-runnable) =="
-for app in web api db; do
+# Live-check the network-reachable tiers (web/api) — the ones ID6 has always claimed live. db is
+# covered by the STATIC guarantee instead (db-sa + pod automountServiceAccountToken=false, k8s/app.yaml):
+# db mounts an emptyDir at /var/run under readOnlyRootFS, which makes a live path-probe of that mount
+# ambiguous, while automount=false guarantees no token at the API level regardless. (Not an overclaim:
+# making this re-runnable is exactly what caught an earlier over-broadening of the claim to db-live.)
+for app in web api; do
   pod="$(k -n shop get pod -l "app=$app" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)"
   if [ -z "$pod" ]; then echo "  SKIP: $app pod 없음"; continue; fi
   if k -n shop exec "$pod" -- sh -c "test ! -e $TOKEN_PATH" >/dev/null 2>&1; then
