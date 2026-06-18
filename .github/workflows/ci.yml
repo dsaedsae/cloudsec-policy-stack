@@ -182,3 +182,18 @@ jobs:
       # containment. Asserts every blast-radius boundary HELD on the live stack.
       - name: M9 assume-breach containment (blast-radius boundaries hold)
         run: bash labs/m9/grade.sh
+
+      # ED3 honesty probe: run the M11 BPF-LSM exec-allowlist grader LIVE. It is SKIP-first
+      # (exit 2) — most kernels (incl. this runner unless its lsm= includes bpf) cannot attach a
+      # BPF-LSM program, so it SKIPs and ED3 stays NOT_COVERED. If the kernel DOES have bpf LSM it
+      # fires and proves the loaded-image exec kill (renamed/execveat shell killed) — an ED3
+      # promotion candidate (owner decides; not on a single PASS). Print kernel lsm= as evidence.
+      - name: "M11 BPF-LSM exec-allowlist (LIVE if kernel has bpf LSM; else honest SKIP -> ED3 NOT_COVERED)"
+        run: |
+          echo "kernel lsm= : $(cat /sys/kernel/security/lsm 2>/dev/null || echo unavailable)"
+          set +e; bash labs/m11/grade.sh; rc=$?; set -e
+          case "$rc" in
+            0) echo "::notice::M11 LSM FIRED + PASSED — bpf LSM present on this runner; ED3 is now a live-proven promotion candidate" ;;
+            2) echo "::notice::M11 SKIPPED — no bpf in this kernel's lsm= (see above); ED3 stays NOT_COVERED (honest, no headline move)" ;;
+            *) echo "M11 grader BREACH/error (rc=$rc)"; exit "$rc" ;;
+          esac
