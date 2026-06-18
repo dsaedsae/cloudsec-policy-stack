@@ -42,7 +42,7 @@ def summarize(rows: list[dict]) -> None:
     for c in CATS:
         print(f"  {c:14s}: {by_cat[c]:2d}")
     # print the EXACT fraction (anti-inflation): .1f then strip a trailing ".0" — so
-    # 32/40 prints "80" and 31/40 prints "77.5"; never round a fraction up.
+    # 33/40 prints "82.5" and a whole-number fraction (e.g. 32/40) prints "80"; never round up.
     pct_app_s = f"{pct_app:.1f}".rstrip("0").rstrip(".")
     print(f"\n  HEADLINE: {verifiable}/{workload_applicable} = {pct_app_s}% of "
           f"workload-applicable sub-requirements are VERIFIED-AS-CODE")

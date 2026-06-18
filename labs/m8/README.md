@@ -12,7 +12,7 @@
 바로 **shipped 기본이 zero-exec**(`sys_execve`+`sys_execveat` 전부 Sigkill, `k8s/tracingpolicy.yaml`)인 이유임을
 보인다. `verify-runtime-scope`는 두 룰을 차례로 적용해 *델타*를 측정한다: 선택적은 `id`를 살리고(갭), zero-exec는
 그 `id`까지 죽인다(이름 무관) — 그 뒤 shipped zero-exec로 복원한다.
-**메트릭은 변하지 않는다(80% 그대로):** ED1은 **VERIFIED 그대로** — M8/[ADR 0001](../../docs/decisions/0001-data-tier-zero-exec.md)은
+**메트릭은 변하지 않는다(82.5% 그대로):** ED1은 **VERIFIED 그대로** — M8/[ADR 0001](../../docs/decisions/0001-data-tier-zero-exec.md)은
 통제를 더/덜 만든 게 아니라 *증거를 선택적→zero-exec로 정직하게 진화*시키고 기본으로 승격했을 뿐(개수 불변).
 
 > **학습 성과:** 런타임 kill의 정직한 경계를 *라이브로 측정*해 설명할 수 있다 — detection≠prevention, execve(pre-image-load) vs I/O(write window), 그리고 io_uring에 blind한 건 *기본 syscall 정책*이고 LSM/KRSI가 해법이라는 것.
@@ -206,7 +206,7 @@ kubectl exec db -n shop -- id                     # -> rc=137 (정책 kill)
 - [ ] **B:** 실제 결과 보고(예상: marker 없음/쓰기 불가) + readOnlyRootFS 이중차단 이해
 - [ ] **C:** write-window를 측정(`bytes>0`) **또는** 정직한 SKIP + "synchronous-process-kill ≠ pre-operation"과 Sigkill vs +Override 설명
 - [ ] **D:** 비셸 exec + 파일 읽기 생존 확인 + io_uring/BPF-LSM(KRSI)을 robust 훅으로 지목
-- [ ] 헤드라인이 **왜 안 변하나**(80%) 설명 — M8은 통제 가감이 아니라 가장자리 측정
+- [ ] 헤드라인이 **왜 안 변하나**(82.5%) 설명 — M8은 통제 가감이 아니라 가장자리 측정
 
 ## 구두 문답
 1. <details><summary>execve+Sigkill은 prevention-grade인데 write+Sigkill은 왜 detection-grade?</summary>execve는 새 이미지 load *이전*에 죽어 셸 코드가 실행되지 않음(pre-image-load). write()는 프로세스를 동기적으로 죽여도 커널이 이미 바이트를 기록했을 수 있음. prevention-grade로 만들려면 Sigkill+Override.</details>
@@ -214,7 +214,7 @@ kubectl exec db -n shop -- id                     # -> rc=137 (정책 kill)
 3. <details><summary>io_uring 클래스를 닫는 훅은? 왜?</summary>BPF-LSM/KRSI — syscall 표면이 아니라 커널 *연산*을 관측하므로 호출 방식(syscall vs io_uring)과 무관. Tetragon은 LSM 훅도 지원하므로 io_uring을 "볼 수 있다"; blind한 건 *기본 syscall 정책*일 뿐.</details>
 4. <details><summary>Tetragon은 io_uring에 "blind"한가? 정확히.</summary>아니다(전부는). ARMO는 "기본 syscall 후킹 기반 탐지가 blind"라 했고, Tetragon은 kprobe+LSM 훅도 지원해 io_uring을 잡을 수 있다. "기본 정책 blind / LSM이 해법"이 정확.</details>
 5. <details><summary>matchBinaries로 "nginx만 허용"하는 allowlist를 왜 못 쓰나? 그럼 무엇으로?</summary>`sys_execve`에서 matchBinaries는 적재될 *새 이미지*가 아니라 execve를 *호출한 부모*를 매칭한다. `NotIn [/usr/sbin/nginx]`는 `nginx -v`(호출자=exec shim)를 죽이고 nginx-RCE 셸(호출자=nginx)은 통과시켜 정확히 거꾸로 동작한다. execve 진입 시점엔 caller 정보뿐이라 이름 기반 allowlist가 원리적으로 불가. 진짜 신원이 필요하면 BPF-LSM `security_bprm_creds_for_exec`(적재될 바이너리의 creds를 본다).</details>
-6. <details><summary>zero-exec가 selective보다 "더 강한 통제"라서 커버리지가 올라가야 하지 않나?</summary>아니다 — selector를 *추가*한 게 아니라 *줄여* 매칭 표면을 없앤 것이다. ED1의 주장("데이터 티어 셸 exec를 죽인다")은 selective에서도 zero-exec에서도 참이라 개수가 불변(80%). (#2가 하향을, 이건 상향을 막는 같은 정직성의 두 방향.)</details>
+6. <details><summary>zero-exec가 selective보다 "더 강한 통제"라서 커버리지가 올라가야 하지 않나?</summary>아니다 — selector를 *추가*한 게 아니라 *줄여* 매칭 표면을 없앤 것이다. ED1의 주장("데이터 티어 셸 exec를 죽인다")은 selective에서도 zero-exec에서도 참이라 개수가 불변(82.5%). (#2가 하향을, 이건 상향을 막는 같은 정직성의 두 방향.)</details>
 7. <details><summary>execve 룰을 web/api 티어엔 왜 안 거나? (ED3 NOT_COVERED)</summary>데이터 티어는 정당한 exec가 0(프로브=httpGet, 본체=PID1)이라 "전부 금지"가 가용성을 안 깬다. web/api는 정상 운영 중 exec할 수 있어(예: 진입스크립트·sidecar) 전면 금지가 곧 가용성 사고. 그래서 zero-exec는 `tier: data`(ⓐ)에 한정되고, 다른 티어는 NOT_COVERED로 정직히 남긴다 — 과잉차단도 결함이라는 M4 교훈의 연장.</details>
 
 ## 더 깊이 (1차 출처)

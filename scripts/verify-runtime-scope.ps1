@@ -4,7 +4,7 @@
 # verify-runtime-scope.sh (same probes).
 #   Phase 1  selective (M4)   -> a non-shell exec (id) SURVIVES, a shell exec dies (137)
 #   Phase 2  zero-exec (ship) -> id ALSO dies (137): the name-independent gap is closed
-# Does NOT change ED1 (VERIFIED) or the 80% metric. NOTE: temporarily swaps the data-tier
+# Does NOT change ED1 (VERIFIED) or the 82.5% metric. NOTE: temporarily swaps the data-tier
 # TracingPolicy on the running db; the finally block restores shipped zero-exec. Run standalone.
 $ErrorActionPreference = "Continue"
 $ctx = "kind-cloudsec"; $ns = "shop"; $fail = 0

@@ -3,7 +3,7 @@ NS1,micro-segmentation,default-deny ingress (모든 파드),A,VERIFIED,verify:L1
 NS2,micro-segmentation,default-deny egress (모든 파드),A,VERIFIED,verify:egress 000 x3
 NS3,micro-segmentation,least-privilege L3 hops (web->api->db only),A,VERIFIED,verify:web->db 000 / api->db 200
 NS4,micro-segmentation,L7 method+path restriction (Envoy),A,VERIFIED,verify:L2 /auditlogs 403
-NS5,micro-segmentation,cross-namespace isolation,B,CONFIGURED,netpol scoped to shop; no inter-ns test
+NS5,micro-segmentation,cross-namespace isolation,B,VERIFIED,cross-ns isolation PROVEN LIVE in CI (scripts/verify-cross-ns.sh on kind+Cilium; CI run 27751842751 step green): a pod in a FOREIGN namespace (intruder) is BLOCKED from db:8080 and api:8080 (000) while web IS reachable by design (allow-ingress-to-web fromEntities:cluster) — the web control proves L3 connectivity so the db/api block is policy isolation not a missing route; if the apparatus breaks the control returns 000 and the run FAILS (no silent pass). Scope: SENSITIVE tiers (db/api) ns-isolated; web intentionally cluster-reachable (not claimed isolated)
 ZT1,zero-trust,egress to internet blocked,A,VERIFIED,verify:web->internet 000
 ZT2,zero-trust,egress to cloud metadata (169.254.169.254) blocked,A,VERIFIED,verify:metadata 000
 ZT3,zero-trust,egress to kube-apiserver blocked,A,VERIFIED,verify:apiserver 000

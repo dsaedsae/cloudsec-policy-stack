@@ -66,13 +66,13 @@ FSC 로드맵(2024-08-13): **위치 기반 분리 → 위험 기반 MLS**.
 
 | metric | | |
 |---|---|---|
-| coverage | 검증가능-as-code | 80% (32/40) |
+| coverage | 검증가능-as-code | 82.5% (33/40) |
 | verify | 라이브, 전 계층 | 21/21 |
 | cedar | 인가 + 에이전트 위임 | 8/8 · 17/17 |
 | rebac | OpenFGA 관계 | 11/11 |
 | checkov | shift-left · 실 CVE 포착 | 452 / 0 |
 
-<span class="mut mono" style="font-size:.7em">// 21/21은 기능 회귀 스위트(분모 없음) · 갭 20%(CONFIGURED 4·GOVERNANCE 2·NOT-COVERED 4)는 행 단위 공개</span>
+<span class="mut mono" style="font-size:.7em">// 21/21은 기능 회귀 스위트(분모 없음) · 갭 17.5%(CONFIGURED 3·GOVERNANCE 2·NOT-COVERED 4)는 행 단위 공개</span>
 
 ---
 
@@ -90,7 +90,7 @@ FSC 로드맵(2024-08-13): **위치 기반 분리 → 위험 기반 MLS**.
 <span class="mut">"안전하다"가 아니라 — </span>**갭을 공개한다.**
 
 - **재현 증거** — 감사자가 부작용 없는 dry-run으로 직접 확인
-- **명시된 갭** — 미검증 20%를 행 단위로 공개
+- **명시된 갭** — 미검증 17.5%를 행 단위로 공개
 - **정직성** — 요청자 JWT 행을 *증명 전엔 CONFIGURED로 낮춰 뒀다가 라이브로 강제를 증명해 VERIFIED로 올렸다* (편한 숫자가 아니라 참값)
 - **적대적 자기검증** — 우리 정책의 실 결함(SA-use CRITICAL)을 찾아 수정·재검증
 

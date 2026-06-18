@@ -123,9 +123,9 @@ M2식 *"한 줄이 통제다"*. 떠먹여주는 모드는 [LEARN.md](LEARN.md). 
 ## 왜 헤드라인이 (거의) 안 변하나
 
 > **GitOps 대부분은 ops/instrumentation이거나 기존 통제의 *재계측*이지 새 VERIFIED 행이 아니다.** 기본값으로
-> 헤드라인 **80%(32/40)는 이 모듈로 바뀌지 않는다.** 추가 후보는 단 1행 — **IN1**(새 family `integrity`,
-> "drift auto-reverted within sync interval") — 이고, 그조차 정직하게: CI hard-gate면 VERIFIED(→80.5%), 로컬
-> 랩 grader만이면 CONFIGURED(→**78.0%**, denominator +1이 비율을 *먼저* 떨어뜨림 — ID8의 "증명 전엔 claim 안 함"
+> 헤드라인 **82.5%(33/40)는 이 모듈로 바뀌지 않는다.** 추가 후보는 단 1행 — **IN1**(새 family `integrity`,
+> "drift auto-reverted within sync interval") — 이고, 그조차 정직하게: CI hard-gate면 VERIFIED(→82.9%), 로컬
+> 랩 grader만이면 CONFIGURED(→**80.5%**, denominator +1이 비율을 *먼저* 떨어뜨림 — ID8의 "증명 전엔 claim 안 함"
 > 방향). L2~L5는 기존 ID1/SL6/B7의 property를 새 actor로 재측정 — evidence 강화지 새 행 아님. **모듈의 가치는
 > coverage가 아니라 깊이다.** 행 추가/승격은 오너 결정 → [ADR 0002](../../docs/decisions/0002-argocd-gitops-relocates-identity-tcb.md).
 

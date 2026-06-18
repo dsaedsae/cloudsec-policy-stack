@@ -8,7 +8,7 @@ hide:
 
 검증 가능한 다층보안(MLS) 보상통제를 코드로 — 한 요청이 신원·세분화·인가·암호화·탐지를 전부 통과해야 데이터에 닿고, 막힌다는 사실을 매번 라이브로 증명한다.
 
-[라이브 검증 21/21](docs/evaluation-coverage.md) · [검증가능 커버리지 80%](docs/evaluation-coverage.md) · [적대적 검증: CRITICAL 1 발견·수정](THREAT_MODEL.md) · 무료 로컬 $0
+[라이브 검증 21/21](docs/evaluation-coverage.md) · [검증가능 커버리지 82.5%](docs/evaluation-coverage.md) · [적대적 검증: CRITICAL 1 발견·수정](THREAT_MODEL.md) · 무료 로컬 $0
 
 [여기서 시작 — M0 재구현 (클러스터 불필요·Python만)](labs/m0/README.md) · [트랙 전체 보기](labs/README.md)
 
@@ -74,7 +74,7 @@ flowchart TB
 ## 기여 (contributions)
 
 - **규제 → 통제 매핑** — FSC 망분리 완화/MLS 보상통제 6종을 NIST SP 800-207·ISMS-P·검증 항목에 1:1 매핑. [→ MLS 매핑](docs/financial-mls-mapping.md)
-- **검증가능성 기준 + 커버리지 측정** — "각 규제 요구는 시행을 증명하는 실행 테스트에 대응돼야 한다"를 기준으로, MLS 보상통제의 80%가 코드로 검증가능함을 정량화(갭 공개). [→ 평가](docs/evaluation-coverage.md)
+- **검증가능성 기준 + 커버리지 측정** — "각 규제 요구는 시행을 증명하는 실행 테스트에 대응돼야 한다"를 기준으로, MLS 보상통제의 82.5%가 코드로 검증가능함을 정량화(갭 공개). [→ 평가](docs/evaluation-coverage.md)
 - **적대적 검증** — LLM 멀티에이전트 재검토가 자체 SA-use 정책의 실제 우회(CRITICAL)를 발견 → 수정 → 라이브 재검증. 잔여위험 명시.
 - **인가 흐름 정렬 + 프런티어** — RBAC+ABAC 하이브리드 · policy-as-code · 지속평가. AI-에이전트 위임(Cedar)·ReBAC(OpenFGA)을 실행 데모로 충족(NHI 생애주기 포함). [→ 인가 모델](docs/authorization-model.md)
 
@@ -84,7 +84,7 @@ flowchart TB
 
 | 항목 | 결과 |
 |------|------|
-| **검증가능성 커버리지 (정량 헤드라인)** | 워크로드 적용가능 MLS 보상통제 sub-requirement의 **80% (32/40)** 가 *코드로 검증* — 갭(CONFIGURED 4·NOT-COVERED 4·GOVERNANCE 2)을 정직하게 공개. [→ 평가](docs/evaluation-coverage.md) |
+| **검증가능성 커버리지 (정량 헤드라인)** | 워크로드 적용가능 MLS 보상통제 sub-requirement의 **82.5% (33/40)** 가 *코드로 검증* — 갭(CONFIGURED 3·NOT-COVERED 4·GOVERNANCE 2)을 정직하게 공개. [→ 평가](docs/evaluation-coverage.md) |
 | 라이브 방어심층 검증 (기능 회귀 스위트) | **21 / 21 PASS** — 차단/허용 enforcement 전부. WireGuard는 api/db를 다른 노드로 강제(podAntiAffinity)하고 tcpdump로 선상 WG 암호문(UDP/51871, 25s 윈도우) + 평문 0 확인(`scripts/capture-wg.sh`) |
 | Cedar 인가 단위테스트 | **8 / 8** (코어) · **17 / 17** AI-에이전트 위임(confused-deputy 차단 + ASI08 위임깊이 cap·홉별 클램프·출처 게이트; P2·P3·P5·P6·P7 mutation으로 반증가능) |
 | ReBAC 관계 테스트 (OpenFGA) | **11 / 11** `fga model test` + 라이브 `/check` 11/11 — 인가 모델의 ReBAC 갭을 실행으로 충족 |

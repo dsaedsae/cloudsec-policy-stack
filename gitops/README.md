@@ -24,7 +24,7 @@ gitops/
 
 ## 정직한 경계 (오너 결정 전까지)
 
-- **헤드라인(80%)은 이 모듈로 바뀌지 않는다.** GitOps 대부분은 ops/instrumentation이거나
+- **헤드라인(82.5%)은 이 모듈로 바뀌지 않는다.** GitOps 대부분은 ops/instrumentation이거나
   기존 통제의 *재계측*이다. coverage 행 추가(IN1, family `integrity`)는 **오너 결정** — 자세히는
   [M10 README의 "왜 헤드라인이 안 변하나"](../labs/m10/README.md).
 - **opt-in.** ArgoCD는 무거운 always-on integration job에 넣지 않는다(OOM 회피). 정적 절반

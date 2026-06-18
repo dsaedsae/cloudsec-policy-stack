@@ -33,12 +33,12 @@ B7의 "누가 `app:web` 파드를 만드나"가 "누가 repo에 머지하나 + r
 
 ## 헤드라인 정직성 (가장 중요한 콜)
 GitOps 대부분은 **ops/거버넌스이거나 기존 통제의 *재계측*** 이지 headline 변화가 아니다.
-- **기본: 헤드라인 80%(32/40)는 이 모듈로 바뀌지 않는다.** coverage 행 추가는 **오너 결정**으로 분리한다 — 결정: 행 미추가. coverage 분모는 *고정된* MLS 요구집합을 추적하고, GitOps 무결성은 자체 추가 통제라 위협모델 B8·학습모듈(M10)로 기록한다(라이브 ArgoCD를 상시 CI 게이트로 만들면 재검토).
+- **기본: 헤드라인 82.5%(33/40)는 이 모듈로 바뀌지 않는다.** coverage 행 추가는 **오너 결정**으로 분리한다 — 결정: 행 미추가. coverage 분모는 *고정된* MLS 요구집합을 추적하고, GitOps 무결성은 자체 추가 통제라 위협모델 B8·학습모듈(M10)로 기록한다(라이브 ArgoCD를 상시 CI 게이트로 만들면 재검토).
 - 추가 시 후보는 단 1행 — **IN1**(새 family `integrity`): "desired-state drift auto-reverted within sync
   interval". 이건 어느 기존 계층도 증명 못하는 유일한 *런타임 무결성* 통제(detection=ED*·prevention=ID*와
   구별되는 **correction**)다. 정직한 매핑:
-  - CI hard-gate(push-triggered)면 → VERIFIED → 33/41 = **80.5%**.
-  - 로컬 랩 grader만(ID4 SPIFFE 선례)이면 → CONFIGURED → 32/41 = **78.0%** (denominator +1이 비율을
+  - CI hard-gate(push-triggered)면 → VERIFIED → 34/41 = **82.9%**.
+  - 로컬 랩 grader만(ID4 SPIFFE 선례)이면 → CONFIGURED → 33/41 = **80.5%** (denominator +1이 비율을
     *먼저 떨어뜨린다* — ID8이 쓴 "증명 전엔 claim 안 함"의 정직한 방향).
 - **이중계상 금지:** L2 fighting-controllers·L3-static·L4 supply-chain·L5 ordering은 *기존* 통제(ID1/SL6/B7)의
   property를 새 actor로 재측정한 것 — evidence 강화지 새 row가 아니다. 모듈의 가치는 coverage가 아니라 **깊이**.
