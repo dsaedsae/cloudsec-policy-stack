@@ -1,0 +1,32 @@
+# app-of-apps ROOT — the ONE manifest you apply by hand: "the documented last imperative
+# act". It points ArgoCD at gitops/apps/, and from there the 3 child Applications are
+# pull-reconciled in sync-wave order. After this, `kubectl apply` should never be the way
+# the shop stack changes — only a git merge is.
+#
+# Honest bootstrap paradox (ADR 0002 / B8): GitOps cannot bootstrap itself. ArgoCD itself
+# AND this root Application are installed out-of-band by terraform / admin kubectl (a
+# push-model, cluster-admin trust root installing the pull-model reconciler — turtles all
+# the way down). GitOps does not REMOVE the root kubectl trust; it reduces how OFTEN it is
+# used. scripts/enable-gitops.sh performs this one apply.
+#
+# auto-sync is OFF here by default (opt-in / RAM honesty). The M10 lab turns on
+# syncPolicy.automated{prune,selfHeal} on a child App to demonstrate drift auto-correction;
+# that is the one load-bearing line the learner authors and the grader keys on.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shop-root
+  namespace: argocd
+spec:
+  project: shop
+  source:
+    repoURL: https://github.com/dsaedsae/cloudsec-policy-stack
+    targetRevision: master
+    path: gitops/apps
+    directory:
+      recurse: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    syncOptions: [CreateNamespace=false]

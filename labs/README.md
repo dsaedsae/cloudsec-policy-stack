@@ -19,14 +19,14 @@ flowchart LR
     end
     M5 --> M6[M6 · 에이전트]
     M6 -. 졸업 후 .-> M7
-    subgraph ADV["심화 · 졸업 후 선택 (M7–M9)"]
+    subgraph ADV["심화 · 졸업 후 선택 (M7–M10)"]
       direction LR
-      M7[M7 · 형식검증] ~~~ M8[M8 · 런타임 경계] ~~~ M9[M9 · 침해 가정]
+      M7[M7 · 형식검증] ~~~ M8[M8 · 런타임 경계] ~~~ M9[M9 · 침해 가정] ~~~ M10[M10 · GitOps 무결성]
     end
     classDef nc fill:#e8eaf6,stroke:#3f51b5,color:#1a237e;
     classDef cl fill:#fff3e0,stroke:#c2410c,color:#7c2d12;
     class M0,M1,M6,M7 nc;
-    class M2,M3,M4,M5,M8,M9 cl;
+    class M2,M3,M4,M5,M8,M9,M10 cl;
 ```
 
 **각 모듈의 학습 루프 (strip → rebuild → 채점 → 복원):**
@@ -50,7 +50,7 @@ flowchart LR
 > 클러스터 랩의 진짜 비용은 돈이 아니라 **RAM ~6–8GB**다. AWS는 *선택*(관리형 등가물 단발 체험 ~$1–3/세션;
 > 끄는 걸 잊으면 월 $178 함정) → [비용 사다리](../docs/aws-eks-path.md).
 > **M0가 가장 길다**(~3–6h) — Cedar 문법 + 핵심 사고(통과≠증명)를 처음 익히기 때문. 이후 **클러스터 랩(M2–M5)은 짧다**(스택은 무겁지만 작성량은 적다). 부담되면 M0의 5분 첫 채점만 먼저 보고 와도 된다.
-> 트랙 = **코어 7(M0–M6) + 심화 3(M7–M9)**. 진도 카운터 'N / 7'은 코어 기준이고, M7·M8·M9는 졸업 후 선택하는 심화다.
+> 트랙 = **코어 7(M0–M6) + 심화 4(M7–M10)**. 진도 카운터 'N / 7'은 코어 기준이고, M7·M8·M9·M10은 졸업 후 선택하는 심화다.
 
 | 모듈 | 스택 | 하는 일 (졸업 기준) | 클러스터 | ~시간 | 비용 |
 |---|---|---|---|---|---|
@@ -64,6 +64,7 @@ flowchart LR
 | **[M7](../formal/README.md)** | z3 (formal) | 교차계층 shadow/dead-rule 탐지 (심화) | 불필요 (Python) | ~1–2h | **$0** 로컬 |
 | **[M8](m8/README.md)** | Tetragon | 런타임 kill 경계 측정 — detect≠prevent (심화) | 필요 · RAM ~6–8GB | ~30–45m | **$0** 로컬 |
 | **[M9](m9/README.md)** | 전 계층 | 침해 가정 — 블래스트 반경 봉쇄 (제로데이 렌즈, 심화) | 필요 · RAM ~6–8GB | ~25–40m | **$0** 로컬 |
+| **[M10](m10/README.md)** | ArgoCD | GitOps 무결성 — drift 자동교정·reconciler=새 신원-TCB (심화) | 필요 · RAM ~8–10GB | ~40–60m | **$0** 로컬 |
 
 > **먼저 읽을 개념 페이지**(형식 1단계): M0→[01](../docs/01-authz-no-cluster.md) · M1→[02](../docs/02-scan.md) · M2→[05](../docs/05-identity.md) · M3→[03](../docs/03-network-and-authz.md) · M4→[04](../docs/04-runtime.md) · M5→[06](../docs/06-data-protection.md) · M6→[인가모델](../docs/authorization-model.md)·[NHI](../docs/nhi.md) · M8→[04](../docs/04-runtime.md). (번호 오프셋 주의: M2↔05, M3↔03, M5↔06.)
 
@@ -83,6 +84,7 @@ flowchart LR
 - **[M7 · 심화 (교차계층 일관성, formal)](../formal/README.md)** — Cilium L7 × Cedar의 그림자/dead-rule을 z3로 탐지(ViewAuditLog shadow, 반증가능). 채점 `python formal/cross_layer.py` · *클러스터 불필요*
 - **[M8 · 심화 (런타임 kill 경계)](m8/README.md)** — Tetragon shell-kill의 정직한 경계: detection≠prevention, execve vs I/O, io_uring 클래스. 채점 `powershell -File scripts\verify-runtime-scope.ps1` · *클러스터 필요*
 - **[M9 · 심화 (침해 가정·블래스트 반경)](m9/README.md)** — 제로데이 RCE를 *가정*하고 횡이동·유출·권한상승이 어디서 막히나(+ 못 막는 것)를 추적. 기존 통제를 공격자 사후 렌즈로 재구성. 채점 `bash labs/m9/grade.sh` · *클러스터 필요*
+- **[M10 · 심화 (GitOps 무결성 통제판)](m10/README.md)** — GitOps가 신원-TCB를 *이전*한다(B7→B8): drift 자동교정의 윈도우·admission과의 교착(fighting controllers)·reconciler 권한 경계를 라이브로 측정. 채점 `bash labs/m10/grade.sh` · *클러스터 필요* · 무클러스터 절반은 항상 CI-게이트(`check-reconciler-rbac.py`·`check-sync-wave-order.py`)
 
 ## 형식 (모든 모듈 공통)
 
@@ -117,6 +119,7 @@ flowchart LR
 - [ ] **M7** (심화) — `python formal/cross_layer.py` → SHADOW 탐지(`--open-auditlogs`로 shadow 소멸=반증) + `--ungate-transfer`로 UNGATED FAIL 확인
 - [ ] **M8** (심화) — `powershell -File scripts\verify-runtime-scope.ps1` → 선택적→zero-exec 델타(id 0→137) + detection≠prevention 설명
 - [ ] **M9** (심화) — `bash labs/m9/grade.sh` → 모든 봉쇄 경계 HELD + assume-breach 한계 설명 (클러스터)
+- [ ] **M10** (심화) — `bash labs/m10/grade.sh` → drift revert+`/auditlogs 403` 재폐쇄 · fighting-controllers OutOfSync∞ · reconciler RBAC bounded (클러스터) · 무클러스터: `python scripts/check-reconciler-rbac.py`·`check-sync-wave-order.py`
 
 > 코어 7개(M0–M6)를 다 졸업하면 → [캡스톤 · 면접 노트](capstone.md)를 채워라. 무엇을 재구현했고, 각 통제가
 > *막는 것*과 *막지 못하는 것*을 정직하게 적으면 그대로 포트폴리오·면접 답변이 된다.

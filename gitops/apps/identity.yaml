@@ -1,0 +1,31 @@
+# Wave -1: identity FIRST. The tier ServiceAccounts + admission policies must reconcile
+# BEFORE the workload, or the ServiceAccount admission controller rejects pods that
+# reference a not-yet-created SA — the exact failure the "Identity FIRST" shell comment
+# in .github/workflows/ci.yml warns about, now an AUDITABLE sync-wave invariant instead
+# of tribal knowledge in a comment. scripts/check-sync-wave-order.py asserts identity < app.
+#
+# Single source of truth: this App path-REFERENCES k8s/ (it does not copy it), so the
+# imperative CI path and the GitOps path read the identical files — otherwise "drift"
+# would be measured against a fork and the whole M10 lesson would be a lie.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shop-identity
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: shop
+  source:
+    repoURL: https://github.com/dsaedsae/cloudsec-policy-stack
+    targetRevision: master
+    path: k8s
+    directory:
+      include: "{rbac.yaml,admission-policy.yaml,admission-sa-use.yaml}"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: shop
+  syncPolicy:
+    # CreateNamespace=false: the `shop` Namespace object lives in rbac.yaml itself (it is
+    # applied first, in this same wave), so Argo must not race to create it.
+    syncOptions: [CreateNamespace=false, ServerSideApply=true]

@@ -48,6 +48,7 @@ control raises the bar against A1–A3, not against an attacker who owns the sub
 | B5 | any pod → outside | egress / exfil | Cilium egress default-deny (DNS + next-hop only) |
 | B6 | compromised workload | post-exploit behavior | Tetragon (SIGKILL shell exec in `db`) |
 | **B7** | **K8s API → pod identity** | **who may create/label pods** | **RBAC + admission policy** ← the identity TCB |
+| **B8** | **Git repo / reconciler → cluster desired-state** | **who may merge + what the controller may apply/impersonate** | **AppProject scoping + signed commits + the reconciler's own least-priv RBAC** ← B7 *relocated* (M10) |
 
 B1–B6 are the original live-verified layers. **B7 is the one the other six all
 silently depend on**, and is what this round hardens. `scripts/verify.{sh,ps1}`
@@ -55,6 +56,21 @@ now also exercises B7 directly: a tier ServiceAccount has zero K8s API rights; a
 *mismatched* workload (`app: api` on `web-sa`) is denied at admission; the limited
 `shop:deployers` principal trying to run a workload as `api-sa` is denied by the
 SA-use gate, while an authorized operator deploying the same workload is admitted.
+
+**B8 (M10 — GitOps) does not add a control; it *relocates* B7.** Under GitOps the
+question "who may create an `app: api` pod" becomes "who may merge to the repo, and
+what may the reconciler ServiceAccount impersonate/apply." The reconciler is a new,
+*re-centralized* identity-TCB: a controller with apply rights over RBAC, NetworkPolicy,
+and admission policy can mint `api`, rewrite the VAP that guards it, and revert your
+incident-response `kubectl edit` — so it must be minimized exactly as `shop:tier-operators`
+was (AppProject allowlist + a named, non-`kube-system` reconciler SA; `k8s/rbac.yaml`
+already foreshadows this — "map this Group to your privileged GitOps controller").
+What it *does* add is a **runtime-integrity** control — drift on a tracked object is
+auto-reverted within the sync interval — measured live in [M10](labs/m10/README.md). It
+does **not** protect against a compromised Git repo or a signed-but-malicious PR (trust
+is *moved* to code-review + signed commits, not created), it cannot revert what it does
+not track, and ArgoCD itself is a net-new control-plane attack surface
+([ADR 0002](docs/decisions/0002-argocd-gitops-relocates-identity-tcb.md)).
 
 ## The identity problem (B7) — why labels are a TCB
 

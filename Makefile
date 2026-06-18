@@ -30,6 +30,8 @@ test:  ## the CI policy gate (no cluster)
 	$(PY) formal/cross_layer_test.py
 	$(PY) scripts/check-sa-consistency.py
 	$(PY) scripts/check-deployer-rbac.py
+	$(PY) scripts/check-reconciler-rbac.py
+	$(PY) scripts/check-sync-wave-order.py
 
 m0:  ## grade M0 (Cedar authz) — target 11/11
 	$(PY) labs/m0/grade.py --ext

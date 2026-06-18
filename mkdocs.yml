@@ -35,6 +35,7 @@ exclude_docs: |
   rebac/
   outputs/
   k8s/
+  gitops/
   node_modules/
   site/
   *.tf
@@ -129,10 +130,14 @@ nav:
     - M7 · 교차계층 일관성 (formal): formal/README.md
     - M8 · 런타임 kill 경계 (detection≠prevention): labs/m8/README.md
     - M9 · 침해 가정 · 블래스트 반경 봉쇄 (제로데이 렌즈): labs/m9/README.md
+    - M10 · GitOps 무결성 통제판 (drift=correction · reconciler=새 TCB):
+      - labs/m10/README.md
+      - 배우기 모드 (떠먹여주는 application.yaml): labs/m10/LEARN.md
     - 캡스톤 · 면접 노트: labs/capstone.md
   - 레퍼런스:
     - 위협 모델 (B1–B7): THREAT_MODEL.md
     - 의사결정 기록 (ADR 0001 · 데이터 티어 zero-exec): docs/decisions/0001-data-tier-zero-exec.md
+    - 의사결정 기록 (ADR 0002 · GitOps가 신원-TCB를 이전): docs/decisions/0002-argocd-gitops-relocates-identity-tcb.md
     - 인가 모델 (RBAC+ABAC/PaC/ReBAC): docs/authorization-model.md
     - NHI 생애주기 (워크로드 신원): docs/nhi.md
     - 금융 망분리 완화 (MLS): docs/financial-mls-mapping.md

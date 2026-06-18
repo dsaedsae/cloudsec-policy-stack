@@ -1,0 +1,29 @@
+# Wave 1: network + runtime policy LAST. The CiliumNetworkPolicy + Tetragon TracingPolicy
+# attach to workloads that already exist (wave 0), so there is no window where a pod runs
+# before its egress default-deny / zero-exec rule is in place. This is the allow-list
+# ordering: open the smallest surface only after the thing it guards exists.
+#
+# This App also carries the object the M10 drift lab attacks: the allow-web-to-api
+# CiliumNetworkPolicy whose L7 rule keeps /auditlogs at 403 (verify.sh). L1 live-edits it
+# open; the reconciler reverts it within the sync interval; the lab re-runs the 403 probe
+# to prove the boundary actually re-closed (spec-equality != semantic re-enforcement).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shop-network-runtime
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: shop
+  source:
+    repoURL: https://github.com/dsaedsae/cloudsec-policy-stack
+    targetRevision: master
+    path: k8s
+    directory:
+      include: "{netpol.yaml,tracingpolicy.yaml}"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: shop
+  syncPolicy:
+    syncOptions: [CreateNamespace=false, ServerSideApply=true]

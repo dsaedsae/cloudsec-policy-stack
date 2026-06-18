@@ -1,0 +1,22 @@
+# Wave 0: the workload. Reconciles AFTER identity (-1) so the Deployments' referenced
+# tier ServiceAccounts already exist and admission admits the pods.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shop-workload
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: shop
+  source:
+    repoURL: https://github.com/dsaedsae/cloudsec-policy-stack
+    targetRevision: master
+    path: k8s
+    directory:
+      include: "app.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: shop
+  syncPolicy:
+    syncOptions: [CreateNamespace=false, ServerSideApply=true]

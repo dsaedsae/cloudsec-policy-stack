@@ -57,6 +57,11 @@ jobs:
       - name: "Least-privilege deployer RBAC (LP7: no pods/secrets/SA/wildcard, namespaced)"
         run: python scripts/check-deployer-rbac.py
 
+      - name: "GitOps reconciler least-privilege (M10 L3: AppProject scope, static)"
+        run: python scripts/check-reconciler-rbac.py
+      - name: "GitOps sync-wave order (M10 L5: identity-first invariant)"
+        run: python scripts/check-sync-wave-order.py
+
       - name: ReBAC model test (OpenFGA — relationship-derived allow/deny)
         run: docker run --rm -v "${{ github.workspace }}/rebac:/data" openfga/cli:latest model test --tests /data/store.fga.yaml
 

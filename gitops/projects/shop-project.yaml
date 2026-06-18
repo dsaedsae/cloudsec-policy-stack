@@ -1,0 +1,54 @@
+# AppProject `shop` — the reconciler's blast radius, made least-privilege (B8 / M10).
+#
+# This is the GitOps analogue of the shop:tier-operators RBAC in k8s/rbac.yaml: the
+# controller that may apply identity / network / runtime policy IS the new identity-TCB
+# (B7 relocated -> B8). So its reach is ALLOWLISTED, not cluster-wide. A cluster-admin
+# reconciler could mint `app:api`, rewrite the VAP that guards it, and revert your
+# incident-response `kubectl edit` — exactly the capability B7 spent four controls
+# minimizing. scripts/check-reconciler-rbac.py asserts this stays tight (the static,
+# no-cluster half of L3); `kubectl auth can-i --as ...argocd-application-controller`
+# proves the effective grant live (the --live half).
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: shop
+  namespace: argocd
+spec:
+  description: "shop stack — least-privilege GitOps reconcile scope (B8: reconciler = new identity-TCB)"
+
+  # Only THIS repo may be a source. No arbitrary git URL -> no arbitrary manifests.
+  sourceRepos:
+    - https://github.com/dsaedsae/cloudsec-policy-stack
+    - https://github.com/dsaedsae/cloudsec-policy-stack.git
+
+  # The reconciler may write ONLY into these namespaces.
+  destinations:
+    - { server: https://kubernetes.default.svc, namespace: shop }
+    - { server: https://kubernetes.default.svc, namespace: argocd }
+
+  # Cluster-scoped kinds the reconciler may manage: just the Namespace + the B7 admission
+  # policy objects. Everything else cluster-scoped is implicitly DENIED — notably it may
+  # NOT create ClusterRoleBindings (no self-escalation) or reach other namespaces' RBAC.
+  clusterResourceWhitelist:
+    - { group: "", kind: Namespace }
+    - { group: admissionregistration.k8s.io, kind: ValidatingAdmissionPolicy }
+    - { group: admissionregistration.k8s.io, kind: ValidatingAdmissionPolicyBinding }
+
+  # Namespaced kinds the reconciler may manage inside the allowed namespaces — exactly
+  # what k8s/ contains, nothing more.
+  namespaceResourceWhitelist:
+    - { group: "", kind: ServiceAccount }
+    - { group: "", kind: Service }
+    - { group: "", kind: ConfigMap }
+    - { group: apps, kind: Deployment }
+    - { group: rbac.authorization.k8s.io, kind: Role }
+    - { group: rbac.authorization.k8s.io, kind: RoleBinding }
+    - { group: cilium.io, kind: CiliumNetworkPolicy }
+    - { group: cilium.io, kind: TracingPolicy }
+
+  # Belt-and-braces: even inside the allowed namespaces, DENY the most dangerous kinds.
+  # The reconciler must never mint a Secret or bind a ClusterRole into the namespace.
+  namespaceResourceBlacklist:
+    - { group: "", kind: Secret }
+    - { group: rbac.authorization.k8s.io, kind: ClusterRole }
+    - { group: rbac.authorization.k8s.io, kind: ClusterRoleBinding }
