@@ -76,6 +76,19 @@ FSC 로드맵(2024-08-13): **위치 기반 분리 → 위험 기반 MLS**.
 
 ---
 
+## 82.5%는 어떻게 — *정직하게만*
+
+<span class="kick">숫자는 라이브 테스트로만 올린다 · 못 버는 건 정직하게 남긴다</span>
+
+- **SL2** 시크릿스캔 → <span class="ok">VERIFIED</span> · 심은 시크릿을 잡는 게이트를 CI에서 라이브 증명
+- **NS5** cross-ns → <span class="ok">VERIFIED</span> · 외부 네임스페이스에서 db·api 차단을 CI에서 라이브 증명
+- **ID4** mutual-auth → <span class="mut">CONFIGURED 유지</span> · *내 과대주장*을 찾아 정정(SVID는 SA-암호가 아니라 라벨 기반)
+- **ED3** broader-runtime → <span class="mut">NOT_COVERED 유지</span> · bpf-LSM 부재를 CI에서 라이브 확정
+
+<span class="mut mono" style="font-size:.7em">// 77.5% → 82.5%: 오른 두 칸은 라이브 증명, 안 오른 두 칸은 *왜 못 버는지*까지 행에 기록</span>
+
+---
+
 ## "아하" — 같은 경로, 다른 신원
 
 <p class="mono" style="font-size:1.15em;line-height:2">alice GET acct-alice <span class="ok">200</span><br>bob &nbsp;&nbsp;같은 경로 &nbsp;&nbsp;&nbsp;<span class="no">403</span></p>
@@ -92,7 +105,7 @@ FSC 로드맵(2024-08-13): **위치 기반 분리 → 위험 기반 MLS**.
 - **재현 증거** — 감사자가 부작용 없는 dry-run으로 직접 확인
 - **명시된 갭** — 미검증 17.5%를 행 단위로 공개
 - **정직성** — 요청자 JWT 행을 *증명 전엔 CONFIGURED로 낮춰 뒀다가 라이브로 강제를 증명해 VERIFIED로 올렸다* (편한 숫자가 아니라 참값)
-- **적대적 자기검증** — 우리 정책의 실 결함(SA-use CRITICAL)을 찾아 수정·재검증
+- **적대적 자기검증** — 내 정책의 실 결함·*과대주장*을 스스로 찾아 수정(SA-use CRITICAL · mutual-auth가 위조를 닫는다는 과대주장)
 
 ---
 
