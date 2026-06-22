@@ -108,6 +108,7 @@ nav:
   - 시작하기: index.md
   - 재구현 트랙:
     - labs/README.md
+    - AI 도우미 — 랩 안 망치고 질문하기: TUTOR.md
     - 환경 준비 (Windows): labs/SETUP.md
     - 교육용으로 쓰기 (instructor): docs/using-for-training.md
     - M0 · Cedar 인가 재구현:
