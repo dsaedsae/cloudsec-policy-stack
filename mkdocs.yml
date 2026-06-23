@@ -145,6 +145,7 @@ nav:
     - 인가 모델 (RBAC+ABAC/PaC/ReBAC): docs/authorization-model.md
     - NHI 생애주기 (워크로드 신원): docs/nhi.md
     - 금융 망분리 완화 (MLS): docs/financial-mls-mapping.md
+    - 왜 기업이 도입하나 (DevSecOps·Cilium·비용): docs/why-adopt.md
     - 프로덕션 도구 · 선행 (왜 직접 짰나): docs/prior-art.md
     - 읽으며 따라가기 (개념 랩):
       - docs/README.md
