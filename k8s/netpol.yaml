@@ -14,7 +14,7 @@ spec:
   endpointSelector: {}
   ingress: []
 ---
-# api accepts ingress ONLY from web, ONLY HTTP GET /get* (L7).
+# api accepts ingress ONLY from web, ONLY L7 GET /accounts/<id> + POST /accounts/<id>/transfer.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata: { name: allow-web-to-api, namespace: shop }
