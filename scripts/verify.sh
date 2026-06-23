@@ -27,6 +27,14 @@ trap 'write_junit; k -n shop delete -f "$ROOT/k8s/probes.yaml" --ignore-not-foun
 k -n shop wait --for=condition=Ready pod/probe-web pod/probe-api --timeout=120s >/dev/null
 API=$(k -n shop get pod -l tier=backend -o jsonpath='{.items[0].status.podIP}')
 DB=$(k -n shop get pod -l tier=data -o jsonpath='{.items[0].status.podIP}')
+# 빈-IP 가드 (verify-cross-ns.sh와 동일): api/db 티어 파드가 없으면 IP가 빈 문자열이 되어
+# 'http://:8080' -> curl 000 이 되고, '000=차단 기대' 체크들(web->db, egress)이 *측정 없이*
+# PASS로 거짓통과한다. set -e도 못 막는다 — 빈 .items[0] jsonpath는 ''를 rc 0으로 반환. 못 풀면
+# 측정 불가이므로 FAIL: CI 게이트(ci.yml)가 드롭을 측정하지 않고 green이 되는 것을 차단한다.
+if [ -z "$API" ] || [ -z "$DB" ]; then
+  echo "FAIL(verify): api/db 티어 파드 IP를 못 구했다 (api='$API' db='$DB') — 스택이 완전히 up이 아니다. 여기서의 '000'은 차단이 아니라 false PASS다." >&2
+  exit 1
+fi
 
 # result() funnels each check -> the human line + a JUnit <testcase> (infra defined above).
 result() { # name expect got status

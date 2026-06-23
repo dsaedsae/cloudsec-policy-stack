@@ -43,6 +43,15 @@ try {
     kubectl --context $ctx -n shop wait --for=condition=Ready pod/probe-web pod/probe-api --timeout=120s | Out-Null
     $api = kubectl --context $ctx -n shop get pod -l tier=backend -o jsonpath="{.items[0].status.podIP}"
     $db = kubectl --context $ctx -n shop get pod -l tier=data -o jsonpath="{.items[0].status.podIP}"
+    # Empty-IP guard (twin of verify.sh / verify-cross-ns.sh): if the api/db tier pods are absent,
+    # the IP is empty -> "http://:8080/" -> curl 000, which the '000 = blocked' probes would score
+    # PASS WITHOUT measuring. Bail loudly so a half-up stack errors instead of false-passing.
+    # (exit inside try still runs the finally -> probes cleanup + Write-Junit.)
+    if (-not $api -or -not $db) {
+        Write-Host "FAIL(verify): could not resolve api/db tier pod IPs (api='$api' db='$db') -- stack not fully up; a '000' here is a false PASS, not a block."
+        $script:fail = 1
+        exit 1
+    }
 
     function Probe($src, $desc, $exp, $cargs) {
         $code = & kubectl --context $ctx -n shop exec $src -- curl -s -o /dev/null -m 8 -w "%{http_code}" @cargs 2>$null

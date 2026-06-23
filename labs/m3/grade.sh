@@ -30,6 +30,11 @@ echo "정책 전파 대기..."; sleep 8
 
 API=$(k -n shop get pod -l tier=backend -o jsonpath='{.items[0].status.podIP}')
 DB=$(k -n shop get pod -l tier=data -o jsonpath='{.items[0].status.podIP}')
+# 빈-IP 가드 (m9/verify-cross-ns.sh와 동일): 티어 파드가 없으면 IP가 비어 'http://:8080' -> 000 이
+# '차단 기대' 체크를 측정 없이 PASS로 거짓통과시킨다. 못 풀면 측정 불가이므로 FAIL (canonical 복원은 trap).
+if [ -z "$API" ] || [ -z "$DB" ]; then
+  echo "FAIL(M3): api/db 티어 파드 IP를 못 구했다 (api='$API' db='$DB') — 스택이 완전히 up이 아니다. '000'은 차단이 아니라 false PASS다." >&2; exit 1
+fi
 
 probe() { # src desc expect curl-args...
   local src="$1" desc="$2" exp="$3"; shift 3
