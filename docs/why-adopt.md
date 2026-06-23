@@ -201,7 +201,7 @@ shift-left를 정당화할 때 가장 흔히 인용되는 *"프로덕션 버그 
   귀속·수치 인용 금지**). [출처: https://cilium.io/blog/2026/03/23/native-mtls-cilium/]
   — **(contested_flag, 제목만 확인·본문 미확인)**
 - **독립(비벤더) 비교(arXiv 프리프린트):** *"Performance Comparison of Service Mesh
-  Frameworks: the MTLS Test Case"* (Bremler-Barr 외)가 Istio/Linkerd/Cilium 등을 비교한다.
+  Frameworks: the MTLS Test Case"* (Bremler Barr 외)가 Istio/Linkerd/Cilium 등을 비교한다.
   보도·요약 기준 Istio 사이드카 모델이 ~3,200 RPS에서 지연 증가·자원 오버헤드 최고, Cilium은
   per-pod 프록시가 없어 CPU 소비에서 최선으로 보고된다. **프리프린트이고 PDF 본문 수치를
   직접 패치하지 못했으므로 방향성 참고치로만** 쓴다(메모리·intra-node 암호화 등 불리한
@@ -212,8 +212,8 @@ shift-left를 정당화할 때 가장 흔히 인용되는 *"프로덕션 버그 
 
 - Hubble이 노드/클러스터/멀티클러스터(Cluster Mesh) 범위의 네트워크·보안 관측성을
   *"in a completely transparent manner"* 로 제공하고, L3/L4·L7 서비스 의존성 그래프를 자동
-  발견한다 — Cilium 선택의 관측성 기둥. (Hubble이 Cilium/eBPF 기반이라는 점은 Cilium 문서
-  전반에서 사실이나, *이 정확한 URL* 본문엔 그 한 줄이 verbatim으로 있지 않다.) [출처:
+  발견한다 — Cilium 선택의 관측성 기둥. (이 문구·L3/L4·L7 의존성 그래프·멀티클러스터 범위는
+  인용 URL 본문에서 verbatim 재확인됨.) [출처:
   https://docs.cilium.io/en/stable/observability/hubble/] — **(sourced_fact)**
 
 ### 3.5 ⚠️ 정직한 tradeoff (공짜가 아니다)
@@ -266,7 +266,7 @@ shift-left를 정당화할 때 가장 흔히 인용되는 *"프로덕션 버그 
 | **M3** (network seg/egress) | egress·메타데이터 차단 | SSRF → IMDSv1 자격증명 탈취 | **Capital One 2019** — OCC **$80M** 민사벌금(2020-08-06), *"failure to establish effective risk assessment processes prior to migrating ... to the public cloud"* [출처: https://www.occ.gov/news-issuances/news-releases/2020/nr-occ-2020-101.html] — **(sourced_fact)**. SSRF→IMDS 체인 자체는 AWS IMDSv2 문서가 방어책으로 명시 [출처: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html] — **(sourced_fact)** | $80M 벌금(OCC). 유출 규모 *"more than 100 million"* (美+캐나다 약 1억+600만)은 **OCC 페이지에 없고** DOJ 발표에 근거 — 출처 분리 표기 [출처(DOJ, 제목 확인·본문 403): https://www.justice.gov/usao-wdwa/pr/former-hacker-sentenced-stealing-computer-power-mine-cryptocurrency-and-stealing] — **(contested_flag, 2차/본문 미패치)** |
 | **M0/M6** (object authz, Cedar) | per-object 인가 | BOLA — 요청 내 객체 ID 조작 | **OWASP API1:2023** *"manipulating the ID of an object that is sent within the request"*; 시나리오: *"gains access to the sales data of thousands of e-commerce stores"* [출처: https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/] — **(sourced_fact)** | 데이터 유출·조작, 계정 탈취. ⚠️ "API 공격의 ~40%가 BOLA"는 **벤더 출처**(OWASP 페이지엔 없음) — OWASP 통계로 귀속 금지 **(contested_flag)** |
 | **M2** (identity, label↔SA / SA-use) | 신원·RBAC 위조 차단 | create-workload로 SA 권한 탈취 / 관리 webhook RCE | k8s 문서: *"granting permission to create workloads also implicitly grants the API access levels of any service account in that namespace"* [출처: https://kubernetes.io/docs/concepts/security/rbac-good-practices/] — **(sourced_fact)**. 최근 사례 **IngressNightmare(CVE-2025-1974, CVSS 9.8 CRITICAL)** = 미인증 공격자가 pod 네트워크 접근만으로 ingress-nginx admission controller RCE → 컨트롤러 기본설정상 전 네임스페이스 시크릿 접근/클러스터 탈취 [출처(1차, NVD): https://nvd.nist.gov/vuln/detail/CVE-2025-1974] (벤더 해설: https://www.wiz.io/blog/ingress-nginx-kubernetes-vulnerabilities) — **(sourced_fact)** | 클러스터 takeover |
-| **M4/M8** (runtime, Tetragon eBPF-LSM) | 컨테이너 탈출·런타임 회피 | runc 탈출 / syscall-우회 | **runc "Leaky Vessels" CVE-2024-21626(CVSS 8.6)** — *"internal file descriptor leak ... working directory in the host filesystem namespace, allowing for a container escape"* (runc 1.0.0-rc93~1.1.11) [출처: https://nvd.nist.gov/vuln/detail/cve-2024-21626] — **(sourced_fact)**. **io_uring/Curing(2025)** — io_uring은 *syscall 없이* I/O 수행 → syscall-후킹 도구(Falco 등)가 *맹점*; 권장 방어는 **LSM 훅(KRSI)** [출처: https://www.armosec.io/blog/io_uring-rootkit-bypasses-linux-security/] — **(sourced_fact)** | 호스트 장악 / EDR 맹점 |
+| **M4/M8** (runtime, Tetragon eBPF) | 컨테이너 탈출·런타임 회피 | runc 탈출 / syscall-우회 | **runc "Leaky Vessels" CVE-2024-21626(CVSS 8.6)** — *"internal file descriptor leak ... working directory in the host filesystem namespace, allowing for a container escape"* (runc 1.0.0-rc93~1.1.11) [출처: https://nvd.nist.gov/vuln/detail/cve-2024-21626] — **(sourced_fact)**. **io_uring/Curing(2025)** — io_uring은 *syscall 없이* I/O 수행 → syscall-후킹 도구(Falco 등)가 *맹점*; 권장 방어는 **LSM 훅(KRSI)** [출처: https://www.armosec.io/blog/io_uring-rootkit-bypasses-linux-security/] — **(sourced_fact)** | 호스트 장악 / EDR 맹점 |
 | **SL/M1** (supply-chain, checkov/trivy/cosign/SBOM) | 빌드·아티팩트 무결성 | 빌드에 심긴 백도어 / 유출 자격증명 | **xz-utils CVE-2024-3094(CVSS 10.0, CWE-506)** — *"liblzma build process extracts a prebuilt object file from a disguised test file"* — 소스가 아닌 **빌드**에 심긴 백도어 [출처: https://nvd.nist.gov/vuln/detail/cve-2024-3094] — **(sourced_fact)**. **Codecov 2021** — 공개 Docker 이미지 중간 레이어에서 HMAC 키 탈취 → Bash Uploader 변조 → 하류 CI 시크릿 대량 유출 [출처: https://about.codecov.io/apr-2021-post-mortem/] — **(sourced_fact)** | 대규모 하류 침해 |
 
 > ⚠️ **출처 등급 명시.** **IngressNightmare(CVE-2025-1974)** 의 CVSS 9.8·미인증 RCE·전
@@ -315,7 +315,7 @@ shift-left를 정당화할 때 가장 흔히 인용되는 *"프로덕션 버그 
 > CISO 이사회 보고 조항으로 거론되는 **전자금융감독규정 제8조의2 는 *이 FSC 보도자료* 에는
 > 등장하지 않는다**(보도자료는 "CEO·이사회 보고의무"라는 원칙만 서술) — **law.go.kr 1차 법령
 > 대조 전까지 조문번호를 사실로 단정하지 않는다(대조 필요)**. SaaS 예외의 **제15조제1항제3호
-> (단말기 망분리)** 만이 2026 시행세칙 맥락에서 공개 확인된다. 이 문서는 **규정 준수
+> (단말기 망분리)** 만이 2026 시행세칙 맥락의 2차 출처(법무법인 해설 등)로 교차확인된다(1차 법령 대조는 financial-mls-mapping §8). 이 문서는 **규정 준수
 > 확인서가 아니다.** (상세·출처는 financial-mls-mapping §8)
 
 > **이 랩에서의 의미.** §2(supply-chain·최소권한)·§3(identity·egress)·§4(통제별 사고)의

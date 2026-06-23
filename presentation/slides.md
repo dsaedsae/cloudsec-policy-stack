@@ -72,7 +72,7 @@ FSC 로드맵(2024-08-13): **위치 기반 분리 → 위험 기반 MLS**.
 | rebac | OpenFGA 관계 | 11/11 |
 | checkov | shift-left · 실 CVE 포착 | 452 / 0 |
 
-<span class="mut mono" style="font-size:.7em">// 21/21은 기능 회귀 스위트(분모 없음) · 갭 17.5%(CONFIGURED 3·GOVERNANCE 2·NOT-COVERED 4)는 행 단위 공개</span>
+<span class="mut mono" style="font-size:.7em">// 21/21은 기능 회귀 스위트(분모 없음) · 갭 17.5%(CONFIGURED 3·NOT-COVERED 4; GOVERNANCE 2는 40 분모 밖)는 행 단위 공개</span>
 
 ---
 

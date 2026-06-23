@@ -115,7 +115,7 @@ permit (
 **R4 — 동결 계좌 금지:**
 - forbid를 사용하는 첫 정책 — permit과 forbid가 모두 매치되면 **forbid가 이긴다**
 - 언제 이체를 **절대 금지**할까? → 계좌가 frozen인 경우
-- 힌트: `resource.frozen == true` 를 when에
+- 힌트: 어느 boolean 계좌 속성이 '동결'을 뜻하는지 `cedar/schema.json`에서 찾아 `when`에 — 비교식은 직접.
 
 **E1 — 확장: 감사역의 조회 전용 권한:**
 - 기존 R1은 "소유자만 자신의 계좌 조회" → R3는 "감사역만 감사로그 조회"

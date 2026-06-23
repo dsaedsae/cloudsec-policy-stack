@@ -4,7 +4,7 @@
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dsaedsae/cloudsec-policy-stack)
 
-> **EN (TL;DR):** A free, local-`kind` **defense-in-depth Kubernetes security stack** + a **self-grading re-implementation track** (M0–M9): you rebuild each control — Cedar authz, Cilium L3/L7, Tetragon runtime, identity admission, encryption, agent-ABAC — from a stripped skeleton, and the existing test/verify harness auto-grades it. An **education/portfolio reference** (not production; not legal/compliance advice). **Content is in Korean.** Start (no cluster, ~5 min): `make setup && make m0`, or open in Codespaces.
+> **EN (TL;DR):** A free, local-`kind` **defense-in-depth Kubernetes security stack** + a **self-grading re-implementation track** (M0–M11): you rebuild each control — Cedar authz, Cilium L3/L7, Tetragon runtime, identity admission, encryption, agent-ABAC, GitOps integrity, BPF-LSM exec-allowlist — from a stripped skeleton, and the existing test/verify harness auto-grades it. An **education/portfolio reference** (not production; not legal/compliance advice). **Content is in Korean.** Start (no cluster, ~5 min): `make setup && make m0`, or open in Codespaces.
 
 > 의사결정자·도입 검토용: [원페이저 PDF](presentation/cloudsec-onepager.pdf)(GitHub에서 바로 열림) · [HTML](presentation/cloudsec-onepager.html)(브라우저·이메일·인쇄). 아래는 개발자/학습자용.
 
@@ -32,7 +32,7 @@
 
 > 커리큘럼 한눈에 보기(HTML): [커리큘럼 페이지](presentation/curriculum.html) — 배우는 것·기술 스택·추천 순서·선수지식. 아래 표는 요약.
 
-코어 트랙은 **M0–M6**, 심화는 **M7–M9**입니다. 무클러스터 모듈(M0·M1·M6·M7)은 Python만 있으면 되고, 클러스터 모듈(M2–M5·M8·M9)은 로컬 스택을 `up` → `down` 한 세션으로 띄워서 합니다.
+코어 트랙은 **M0–M6**, 심화는 **M7–M11**입니다. 무클러스터 모듈(M0·M1·M6·M7)은 Python만 있으면 되고, 클러스터 모듈(M2–M5·M8·M9·M10·M11)은 로컬 스택을 `up` → `down` 한 세션으로 띄워서 합니다.
 
 | 모듈 | 통제 | 클러스터 |
 |------|------|----------|
@@ -46,8 +46,10 @@
 | M7 (심화) | 교차계층 일관성 (formal, z3) | 불필요 |
 | M8 (심화) | 런타임 kill 경계 (detection≠prevention) | 필요 |
 | M9 (심화) | 침해 가정 · 블래스트 반경 봉쇄 (제로데이 렌즈) | 필요 |
+| M10 (심화) | GitOps 무결성: drift 자동교정 · reconciler=새 신원-TCB | 필요 |
+| M11 (심화) | BPF-LSM exec 허용목록: 적재-이미지 신원 (arg0/caller 함정) | 필요 |
 
-[환경 준비 (SETUP)](labs/SETUP.md)부터 보고 [M0](labs/m0/README.md)으로 시작하세요 — 빈 Cedar 정책에서 **첫 채점까지 약 5분**, 졸업(11/11)까지는 **~3–6h**, 클러스터 불필요. 개념부터 읽고 싶다면 [개념 랩](docs/)이 같은 통제를 먼저 설명합니다.
+[환경 준비 (SETUP)](labs/SETUP.md)부터 보고 [M0](labs/m0/README.md)으로 시작하세요 — 빈 Cedar 정책에서 **첫 채점까지 약 5분**, M0 졸업(11/11)까지는 **~3–6h**, 클러스터 불필요. 개념부터 읽고 싶다면 [개념 랩](docs/)이 같은 통제를 먼저 설명합니다.
 
 ## 스택 구성
 
@@ -124,7 +126,7 @@ python formal/cross_layer.py --open-auditlogs  # 반증: L7 경로를 열면 sha
 ```
 terraform/   kind + Cilium + Tetragon (helm)     app/api/    FastAPI Cedar PDP (api 이미지)
 cedar/       schema + policies + 단위테스트       k8s/        app, netpol, tracingpolicy, probes
-labs/        재구현 트랙 (M0–M9)                   docs/       개념 랩 + 매핑
+labs/        재구현 트랙 (M0–M11)                  docs/       개념 랩 + 매핑
 scripts/     up / verify / scan / down (.ps1+.sh) .github/    CI 워크플로 + kind 설정
 ```
 
