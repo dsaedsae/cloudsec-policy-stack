@@ -1,5 +1,5 @@
 # Pinned tooling for the gates (local + CI) so results are reproducible.
-cedarpy==4.8.4
+cedarpy==4.8.5
 checkov==3.3.1
 pyjwt==2.13.0
 # z3 SMT solver for the cross-layer policy-consistency check (formal/cross_layer.py).
