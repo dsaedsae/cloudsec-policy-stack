@@ -1,9 +1,9 @@
 name: docs
 
-# Build the MkDocs site as a check (catches broken nav/links/build) on every push.
-# Deploy is intentionally NOT here: the repo is private and GitHub Pages on the free
-# plan only serves public repos. To publish later: make the repo public, then add a
-# deploy job (upload-pages-artifact + deploy-pages) and enable Pages (Source: Actions).
+# Build the MkDocs site (catches broken nav/links) on every push, AND deploy it to
+# GitHub Pages on push to master. The repo went public 2026-06-24, so Pages on the free
+# plan now serves it. Pages source must be "GitHub Actions" (enabled once via the API or
+# Settings -> Pages -> Build and deployment -> Source: GitHub Actions).
 on:
   push:
     branches: [main, master]
@@ -12,6 +12,13 @@ on:
 
 permissions:
   contents: read
+  pages: write          # publish to GitHub Pages
+  id-token: write       # OIDC token consumed by deploy-pages
+
+# Serialize Pages publishes; never cancel an in-progress deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -25,3 +32,18 @@ jobs:
         env:
           NO_MKDOCS_2_WARNING: "true"       # Material dependency ships TWO promo banners,
           DISABLE_MKDOCS_2_WARNING: "true"  # one gated by each var; both needed. Build is green either way.
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: site                        # mkdocs site_dir (default artifact path is _site)
+
+  # Publish to GitHub Pages — only on a real push to master (skips PRs and the main mirror).
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

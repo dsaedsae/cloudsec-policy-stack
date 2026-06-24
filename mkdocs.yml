@@ -1,6 +1,7 @@
 site_name: cloudsec-policy-stack
 site_description: 망분리 완화(MLS) 보상통제를 코드로 — 검증 가능한 방어심층(defense-in-depth)
 site_author: dsaedsae
+site_url: https://dsaedsae.github.io/cloudsec-policy-stack/
 repo_url: https://github.com/dsaedsae/cloudsec-policy-stack
 repo_name: dsaedsae/cloudsec-policy-stack
 edit_uri: edit/master/
