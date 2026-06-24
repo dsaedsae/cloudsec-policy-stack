@@ -32,6 +32,8 @@
 **헤드라인 메트릭:**
 
 > ✅ **검증가능-as-code 커버리지:** **워크로드 적용가능 sub-requirement의 82.5% (33/40)** 가 코드로 검증된다. (거버넌스 포함 전체로는 33/42 = 79%.) 범주 분포: **VERIFIED 33 · CONFIGURED 3 · GOVERNANCE 2 · NOT-COVERED 4.**
+>
+> 분류 규칙(어떤 행을 왜 VERIFIED/CONFIGURED/GOVERNANCE/NOT_COVERED 로 놓았는지, 분모를 어떻게 잡는지)은 [커버리지 코드북](coverage-rubric.md)에 명문화돼 있다 — 산식은 `scripts/coverage.py:36`에 결정론적으로 박혀 있고, 분류는 **n=1 단일 저자 판단**임을 함께 고지한다.
 
 ![MLS verifiability coverage per family](assets/coverage.png)
 
