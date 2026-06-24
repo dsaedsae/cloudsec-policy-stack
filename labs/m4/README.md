@@ -66,6 +66,7 @@ selectors:
       - action: Sigkill
 ```
 
+<!-- TUTOR:CUT -->
 - `index: 0` = execve의 첫 인자(실행 파일 경로).
 - `operator: "Postfix"` = 경로가 그 값으로 *끝나면* 매칭. `/bin/sh`·`/usr/bin/bash` 등 접두가 달라도
   잡는다. `/usr/bin/id`는 목록에 없으니 안 잡힌다 → **선택적**.
@@ -86,6 +87,7 @@ selectors:
 
 `args`(무엇을 *읽을지*)와 `selectors.matchArgs`(읽은 걸 *어떻게 판정할지*)는 별개라 둘 다 `index: 0`을
 가리켜야 같은 인자를 본다 — 위 표의 4행·5행이 짝이다.
+<!-- /TUTOR:CUT -->
 
 ```bash
 bash labs/m4/grade.sh        # id=0 PASS + sh=137 PASS → M4 GRADUATED. 채점 후 canonical 복원.
