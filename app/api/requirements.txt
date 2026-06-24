@@ -1,4 +1,4 @@
-fastapi==0.136.3
+fastapi==0.138.0
 uvicorn==0.49.0
 cedarpy==4.8.4
 # Bearer-JWT verification at the PDP edge (signature + audience binding, RFC 8707).
