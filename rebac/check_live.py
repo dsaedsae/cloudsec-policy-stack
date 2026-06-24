@@ -92,7 +92,7 @@ def main() -> int:
     try:
         # 1) DSL -> JSON model (run the CLI image over the mounted rebac dir).
         tr = subprocess.run(
-            ["docker", "run", "--rm", "-v", f"{HERE}:/data", "openfga/cli:latest",
+            ["docker", "run", "--rm", "-v", f"{HERE}:/data", "openfga/cli@sha256:94dfb9ed3b8a308742e48f25a2f4b21b7fc01fe8c4f32e42bb6dc1d0f37b8c84",
              "model", "transform", "--file", "/data/model.fga"],
             capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
         )
@@ -103,7 +103,7 @@ def main() -> int:
         # 2) Boot the real engine.
         up = subprocess.run(
             ["docker", "run", "-d", "--name", CONTAINER,
-             "-p", f"{HOST_PORT}:8080", "openfga/openfga:latest", "run"],
+             "-p", f"{HOST_PORT}:8080", "openfga/openfga@sha256:36097b960f66039e4eac9f5849ecaecffc7015252a19f54a814dc007e4fb347e", "run"],
             capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
         )
         if up.returncode != 0:

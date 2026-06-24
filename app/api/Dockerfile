@@ -1,6 +1,6 @@
 # Build from the repo root so the shared cedar/ policies are in context:
 #   docker build -t cloudsec-api:local -f app/api/Dockerfile .
-FROM python:3.12-slim AS base
+FROM python:3.12-slim@sha256:d764629ce0ddd8c71fd371e9901efb324a95789d2315a47db7e4d27e78f1b0e9 AS base
 
 # Non-root, high UID (passes the namespace's restricted Pod Security).
 RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin appuser

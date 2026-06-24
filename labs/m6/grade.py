@@ -56,7 +56,7 @@ def grade_rebac() -> int:
         shutil.copy(HERE / "model.fga", base / "model.fga")
         shutil.copy(ROOT / "rebac" / "store.fga.yaml", base / "store.fga.yaml")
         proc = subprocess.run(
-            ["docker", "run", "--rm", "-v", f"{base}:/data", "openfga/cli:latest",
+            ["docker", "run", "--rm", "-v", f"{base}:/data", "openfga/cli@sha256:94dfb9ed3b8a308742e48f25a2f4b21b7fc01fe8c4f32e42bb6dc1d0f37b8c84",
              "model", "test", "--tests", "/data/store.fga.yaml"],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
         )

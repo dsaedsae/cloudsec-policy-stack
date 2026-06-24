@@ -30,4 +30,4 @@ metadata:
 spec:
   containers:
     - name: db
-      image: cgr.dev/chainguard/nginx:latest   # distroless nginx — no shell, no busybox
+      image: cgr.dev/chainguard/nginx@sha256:cd35918ef80082318a9215becdb351c964435193003f281ebb8d5de872562ccd   # distroless nginx (digest-pinned; was :latest) — no shell, no busybox

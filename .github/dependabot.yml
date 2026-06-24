@@ -14,3 +14,16 @@ updates:
     directory: "/"
     schedule: { interval: weekly }
     commit-message: { prefix: "chore(deps)" }
+  # the FastAPI api image: its Dockerfile FROM (now digest-pinned) + its own requirements.txt
+  # (the root pip entry above does not recurse into app/api/).
+  - package-ecosystem: docker
+    directory: "/app/api"
+    schedule: { interval: weekly }
+    commit-message: { prefix: "chore(deps)" }
+  - package-ecosystem: pip
+    directory: "/app/api"
+    schedule: { interval: weekly }
+    commit-message: { prefix: "chore(deps)" }
+  # NOTE: openfga/* and cgr.dev/chainguard/* images used via `docker run` / k8s manifests are
+  # digest-pinned in place (was `:latest`) but are NOT Dockerfile FROMs, so Dependabot cannot
+  # track them — refresh those digests manually when bumping.

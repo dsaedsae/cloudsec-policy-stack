@@ -35,7 +35,7 @@ account.owner = alice   AND   alice.delegate = assistant
 # native CLI (https://github.com/openfga/cli):  winget install openfga.cli   (또는 go install)
 fga model test --tests rebac/store.fga.yaml
 # 또는, native 설치 없이 docker로:
-docker run --rm -v "$PWD/rebac:/data" openfga/cli:latest model test --tests /data/store.fga.yaml
+docker run --rm -v "$PWD/rebac:/data" openfga/cli@sha256:94dfb9ed3b8a308742e48f25a2f4b21b7fc01fe8c4f32e42bb6dc1d0f37b8c84 model test --tests /data/store.fga.yaml
 ```
 
 기대 결과: `Tests 1/1 passing  Checks 11/11 passing`.
