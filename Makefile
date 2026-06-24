@@ -32,6 +32,7 @@ test:  ## the CI policy gate (no cluster)
 	$(PY) scripts/check-deployer-rbac.py
 	$(PY) scripts/check-reconciler-rbac.py
 	$(PY) scripts/check-sync-wave-order.py
+	$(PY) scripts/check_negatives_test.py
 
 m0:  ## grade M0 (Cedar authz) — target 11/11
 	$(PY) labs/m0/grade.py --ext
