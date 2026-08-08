@@ -8,4 +8,4 @@ pyjwt==2.13.0
 # trivy build gate. CVE-2025-62727 (HIGH, FileResponse Range-header O(n^2) DoS) affects
 # 0.39.0-0.49.0 and is FIXED in 0.49.1; the prior 0.41.3 pin was in the vulnerable range.
 # Pinned 1.3.1 (current), which is above 0.49.1 and includes the fix. See docs/02-scan.md.
-starlette==1.3.1
+starlette==1.4.1
